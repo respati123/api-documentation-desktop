@@ -326,7 +326,7 @@ export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: stri
       const openApiSchemas = referencedResponseSchemas(spec, responses)
       const request: SyncRequest = {
         id: crypto.randomUUID(), kind: 'request', name: uniqueRequestName(operation, method, path), method: method.toUpperCase(), url,
-        body: '', bodyMode: 'none', headers: fields.headers, params: fields.params, pathParams: fields.pathParams,
+        bodyMode: 'none', headers: fields.headers, params: fields.params, pathParams: fields.pathParams,
         auth: authFromSecurity(spec, operation.security ?? spec.security),
         responses,
         ...(openApiSchemas ? { openApiSchemas } : {}),

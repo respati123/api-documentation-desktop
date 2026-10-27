@@ -1,6 +1,6 @@
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
-import type { ButtonHTMLAttributes } from 'react'
+import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
@@ -10,7 +10,8 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-blue-700 text-white shadow-sm hover:bg-blue-800',
         outline: 'border border-slate-300 bg-white text-slate-950 shadow-sm hover:bg-slate-50',
-        ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+        ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
+        destructive: 'bg-red-700 text-white shadow-sm hover:bg-red-800'
       },
       size: {
         default: 'h-11',
@@ -25,7 +26,7 @@ const buttonVariants = cva(
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonVariants> & { asChild?: boolean }
 
-export function Button({ className, variant, size, asChild, ...props }: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ className, variant, size, asChild, ...props }, ref) {
   const Component = asChild ? Slot : 'button'
-  return <Component className={cn(buttonVariants({ variant, size }), 'graphite-button', `graphite-button-${variant ?? 'default'}`, className)} {...props} />
-}
+  return <Component ref={ref} className={cn(buttonVariants({ variant, size }), 'graphite-button', `graphite-button-${variant ?? 'default'}`, className)} {...props} />
+})

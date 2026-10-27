@@ -379,7 +379,7 @@ function migrateNode(value: unknown): TreeNode | null {
       const url = String(saved.url || '')
       const migratedUrl = splitUrlParams(url)
       return { id: saved.id, kind: 'request' as const, name: String(saved.name || 'Untitled request'), method: String(saved.method || 'GET'), url: migratedUrl.url, body: String(saved.body || ''), headers: [{ id: crypto.randomUUID(), name: 'Accept', value: '*/*', enabled: true }], params: migratedUrl.params, auth: { type: 'none' as const } }
-    }).filter((node): node is SavedRequest => node !== null)
+    }).filter((node) => node !== null) as unknown as SavedRequest[]
     return { id: item.id, kind: 'folder', name: String(item.name || 'Untitled folder'), children }
   }
   return null
@@ -558,7 +558,7 @@ function insertNode(nodes: TreeNode[], item: TreeNode, targetId: string | null):
   const target = findNode(nodes, targetId)
   if (!target) return [...nodes, item]
   if (isFolder(target)) {
-    return nodes.map((node) => node.id === targetId ? { ...node, children: [...node.children, item] } : isFolder(node) ? { ...node, children: insertNode(node.children, item, targetId) } : node)
+    return nodes.map((node) => isFolder(node) && node.id === targetId ? { ...node, children: [...node.children, item] } : isFolder(node) ? { ...node, children: insertNode(node.children, item, targetId) } : node)
   }
   return nodes.flatMap((node) => {
     if (node.id === targetId) return [item, node]
@@ -1916,7 +1916,7 @@ function App() {
         setLocalCommits((current) => current.map((commit) => rebasedById.get(commit.id) ?? commit))
       }
 
-      const sharedCommits = pending.map((commit) => ({ ...commit, tree: stripLocalFilePaths(commit.tree), variables: shareableWorkspaceVariables(normalizeWorkspaceVariables(commit.variables)) }))
+      const sharedCommits = pending.map((commit) => ({ ...commit, tree: stripLocalFilePaths(commit.tree as SyncTreeNode[]), variables: shareableWorkspaceVariables(normalizeWorkspaceVariables(commit.variables)) }))
       const result = await apiCall<{ headCommitId: string }>(`/api/workspaces/${targetCloudId}/sync/push`, { token: sessionToken, method: 'POST', body: { commits: sharedCommits } })
       await Promise.all(pending.map((commit) => window.apiDesktop.saveCommit(activeWorkspace.id, { ...commit, pushed: true })))
       const pushedIds = new Set(pending.map((commit) => commit.id))
@@ -1975,7 +1975,7 @@ function App() {
     setTree((current) => {
       const parent = findNode(current, newFolderParentId)
       if (!parent || !isFolder(parent)) return [...current, folder]
-      return current.map((node) => node.id === parent.id ? { ...node, children: [...node.children, folder] } : isFolder(node) ? appendToFolder(node, parent.id, folder) : node)
+      return current.map((node) => isFolder(node) && node.id === parent.id ? { ...node, children: [...node.children, folder] } : isFolder(node) ? appendToFolder(node, parent.id, folder) : node)
     })
     setSelectedFolderId(folder.id)
     setExpandedFolders((current) => new Set(current).add(folder.id))
@@ -1989,7 +1989,7 @@ function App() {
     setTree((current) => {
       const folder = findNode(current, folderId)
       if (!folder || !isFolder(folder)) return [...current, request]
-      return current.map((node) => node.id === folder.id ? { ...node, children: [...node.children, request] } : isFolder(node) ? appendToFolder(node, folder.id, request) : node)
+      return current.map((node) => isFolder(node) && node.id === folder.id ? { ...node, children: [...node.children, request] } : isFolder(node) ? appendToFolder(node, folder.id, request) : node)
     })
     const tab: WorkspaceTab = { kind: 'request', id: request.id }
     setWorkspaceTabs((current) => [...current.filter((item) => workspaceTabKey(item) !== workspaceTabKey(tab)), tab])

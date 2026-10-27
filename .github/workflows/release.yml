@@ -28,6 +28,8 @@ concurrency:
 
 jobs:
   version:
+    # Commits whose message contains [skip release] do not create a release.
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.bump.outputs.version }}
@@ -56,6 +58,7 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   build:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     needs: version
     strategy:
       fail-fast: false
@@ -111,6 +114,7 @@ jobs:
           if-no-files-found: error
 
   draft-release:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     needs: [version, build]
     runs-on: ubuntu-latest
     steps:

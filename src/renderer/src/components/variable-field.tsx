@@ -185,7 +185,7 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
     })
   }
 
-  function onKeyDown(event: ReactKeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, userHandler?: (event: ReactKeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void) {
+  function onKeyDown<T extends HTMLInputElement | HTMLTextAreaElement>(event: ReactKeyboardEvent<T>, userHandler?: (event: ReactKeyboardEvent<T>) => void) {
     userHandler?.(event)
     if (event.defaultPrevented || !match || !filtered.length) return
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
