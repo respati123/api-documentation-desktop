@@ -3,13 +3,11 @@ name: Release desktop app
 # Runs on every push to main (patch bump) and on manual dispatch (choose the bump).
 # Each run bumps the version, tags it, builds all three platforms, and attaches the
 # installers to a DRAFT GitHub release. Publishing the draft is a manual step in the
-# GitHub UI. Pushes that only change packages/ (the npm MCP package) are skipped.
+# GitHub UI.
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'packages/**'
   workflow_dispatch:
     inputs:
       bump:
