@@ -28,6 +28,6 @@ export async function apiCall<T>(path: string, options: { token?: string; method
   })
   const result = await response.json().catch(() => ({})) as { error?: string } & T
   if (!response.ok) throw new ApiError(result.error || `API request failed (${response.status}).`, response.status, result)
-  return result
+  return (typeof result === 'object' && result !== null && 'data' in result ? result.data : result) as T
 }
 
