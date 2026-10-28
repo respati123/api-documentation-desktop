@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { AiConnectDialog } from '@/components/ai-connect-dialog'
 import { cn } from '@/lib/utils'
-import { ApiError, apiCall, apiWebSocketUrl, type ApiUser, type CloudCommit, type CloudCommitDetail, type CloudWorkspace } from '@/lib/api'
+import { ApiError, apiCall, apiListAll, apiWebSocketUrl, type ApiUser, type CloudCommit, type CloudCommitDetail, type CloudWorkspace } from '@/lib/api'
 import { bodyModes, isBodyMode, mergeTreeSnapshots, stripLocalFilePaths, type BodyField, type BodyMode, type HeaderField, type ParamField, type RequestAuth, type ResponseContent, type ResponseDefinition, type SyncConflict, type SyncTreeNode } from '@/lib/merge'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
@@ -1059,7 +1059,7 @@ function App() {
   useEffect(() => {
     if (!sessionToken || !user || !storageLoaded) return
     let active = true
-    void apiCall<{ workspaces: CloudWorkspace[] }>('/api/workspaces', { token: sessionToken }).then(async ({ workspaces }) => {
+    void apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken }).then(async (workspaces) => {
       const records: LocalWorkspace[] = []
       for (const cloud of workspaces) {
         if (!active) return
@@ -1178,8 +1178,8 @@ function App() {
     let active = true
     const refreshCloudHeads = async () => {
       try {
-        const result = await apiCall<{ workspaces: CloudWorkspace[] }>('/api/workspaces', { token: sessionToken })
-        if (active) setCloudWorkspaces(result.workspaces)
+        const workspaces = await apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken })
+        if (active) setCloudWorkspaces(workspaces)
       } catch {
         // Keep the last known cloud status when the network is temporarily unavailable.
       }
@@ -1241,8 +1241,8 @@ function App() {
 
     const refreshCloudHeads = async () => {
       try {
-        const result = await apiCall<{ workspaces: CloudWorkspace[] }>('/api/workspaces', { token: sessionToken })
-        if (active) setCloudWorkspaces(result.workspaces)
+        const workspaces = await apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken })
+        if (active) setCloudWorkspaces(workspaces)
       } catch {
         // The existing polling fallback will retry when the current workspace is cloud-backed.
       }
@@ -1275,8 +1275,8 @@ function App() {
     }
     setHistoryLoading(true)
     setHistoryError('')
-    void apiCall<{ commits: CloudCommit[] }>(`/api/workspaces/${activeWorkspace.cloudId}/sync/history`, { token: sessionToken })
-      .then((result) => { if (active) setCloudCommits(result.commits) })
+    void apiListAll<CloudCommit>(`/api/workspaces/${activeWorkspace.cloudId}/sync/history`, 'commits', { token: sessionToken })
+      .then((commits) => { if (active) setCloudCommits(commits) })
       .catch((error) => { if (active) setHistoryError(error instanceof Error ? error.message : 'Could not load cloud history.') })
       .finally(() => { if (active) setHistoryLoading(false) })
     return () => { active = false }
