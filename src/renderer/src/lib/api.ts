@@ -17,7 +17,13 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public data: unknown) { super(message) }
 }
 
-export async function apiCall<T>(path: string, options: { token?: string; method?: string; body?: unknown } = {}): Promise<T> {
+type RequestOptions = { token?: string; method?: string; body?: unknown }
+type ListResult<T> = { data?: Record<string, T[]>; meta?: { nextCursor?: unknown } }
+
+const listPageLimit = 100
+const listPageCap = 200
+
+async function send(path: string, options: RequestOptions): Promise<unknown> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: options.method || 'GET',
     headers: {
@@ -26,8 +32,39 @@ export async function apiCall<T>(path: string, options: { token?: string; method
     },
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) })
   })
-  const result = await response.json().catch(() => ({})) as { error?: string } & T
+  const result = await response.json().catch(() => ({})) as { error?: string }
   if (!response.ok) throw new ApiError(result.error || `API request failed (${response.status}).`, response.status, result)
+  return result
+}
+
+export async function apiCall<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const result = await send(path, options)
   return (typeof result === 'object' && result !== null && 'data' in result ? result.data : result) as T
+}
+
+// Follows meta.nextCursor until the list ends. A list past the page cap is an error, not a silently cut list.
+export async function apiListAll<T>(path: string, key: string, options: { token?: string } = {}): Promise<T[]> {
+  const items: T[] = []
+  let cursor: string | null = null
+  for (let page = 0; page < listPageCap; page++) {
+    const query = new URLSearchParams({ limit: String(listPageLimit) })
+    if (cursor) query.set('cursor', cursor)
+    const result = await send(`${path}?${query}`, options) as ListResult<T>
+    items.push(...readListItems(result, key))
+    cursor = readNextCursor(result)
+    if (!cursor) return items
+  }
+  throw new Error(`Cloud list ${path} has more than ${listPageLimit * listPageCap} items.`)
+}
+
+function readListItems<T>(result: ListResult<T>, key: string): T[] {
+  const items = result.data?.[key]
+  if (!Array.isArray(items)) throw new Error(`Cloud response has no ${key} list.`)
+  return items
+}
+
+function readNextCursor(result: ListResult<unknown>): string | null {
+  const cursor = result.meta?.nextCursor
+  return typeof cursor === 'string' ? cursor : null
 }
 
