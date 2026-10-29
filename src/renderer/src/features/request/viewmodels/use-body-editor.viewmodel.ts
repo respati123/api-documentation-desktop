@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { BODY_MODE_TEXT } from '@/features/request/constants/body-mode-text.constants'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import { bodyContentType } from '@/features/request/lib/body-content-type'
 import { effectiveBodyMode } from '@/features/request/lib/body-mode'
 import type { PickedFile } from '@/features/request/models/request.model'
 import { requestService } from '@/features/request/services/request.service'
 import type { EditorInput } from '@/features/request/viewmodels/editor.types'
+import { BODY_MODE_TEXT } from '@/shared/constants/body-mode-text.constants'
 import { type BodyField, bodyFieldSchema, bodyModeSchema, bodyModes } from '@/shared/models/api-node.model'
 
 const rawModes = ['json', 'xml', 'yaml', 'edn', 'text', 'other']
@@ -34,7 +34,7 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
     return name ? t(REQUEST_TEXT.body.chooseOnDevice, { name }) : t(REQUEST_TEXT.body.noFile)
   }
 
-  const modeLabel = t(BODY_MODE_TEXT[mode])
+  const modeLabel = t(BODY_MODE_TEXT[mode], { ns: 'common' })
   const helpByMode: Record<string, string> = {
     'form-data': t(REQUEST_TEXT.body.helpFormData),
     urlencoded: t(REQUEST_TEXT.body.helpUrlencoded),
@@ -49,7 +49,7 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
     suggestions,
     onVariableClick,
     mode,
-    modeOptions: bodyModes.map((value) => ({ value, label: t(BODY_MODE_TEXT[value]) })),
+    modeOptions: bodyModes.map((value) => ({ value, label: t(BODY_MODE_TEXT[value], { ns: 'common' }) })),
     helpText: helpByMode[mode] ?? t(REQUEST_TEXT.body.helpContentType, { type: contentType }),
     isFields: mode === 'form-data' || mode === 'urlencoded',
     isFormData: mode === 'form-data',

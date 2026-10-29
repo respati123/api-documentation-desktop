@@ -4,12 +4,14 @@ import { initReactI18next } from 'react-i18next'
 import enAiConnect from '@/shared/i18n/locales/en/ai-connect.json'
 import enCollection from '@/shared/i18n/locales/en/collection.json'
 import enCommon from '@/shared/i18n/locales/en/common.json'
+import enDocs from '@/shared/i18n/locales/en/docs.json'
 import enRequest from '@/shared/i18n/locales/en/request.json'
 import enResponse from '@/shared/i18n/locales/en/response.json'
 import enVariables from '@/shared/i18n/locales/en/variables.json'
 import idAiConnect from '@/shared/i18n/locales/id/ai-connect.json'
 import idCollection from '@/shared/i18n/locales/id/collection.json'
 import idCommon from '@/shared/i18n/locales/id/common.json'
+import idDocs from '@/shared/i18n/locales/id/docs.json'
 import idRequest from '@/shared/i18n/locales/id/request.json'
 import idResponse from '@/shared/i18n/locales/id/response.json'
 import idVariables from '@/shared/i18n/locales/id/variables.json'
@@ -26,6 +28,7 @@ const resources = {
     response: enResponse,
     request: enRequest,
     collection: enCollection,
+    docs: enDocs,
   },
   id: {
     common: idCommon,
@@ -34,6 +37,7 @@ const resources = {
     response: idResponse,
     request: idRequest,
     collection: idCollection,
+    docs: idDocs,
   },
 }
 

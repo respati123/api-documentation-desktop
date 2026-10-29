@@ -1,2 +1,3 @@
-export * from '@/features/docs/components/api-reference'
-export * from '@/features/docs/components/openapi-dialog'
+export * from '@/features/docs/lib/api-reference'
+export * from '@/features/docs/pages/api-reference.page'
+export * from '@/features/docs/pages/openapi-dialog.page'

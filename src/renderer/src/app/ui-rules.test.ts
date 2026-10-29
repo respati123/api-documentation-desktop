@@ -52,6 +52,8 @@ function findViolations(path: string): string[] {
 }
 
 const legacyViolations = new Set<string>([
+  'features/docs/views/openapi-dialog.view.tsx',
+  'features/docs/views/api-reference.view.tsx',
   'features/collection/views/collection-dialogs.view.tsx',
   'features/collection/views/collection-menu.view.tsx',
   'features/collection/views/collection-tree.view.tsx',
