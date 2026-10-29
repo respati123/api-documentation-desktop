@@ -1,9 +1,12 @@
-import { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
-import { WorkspaceView } from '@/features/workspace/views/workspace.view'
+import { AppProviders } from '@/app/app-providers'
+import { WorkspacePage } from '@/features/workspace'
 
 function App() {
-  const viewModel = useWorkspaceViewModel()
-  return <WorkspaceView {...viewModel} />
+  return (
+    <AppProviders>
+      <WorkspacePage />
+    </AppProviders>
+  )
 }
 
 export default App
