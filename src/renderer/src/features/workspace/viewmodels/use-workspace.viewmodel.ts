@@ -1,18 +1,7 @@
-import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
-import {
-  firstRequestId,
-  indexTree,
-  initialTree,
-  isFolder,
-  isRequest,
-  normalizeSharedTree,
-  normalizeSharedVariables,
-  normalizeTree,
-  updateNode,
-  useCollectionTreeViewModel,
-} from '@/features/collection'
+import { firstRequestId, indexTree, initialTree, isFolder, isRequest, updateNode, useCollectionTreeViewModel } from '@/features/collection'
 import { replaceUrlParams, syncUrlParams } from '@/features/request'
 import {
   type CloudWorkspaceRecord,
@@ -26,7 +15,7 @@ import {
   useTeamDialogsViewModel,
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
-import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
+import { readTree } from '@/features/workspace/lib/storage'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
@@ -40,15 +29,15 @@ import { useWorkspaceNavigationViewModel } from '@/features/workspace/viewmodels
 import { useWorkspacePersistenceViewModel } from '@/features/workspace/viewmodels/use-workspace-persistence.viewmodel'
 import { useWorkspaceSessionViewModel } from '@/features/workspace/viewmodels/use-workspace-session.viewmodel'
 import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
+import { useWorkspaceStorageViewModel } from '@/features/workspace/viewmodels/use-workspace-storage.viewmodel'
 import { useWorkspaceSyncActionsViewModel } from '@/features/workspace/viewmodels/use-workspace-sync-actions.viewmodel'
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
 import { useWorkspaceTreeActionsViewModel } from '@/features/workspace/viewmodels/use-workspace-tree-actions.viewmodel'
-import { apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
+import type { CloudWorkspace } from '@/lib/api'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
 import {
   activeVariableValues,
   emptyWorkspaceVariables,
-  normalizeWorkspaceVariables,
   type WorkspaceVariables,
   workspaceVariablesChangeId,
 } from '@/lib/workspace-variables'
@@ -141,146 +130,28 @@ export function useWorkspaceViewModel() {
   const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
   const treeIndex = useMemo(() => indexTree(tree), [tree])
-  const restoreTabsEvent = useEffectEvent((workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) =>
-    navigation.restoreTabs(workspaceId, nextTree, variables),
-  )
-  useEffect(() => {
-    let active = true
-    const legacyTree = readTree()
-    void workspaceStorageService
-      .secureStorageAvailable()
-      .then((available) => {
-        if (active) setSecureStorageAvailable(available)
-      })
-      .catch(() => {
-        if (active) setSecureStorageAvailable(false)
-      })
-    void workspaceStorageService
-      .loadWorkspace(legacyTree)
-      .then(async (defaultWorkspace) => {
-        const storedRecords = await workspaceStorageService.listWorkspaces()
-        if (!active) return
-        const records = storedRecords.map((item) => ({
-          ...item,
-          tree: normalizeTree(item.tree),
-          baseTree: normalizeTree(item.baseTree),
-          variables: normalizeWorkspaceVariables(item.variables),
-          baseVariables: normalizeSharedVariables(item.baseVariables ?? item.variables),
-          activeEnvironmentId: item.activeEnvironmentId ?? null,
-        }))
-        const current = records.find((item) => item.id === defaultWorkspace.id) ?? {
-          ...defaultWorkspace,
-          tree: normalizeTree(defaultWorkspace.tree),
-          baseTree: normalizeTree(defaultWorkspace.baseTree),
-          variables: normalizeWorkspaceVariables(defaultWorkspace.variables),
-          baseVariables: normalizeSharedVariables(defaultWorkspace.baseVariables ?? defaultWorkspace.variables),
-          activeEnvironmentId: defaultWorkspace.activeEnvironmentId ?? null,
-        }
-        setLocalWorkspaces(records.length ? records : [current])
-        setCurrentWorkspaceId(current.id)
-        stagedWorkspaceIdRef.current = current.id
-        setStagedSnapshot(readStagedSnapshot(current.id))
-        setStagedVariables(readStagedVariables(current.id))
-        const normalizedTree = normalizeTree(current.tree)
-        setTree(normalizedTree)
-        const normalizedVariables = normalizeWorkspaceVariables(current.variables)
-        setWorkspaceVariables(normalizedVariables)
-        const savedEnvironmentId =
-          current.activeEnvironmentId &&
-          normalizedVariables.environments.some((environment) => environment.id === current.activeEnvironmentId)
-            ? current.activeEnvironmentId
-            : null
-        setActiveEnvironmentId(savedEnvironmentId)
-        restoreTabsEvent(current.id, normalizedTree, normalizedVariables)
-        setExpandedFolders(new Set(normalizedTree.filter(isFolder).map((folder) => folder.id)))
-        localStorage.removeItem('api-docs-workspace')
-        localStorage.removeItem('api-docs-collections')
-        setStorageLoaded(true)
-      })
-      .catch((error) => setAuthError(error instanceof Error ? error.message : 'Could not load local workspace.'))
-    return () => {
-      active = false
-    }
-  }, [setAuthError])
-
-  useEffect(
-    () =>
-      workspaceStorageService.onExternalChange(() => {
-        void workspaceStorageService
-          .listWorkspaces()
-          .then((storedRecords) => {
-            const records = storedRecords.map((item) => ({
-              ...item,
-              tree: normalizeTree(item.tree),
-              baseTree: normalizeTree(item.baseTree),
-              variables: normalizeWorkspaceVariables(item.variables),
-              baseVariables: normalizeSharedVariables(item.baseVariables ?? item.variables),
-              activeEnvironmentId: item.activeEnvironmentId ?? null,
-            }))
-            setLocalWorkspaces(records)
-            const current = records.find((item) => item.id === currentWorkspaceId)
-            if (!current) return
-            setTree(current.tree)
-            setWorkspaceVariables(current.variables ?? emptyWorkspaceVariables())
-            setActiveEnvironmentId(current.activeEnvironmentId)
-          })
-          .catch((error) => setSyncStatus(error instanceof Error ? error.message : 'Could not refresh workspace changes.'))
-      }),
-    [currentWorkspaceId],
-  )
-
-  const findLocalWorkspaceByCloudId = useEffectEvent((cloudId: string) => localWorkspaces.find((item) => item.cloudId === cloudId))
-  useEffect(() => {
-    if (!sessionToken || !user || !storageLoaded) return
-    let active = true
-    void apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken })
-      .then(async (workspaces) => {
-        const records: LocalWorkspace[] = []
-        for (const cloud of workspaces) {
-          if (!active) return
-          const existing = findLocalWorkspaceByCloudId(cloud.id)
-          if (existing) {
-            records.push({ ...existing, name: cloud.name, role: cloud.role })
-          } else {
-            const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
-              `/api/workspaces/${cloud.id}/sync/pull`,
-              { token: sessionToken },
-            )
-            const remoteTree = normalizeSharedTree(result.workspace.tree)
-            const remoteVariables = normalizeSharedVariables(result.workspace.variables)
-            records.push({
-              id: crypto.randomUUID(),
-              cloudId: cloud.id,
-              name: cloud.name,
-              tree: remoteTree,
-              baseTree: remoteTree,
-              variables: remoteVariables,
-              baseVariables: remoteVariables,
-              activeEnvironmentId: remoteVariables.environments[0]?.id ?? null,
-              baseCommitId: result.workspace.headCommitId,
-              localHeadId: result.workspace.headCommitId,
-              role: cloud.role,
-            })
-          }
-        }
-        if (!active) return
-        setCloudWorkspaces(workspaces)
-        if (records.length) {
-          await Promise.all(records.map((record) => workspaceStorageService.saveWorkspace(record)))
-          setLocalWorkspaces((current) => {
-            const localOnly = current.filter((item) => !item.cloudId)
-            return [...localOnly, ...records]
-          })
-        }
-      })
-      .catch((error) => {
-        if (active) setSyncStatus(error instanceof Error ? error.message : 'Could not load cloud workspaces.')
-      })
-    return () => {
-      active = false
-    }
-  }, [sessionToken, user, storageLoaded])
-
+  useWorkspaceStorageViewModel({
+    sessionToken,
+    user,
+    storageLoaded,
+    setStorageLoaded,
+    currentWorkspaceId,
+    setCurrentWorkspaceId,
+    localWorkspaces,
+    setLocalWorkspaces,
+    setCloudWorkspaces,
+    setSecureStorageAvailable,
+    setTree,
+    setWorkspaceVariables,
+    setActiveEnvironmentId,
+    setExpandedFolders,
+    setStagedSnapshot,
+    setStagedVariables,
+    stagedWorkspaceIdRef,
+    setAuthError,
+    setSyncStatus,
+    restoreTabs: (workspaceId, nextTree, variables) => navigation.restoreTabs(workspaceId, nextTree, variables),
+  })
   const { takePendingSave } = useWorkspacePersistenceViewModel({
     tree,
     workspaceVariables,
