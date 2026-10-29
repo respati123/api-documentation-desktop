@@ -1,1 +1,349 @@
-{"numTotalTestSuites":2,"numPassedTestSuites":0,"numFailedTestSuites":2,"numPendingTestSuites":0,"numTotalTests":25,"numPassedTests":8,"numFailedTests":17,"numPendingTests":0,"numTodoTests":0,"snapshot":{"added":0,"failure":false,"filesAdded":0,"filesRemoved":0,"filesRemovedList":[],"filesUnmatched":0,"filesUpdated":0,"matched":0,"total":0,"unchecked":0,"uncheckedKeysByFile":[],"unmatched":0,"updated":0,"didUpdate":false},"startTime":1793239706287,"success":false,"testResults":[{"assertionResults":[{"ancestorTitles":["UI rules"],"fullName":"UI rules App.tsx follows the UI rules or is listed as legacy","status":"passed","title":"App.tsx follows the UI rules or is listed as legacy","duration":6.2247149999999465,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/ai-connect/components/ai-connect-dialog.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/ai-connect/components/ai-connect-dialog.tsx follows the UI rules or is listed as legacy","duration":16.221539000000007,"failureMessages":["AssertionError: expected [ 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/collection/components/workspace-icons.tsx follows the UI rules or is listed as legacy","status":"passed","title":"features/collection/components/workspace-icons.tsx follows the UI rules or is listed as legacy","duration":1.0777550000000247,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/docs/components/api-reference.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/docs/components/api-reference.tsx follows the UI rules or is listed as legacy","duration":6.746537999999987,"failureMessages":["AssertionError: expected [ 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/docs/components/openapi-dialog.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/docs/components/openapi-dialog.tsx follows the UI rules or is listed as legacy","duration":3.0864460000000236,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/request/components/auth-editor.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/request/components/auth-editor.tsx follows the UI rules or is listed as legacy","duration":2.642456999999922,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/request/components/body-editor.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/request/components/body-editor.tsx follows the UI rules or is listed as legacy","duration":5.245376999999962,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/request/components/header-editor.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/request/components/header-editor.tsx follows the UI rules or is listed as legacy","duration":3.869664000000057,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/request/components/params-editor.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/request/components/params-editor.tsx follows the UI rules or is listed as legacy","duration":1.828491999999983,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/request/components/response-editor.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/request/components/response-editor.tsx follows the UI rules or is listed as legacy","duration":2.663995,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/response/components/response-inspector.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/response/components/response-inspector.tsx follows the UI rules or is listed as legacy","duration":2.395266000000106,"failureMessages":["AssertionError: expected [ 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/sync/components/auth-dialog.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/sync/components/auth-dialog.tsx follows the UI rules or is listed as legacy","duration":1.4224420000000464,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/sync/components/workspace-change-rows.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/sync/components/workspace-change-rows.tsx follows the UI rules or is listed as legacy","duration":1.058947000000103,"failureMessages":["AssertionError: expected [ 'raw element' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/variables/components/variable-rows.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/variables/components/variable-rows.tsx follows the UI rules or is listed as legacy","duration":1.4625089999999545,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/variables/components/variables-dialog.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/variables/components/variables-dialog.tsx follows the UI rules or is listed as legacy","duration":2.596746000000053,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/variables/views/variable-quick-edit.view.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/variables/views/variable-quick-edit.view.tsx follows the UI rules or is listed as legacy","duration":7.094951000000037,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules features/workspace/views/workspace.view.tsx follows the UI rules or is listed as legacy","status":"failed","title":"features/workspace/views/workspace.view.tsx follows the UI rules or is listed as legacy","duration":20.165696000000025,"failureMessages":["AssertionError: expected [ 'data call in view', …(2) ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules main.tsx follows the UI rules or is listed as legacy","status":"passed","title":"main.tsx follows the UI rules or is listed as legacy","duration":0.7675870000000486,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/app-dialog.tsx follows the UI rules or is listed as legacy","status":"passed","title":"shared/components/app-dialog.tsx follows the UI rules or is listed as legacy","duration":0.8476459999999406,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/debounced-field.tsx follows the UI rules or is listed as legacy","status":"passed","title":"shared/components/debounced-field.tsx follows the UI rules or is listed as legacy","duration":0.97348199999999,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/key-value-table.tsx follows the UI rules or is listed as legacy","status":"passed","title":"shared/components/key-value-table.tsx follows the UI rules or is listed as legacy","duration":1.2631059999999934,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/labeled-field.tsx follows the UI rules or is listed as legacy","status":"failed","title":"shared/components/labeled-field.tsx follows the UI rules or is listed as legacy","duration":0.6207079999999223,"failureMessages":["AssertionError: expected [ 'raw element' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/section-heading.tsx follows the UI rules or is listed as legacy","status":"passed","title":"shared/components/section-heading.tsx follows the UI rules or is listed as legacy","duration":0.3500020000000177,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/state-message.tsx follows the UI rules or is listed as legacy","status":"passed","title":"shared/components/state-message.tsx follows the UI rules or is listed as legacy","duration":0.38845900000001166,"failureMessages":[],"meta":{},"tags":[],"benchmarks":[]},{"ancestorTitles":["UI rules"],"fullName":"UI rules shared/components/variable-field.tsx follows the UI rules or is listed as legacy","status":"failed","title":"shared/components/variable-field.tsx follows the UI rules or is listed as legacy","duration":11.318136999999979,"failureMessages":["AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"],"meta":{},"tags":[],"benchmarks":[]}],"startTime":1793239707218,"endTime":1793239707321.318,"status":"failed","message":"","name":"/home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts"}]}
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 25,
+  "numPassedTests": 8,
+  "numFailedTests": 17,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1793239706287,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules App.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "App.tsx follows the UI rules or is listed as legacy",
+          "duration": 6.2247149999999465,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/ai-connect/components/ai-connect-dialog.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/ai-connect/components/ai-connect-dialog.tsx follows the UI rules or is listed as legacy",
+          "duration": 16.221539000000007,
+          "failureMessages": [
+            "AssertionError: expected [ 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/collection/components/workspace-icons.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "features/collection/components/workspace-icons.tsx follows the UI rules or is listed as legacy",
+          "duration": 1.0777550000000247,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/docs/components/api-reference.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/docs/components/api-reference.tsx follows the UI rules or is listed as legacy",
+          "duration": 6.746537999999987,
+          "failureMessages": [
+            "AssertionError: expected [ 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/docs/components/openapi-dialog.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/docs/components/openapi-dialog.tsx follows the UI rules or is listed as legacy",
+          "duration": 3.0864460000000236,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/request/components/auth-editor.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/request/components/auth-editor.tsx follows the UI rules or is listed as legacy",
+          "duration": 2.642456999999922,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/request/components/body-editor.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/request/components/body-editor.tsx follows the UI rules or is listed as legacy",
+          "duration": 5.245376999999962,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/request/components/header-editor.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/request/components/header-editor.tsx follows the UI rules or is listed as legacy",
+          "duration": 3.869664000000057,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/request/components/params-editor.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/request/components/params-editor.tsx follows the UI rules or is listed as legacy",
+          "duration": 1.828491999999983,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/request/components/response-editor.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/request/components/response-editor.tsx follows the UI rules or is listed as legacy",
+          "duration": 2.663995,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/response/components/response-inspector.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/response/components/response-inspector.tsx follows the UI rules or is listed as legacy",
+          "duration": 2.395266000000106,
+          "failureMessages": [
+            "AssertionError: expected [ 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/sync/components/auth-dialog.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/sync/components/auth-dialog.tsx follows the UI rules or is listed as legacy",
+          "duration": 1.4224420000000464,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/sync/components/workspace-change-rows.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/sync/components/workspace-change-rows.tsx follows the UI rules or is listed as legacy",
+          "duration": 1.058947000000103,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/variables/components/variable-rows.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/variables/components/variable-rows.tsx follows the UI rules or is listed as legacy",
+          "duration": 1.4625089999999545,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/variables/components/variables-dialog.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/variables/components/variables-dialog.tsx follows the UI rules or is listed as legacy",
+          "duration": 2.596746000000053,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/variables/views/variable-quick-edit.view.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/variables/views/variable-quick-edit.view.tsx follows the UI rules or is listed as legacy",
+          "duration": 7.094951000000037,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules features/workspace/views/workspace.view.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "features/workspace/views/workspace.view.tsx follows the UI rules or is listed as legacy",
+          "duration": 20.165696000000025,
+          "failureMessages": [
+            "AssertionError: expected [ 'data call in view', …(2) ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules main.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "main.tsx follows the UI rules or is listed as legacy",
+          "duration": 0.7675870000000486,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/app-dialog.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "shared/components/app-dialog.tsx follows the UI rules or is listed as legacy",
+          "duration": 0.8476459999999406,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/debounced-field.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "shared/components/debounced-field.tsx follows the UI rules or is listed as legacy",
+          "duration": 0.97348199999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/key-value-table.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "shared/components/key-value-table.tsx follows the UI rules or is listed as legacy",
+          "duration": 1.2631059999999934,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/labeled-field.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "shared/components/labeled-field.tsx follows the UI rules or is listed as legacy",
+          "duration": 0.6207079999999223,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/section-heading.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "shared/components/section-heading.tsx follows the UI rules or is listed as legacy",
+          "duration": 0.3500020000000177,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/state-message.tsx follows the UI rules or is listed as legacy",
+          "status": "passed",
+          "title": "shared/components/state-message.tsx follows the UI rules or is listed as legacy",
+          "duration": 0.38845900000001166,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["UI rules"],
+          "fullName": "UI rules shared/components/variable-field.tsx follows the UI rules or is listed as legacy",
+          "status": "failed",
+          "title": "shared/components/variable-field.tsx follows the UI rules or is listed as legacy",
+          "duration": 11.318136999999979,
+          "failureMessages": [
+            "AssertionError: expected [ 'raw element', 'text literal' ] to deeply equal []\n    at /home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts:56:29\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2886:64\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10)\n    at file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/respati/Projects/my-github-repo/api-documentation/desktop/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10)"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1793239707218,
+      "endTime": 1793239707321.318,
+      "status": "failed",
+      "message": "",
+      "name": "/home/respati/Projects/my-github-repo/api-documentation/desktop/src/renderer/src/app/ui-rules.test.ts"
+    }
+  ]
+}
