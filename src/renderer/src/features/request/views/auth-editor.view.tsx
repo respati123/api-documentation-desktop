@@ -7,7 +7,7 @@ import { Label } from '@/shared/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { VariableInput } from '@/shared/components/variable-field'
 
-// Matches the auth field captions in styles.css: 12px, semibold, slate-700, normal line height.
+// Matches the auth field captions in index.css: 12px, semibold, slate-700, normal line height.
 const authLabelClass = 'text-[12px] font-semibold leading-normal text-slate-700'
 
 export type AuthEditorViewProps = ReturnType<typeof useAuthEditorViewModel>
