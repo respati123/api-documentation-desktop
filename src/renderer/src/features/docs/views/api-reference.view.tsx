@@ -24,10 +24,10 @@ export function ApiReferenceView(props: ApiReferenceViewProps): ReactElement {
           <h2>{props.name}</h2>
         </div>
         <div className="docs-page-actions">
-          <Button type="button" variant="outline" size="sm" onClick={props.onOpenOpenApi}>
+          <Button data-testid="docs-reference-openapi-button" type="button" variant="outline" size="sm" onClick={props.onOpenOpenApi}>
             {props.openApiLabel}
           </Button>
-          <Button type="button" size="sm" onClick={props.onOpenRequest}>
+          <Button data-testid="docs-reference-open-request-button" type="button" size="sm" onClick={props.onOpenRequest}>
             {props.openRequestLabel}
           </Button>
         </div>

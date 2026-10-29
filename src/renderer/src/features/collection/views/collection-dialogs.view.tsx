@@ -10,7 +10,7 @@ type ViewModel = ReturnType<typeof useCollectionTreeViewModel>
 export function CreateFolderDialogView({ folderDialog }: { folderDialog: ViewModel['folderDialog'] }): ReactElement {
   return (
     <Dialog open={folderDialog.open} onOpenChange={folderDialog.onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="collection-folder-dialog">
         <DialogHeader>
           <DialogTitle>{folderDialog.title}</DialogTitle>
           <DialogDescription>{folderDialog.description}</DialogDescription>
@@ -20,13 +20,14 @@ export function CreateFolderDialogView({ folderDialog }: { folderDialog: ViewMod
             {folderDialog.label}
           </Label>
           <Input
+            data-testid="collection-folder-name-input"
             id="folder-name"
             autoFocus
             value={folderDialog.name}
             onChange={(event) => folderDialog.onNameChange(event.target.value)}
             placeholder={folderDialog.placeholder}
           />
-          <Button type="submit" disabled={!folderDialog.canSubmit}>
+          <Button data-testid="collection-folder-submit-button" type="submit" disabled={!folderDialog.canSubmit}>
             {folderDialog.submit}
           </Button>
         </form>
@@ -38,16 +39,16 @@ export function CreateFolderDialogView({ folderDialog }: { folderDialog: ViewMod
 export function DeleteItemDialogView({ deleteDialog }: { deleteDialog: ViewModel['deleteDialog'] }): ReactElement {
   return (
     <Dialog open={deleteDialog.open} onOpenChange={deleteDialog.onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="collection-delete-dialog">
         <DialogHeader>
           <DialogTitle>{deleteDialog.title}</DialogTitle>
           <DialogDescription>{deleteDialog.description}</DialogDescription>
         </DialogHeader>
         <div className="dialog-actions">
-          <Button type="button" variant="outline" onClick={deleteDialog.onCancel}>
+          <Button data-testid="collection-delete-cancel-button" type="button" variant="outline" onClick={deleteDialog.onCancel}>
             {deleteDialog.cancel}
           </Button>
-          <Button type="button" variant="destructive" onClick={deleteDialog.onConfirm}>
+          <Button data-testid="collection-delete-confirm-button" type="button" variant="destructive" onClick={deleteDialog.onConfirm}>
             {deleteDialog.confirm}
           </Button>
         </div>

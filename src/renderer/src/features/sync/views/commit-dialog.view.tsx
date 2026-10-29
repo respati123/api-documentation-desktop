@@ -56,6 +56,7 @@ function ChangesPane({ changes }: { changes: CommitDialogViewProps['changes'] })
           {changes.messageLabel}
         </Label>
         <Input
+          data-testid="sync-commit-message-input"
           id="commit-message"
           autoFocus
           required
@@ -127,7 +128,7 @@ function ChangesPane({ changes }: { changes: CommitDialogViewProps['changes'] })
           </section>
         </div>
         <div className="changes-sidebar-footer">
-          <Button type="submit" disabled={!changes.canSubmit}>
+          <Button data-testid="sync-commit-submit-button" type="submit" disabled={!changes.canSubmit}>
             {changes.submitLabel}
           </Button>
         </div>
@@ -234,7 +235,7 @@ function HistoryPane({ history }: { history: CommitDialogViewProps['history'] })
 export function CommitDialogView(props: CommitDialogViewProps): ReactElement {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="changes-dialog">
+      <DialogContent data-testid="sync-commit-dialog" className="changes-dialog">
         <DialogHeader>
           <DialogTitle>{props.title}</DialogTitle>
           <DialogDescription>{props.description}</DialogDescription>

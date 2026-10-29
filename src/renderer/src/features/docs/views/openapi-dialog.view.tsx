@@ -35,6 +35,7 @@ export function OpenApiDialogView({
       description={description}
     >
       <Input
+        data-testid="docs-openapi-source-input"
         ref={fileInputRef}
         className="sr-only"
         type="file"
@@ -42,13 +43,13 @@ export function OpenApiDialogView({
         onChange={onFileChange}
       />
       <div className="openapi-actions">
-        <Button type="button" variant="outline" disabled={readOnly} onClick={onChooseFile}>
+        <Button data-testid="docs-openapi-choose-file-button" type="button" variant="outline" disabled={readOnly} onClick={onChooseFile}>
           {chooseLabel}
         </Button>
-        <Button type="button" variant="outline" onClick={() => onExport('json')}>
+        <Button data-testid="docs-openapi-export-json-button" type="button" variant="outline" onClick={() => onExport('json')}>
           {exportJsonLabel}
         </Button>
-        <Button type="button" variant="outline" onClick={() => onExport('yaml')}>
+        <Button data-testid="docs-openapi-export-yaml-button" type="button" variant="outline" onClick={() => onExport('yaml')}>
           {exportYamlLabel}
         </Button>
       </div>
@@ -59,7 +60,7 @@ export function OpenApiDialogView({
             <span>{preview.fileName}</span>
           </div>
           <p>{preview.foundText}</p>
-          <Button type="button" disabled={readOnly} onClick={onApply}>
+          <Button data-testid="docs-openapi-import-button" type="button" disabled={readOnly} onClick={onApply}>
             {addLabel}
           </Button>
         </div>

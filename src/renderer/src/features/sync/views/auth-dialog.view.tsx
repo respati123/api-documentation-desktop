@@ -25,7 +25,7 @@ export function AuthDialogView({
   return (
     <>
       {showTrigger && (
-        <Button variant="outline" size="sm" onClick={onOpenTrigger}>
+        <Button data-testid="sync-auth-trigger-button" variant="outline" size="sm" onClick={onOpenTrigger}>
           {triggerLabel}
         </Button>
       )}
@@ -41,7 +41,7 @@ export function AuthDialogView({
               {waitingText}
             </p>
           ) : (
-            <Button type="button" onClick={onSignIn}>
+            <Button data-testid="sync-auth-sign-in-button" type="button" onClick={onSignIn}>
               {signInLabel}
             </Button>
           )}

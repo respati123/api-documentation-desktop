@@ -29,11 +29,11 @@ function ChoiceGroup({
   return (
     <RadioGroup value={value} onValueChange={(next) => (next === 'local' ? onLocal() : onRemote())} className="merge-choices" name={name}>
       <Label className="flex items-center gap-2 text-[12px] text-slate-700">
-        <RadioGroupItem value="local" />
+        <RadioGroupItem data-testid="sync-merge-local-choice" value="local" />
         <span>{localLabel}</span>
       </Label>
       <Label className="flex items-center gap-2 text-[12px] text-slate-700">
-        <RadioGroupItem value="remote" />
+        <RadioGroupItem data-testid="sync-merge-remote-choice" value="remote" />
         <span>{remoteLabel}</span>
       </Label>
     </RadioGroup>
@@ -43,7 +43,7 @@ function ChoiceGroup({
 export function MergeDialogView(props: MergeViewModel): ReactElement {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="merge-dialog">
+      <DialogContent data-testid="sync-merge-dialog" className="merge-dialog">
         <DialogHeader>
           <DialogTitle>{props.title}</DialogTitle>
           <DialogDescription>{props.description}</DialogDescription>
@@ -78,7 +78,7 @@ export function MergeDialogView(props: MergeViewModel): ReactElement {
             </section>
           )}
         </div>
-        <Button onClick={props.onSave} disabled={!props.canSave}>
+        <Button data-testid="sync-merge-save-button" onClick={props.onSave} disabled={!props.canSave}>
           {props.saveLabel}
         </Button>
       </DialogContent>
@@ -96,10 +96,10 @@ export function DiscardDialogView(props: ReturnType<typeof useDiscardDialogViewM
       description={props.description}
     >
       <div className="dialog-actions">
-        <Button type="button" variant="outline" onClick={props.onCancel}>
+        <Button data-testid="sync-discard-cancel-button" type="button" variant="outline" onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
-        <Button type="button" variant="destructive" onClick={props.onConfirm}>
+        <Button data-testid="sync-discard-confirm-button" type="button" variant="destructive" onClick={props.onConfirm}>
           {props.confirmLabel}
         </Button>
       </div>

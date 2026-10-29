@@ -70,7 +70,7 @@ export function WorkspaceTopbarView({
 export function WorkspaceUpdateDialogView({ dialog }: { dialog: ChromeViewModel['dialog'] }): ReactElement {
   return (
     <Dialog open={dialog.open} onOpenChange={dialog.onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="workspace-update-dialog">
         <DialogHeader>
           <DialogTitle>{dialog.title}</DialogTitle>
           <DialogDescription>{dialog.description}</DialogDescription>

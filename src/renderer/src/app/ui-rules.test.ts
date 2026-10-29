@@ -51,17 +51,7 @@ function findViolations(path: string): string[] {
   return [...found].sort()
 }
 
-const legacyViolations = new Set<string>([
-  'features/sync/views/merge-dialog.view.tsx',
-  'features/sync/views/commit-dialog.view.tsx',
-  'features/sync/views/team-dialogs.view.tsx',
-  'features/sync/views/auth-dialog.view.tsx',
-  'features/docs/views/openapi-dialog.view.tsx',
-  'features/docs/views/api-reference.view.tsx',
-  'features/collection/views/collection-dialogs.view.tsx',
-  'features/collection/views/collection-tree.view.tsx',
-  'shared/components/variable-field.tsx',
-])
+const legacyViolations = new Set<string>([])
 
 describe('UI rules', () => {
   const files = sourceFiles(root).map((path) => relative(root, path))

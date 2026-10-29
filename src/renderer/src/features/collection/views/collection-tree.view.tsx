@@ -41,6 +41,7 @@ function FolderLine({
           </span>
           <CollectionFolderIcon open={row.expanded} />
           <Input
+            data-testid="collection-tree-rename-input"
             autoFocus
             aria-label={labels.folderNameLabel}
             className="folder-name-editor"

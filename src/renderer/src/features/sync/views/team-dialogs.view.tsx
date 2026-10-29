@@ -11,7 +11,7 @@ type ViewModel = ReturnType<typeof useTeamDialogsViewModel>
 export function CreateWorkspaceDialogView({ createWorkspace }: { createWorkspace: ViewModel['createWorkspace'] }): ReactElement {
   return (
     <Dialog open={createWorkspace.open} onOpenChange={createWorkspace.onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="sync-create-workspace-dialog">
         <DialogHeader>
           <DialogTitle>{createWorkspace.title}</DialogTitle>
           <DialogDescription>{createWorkspace.description}</DialogDescription>
@@ -19,6 +19,7 @@ export function CreateWorkspaceDialogView({ createWorkspace }: { createWorkspace
         <form className="dialog-form" onSubmit={(event: FormEvent) => void createWorkspace.onSubmit(event)}>
           <Label htmlFor="cloud-workspace-name">{createWorkspace.nameLabel}</Label>
           <Input
+            data-testid="sync-create-workspace-name-input"
             id="cloud-workspace-name"
             autoFocus
             required
@@ -27,7 +28,7 @@ export function CreateWorkspaceDialogView({ createWorkspace }: { createWorkspace
             onChange={(event) => createWorkspace.onNameChange(event.target.value)}
             placeholder={createWorkspace.namePlaceholder}
           />
-          <Button type="submit" disabled={!createWorkspace.canSubmit}>
+          <Button data-testid="sync-create-workspace-submit-button" type="submit" disabled={!createWorkspace.canSubmit}>
             {createWorkspace.submitLabel}
           </Button>
         </form>
@@ -39,7 +40,7 @@ export function CreateWorkspaceDialogView({ createWorkspace }: { createWorkspace
 export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElement {
   return (
     <Dialog open={team.open} onOpenChange={team.onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="sync-team-dialog">
         <DialogHeader>
           <DialogTitle>{team.title}</DialogTitle>
           <DialogDescription>{team.description}</DialogDescription>
@@ -50,6 +51,7 @@ export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElem
               <p className="invite-help">{team.singleUseText}</p>
               <Label htmlFor="invite-email">{team.emailLabel}</Label>
               <Input
+                data-testid="sync-team-invite-email-input"
                 id="invite-email"
                 type="email"
                 autoComplete="email"
@@ -60,7 +62,7 @@ export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElem
               />
               <Label htmlFor="invite-role">{team.roleLabel}</Label>
               <Select value={team.role} onValueChange={team.onRoleChange}>
-                <SelectTrigger id="invite-role">
+                <SelectTrigger data-testid="sync-team-invite-role-select" id="invite-role">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -71,15 +73,15 @@ export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElem
                   ))}
                 </SelectContent>
               </Select>
-              <Button type="button" onClick={team.onSend}>
+              <Button data-testid="sync-team-send-invite-button" type="button" onClick={team.onSend}>
                 {team.sendLabel}
               </Button>
             </>
           )}
           {team.inviteLink && (
             <div className="invite-link-row">
-              <Input aria-label={team.linkLabel} readOnly value={team.inviteLink} />
-              <Button type="button" variant="outline" onClick={team.onCopy}>
+              <Input data-testid="sync-team-invite-link-input" aria-label={team.linkLabel} readOnly value={team.inviteLink} />
+              <Button data-testid="sync-team-copy-link-button" type="button" variant="outline" onClick={team.onCopy}>
                 {team.copyLabel}
               </Button>
             </div>
@@ -87,12 +89,13 @@ export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElem
           <form className="invite-accept-form" onSubmit={(event: FormEvent) => void team.onAccept(event)}>
             <Label htmlFor="invite-token">{team.acceptLabel}</Label>
             <Input
+              data-testid="sync-team-invite-token-input"
               id="invite-token"
               value={team.token}
               onChange={(event) => team.onTokenChange(event.target.value)}
               placeholder={team.tokenPlaceholder}
             />
-            <Button type="submit" variant="outline" disabled={!team.canAccept}>
+            <Button data-testid="sync-team-accept-invite-button" type="submit" variant="outline" disabled={!team.canAccept}>
               {team.joinLabel}
             </Button>
           </form>
