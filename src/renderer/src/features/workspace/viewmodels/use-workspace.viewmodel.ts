@@ -4,7 +4,6 @@ import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
   addToTree,
   containsId,
-  findNode,
   findParentFolder,
   firstRequestId,
   indexTree,
@@ -12,7 +11,6 @@ import {
   insertNode,
   isFolder,
   isRequest,
-  nodeDiffText,
   normalizeSharedTree,
   normalizeSharedVariables,
   normalizeTree,
@@ -33,8 +31,6 @@ import {
   resolvePendingMerge,
   SYNC_TEXT,
   syncService,
-  useCloudCommitDetailsViewModel,
-  useCloudHistoryViewModel,
   useCommitDialogStateViewModel,
   useCommitDialogViewModel,
   useDiscardDialogViewModel,
@@ -45,19 +41,20 @@ import {
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type { WorkspaceHistoryCommit, WorkspaceTab } from '@/features/workspace/models/workspace.model'
+import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
+import { useWorkspaceChangesViewModel } from '@/features/workspace/viewmodels/use-workspace-changes.viewmodel'
 import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
+import { useCommitHistoryViewModel } from '@/features/workspace/viewmodels/use-workspace-history.viewmodel'
 import { useWorkspacePersistenceViewModel } from '@/features/workspace/viewmodels/use-workspace-persistence.viewmodel'
 import { useWorkspaceSessionViewModel } from '@/features/workspace/viewmodels/use-workspace-session.viewmodel'
 import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
 import { apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
-import { diffText } from '@/lib/text-diff'
-import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
+import { buildStagedSnapshot, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
   activeVariableValues,
   emptyWorkspaceVariables,
@@ -67,7 +64,6 @@ import {
   type WorkspaceEnvironment,
   type WorkspaceVariables,
   workspaceVariablesChangeId,
-  workspaceVariablesDiffText,
 } from '@/lib/workspace-variables'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
 import type { ApiNode, FolderNode, RequestNode } from '@/shared/models/api-node.model'
@@ -352,142 +348,53 @@ export function useWorkspaceViewModel() {
     setCloudWorkspaces,
     onStatus: setSyncStatus,
   })
-  const cloudHistoryOpen = commitDialogOpen && commitDialogView === 'history'
+  const changes = useWorkspaceChangesViewModel({
+    tree,
+    workspaceVariables,
+    localCommits,
+    activeWorkspace,
+    cloudWorkspaces,
+    stagedSnapshot,
+    stagedVariables,
+    commitDialogOpen,
+    commitDialogView,
+    selectedChangeId,
+    treeIndex,
+  })
   const {
-    commits: cloudCommits,
-    loading: historyLoading,
-    error: historyError,
-  } = useCloudHistoryViewModel({ token: sessionToken, cloudId: activeWorkspace?.cloudId ?? null, enabled: cloudHistoryOpen })
-  const lastLocalCommit = localCommits.find((commit) => commit.id === activeWorkspace?.localHeadId)
-  const committedTree = (lastLocalCommit?.tree ?? activeWorkspace?.baseTree ?? tree) as ApiNode[]
-  const committedVariablesSource = lastLocalCommit?.variables ?? activeWorkspace?.baseVariables ?? activeWorkspace?.variables
-  const committedVariables = useMemo(() => normalizeWorkspaceVariables(committedVariablesSource), [committedVariablesSource])
-  const stageBaseTree = stagedSnapshot ?? committedTree
-  const stageBaseVariables = stagedVariables ?? committedVariables
-  const workspaceChanges = useMemo(
-    () => getWorkspaceChanges(committedTree, tree, committedVariables, workspaceVariables),
-    [committedTree, tree, committedVariables, workspaceVariables],
-  )
-  const pendingPushCount = localCommits.filter((commit) => !commit.pushed).length
-  const cloudHeadCommitId = cloudWorkspaces.find((workspace) => workspace.id === activeWorkspace?.cloudId)?.headCommitId
-  const showChanges = commitDialogOpen && commitDialogView === 'changes'
-  const hasStagedContent = Boolean(stagedSnapshot || stagedVariables)
-  const stagedChanges = useMemo(
-    () =>
-      showChanges && hasStagedContent ? getWorkspaceChanges(committedTree, stageBaseTree, committedVariables, stageBaseVariables) : [],
-    [showChanges, hasStagedContent, committedTree, stageBaseTree, committedVariables, stageBaseVariables],
-  )
-  const unstagedChanges = useMemo(() => {
-    if (!showChanges) return []
-    if (!hasStagedContent) return workspaceChanges
-    return getWorkspaceChanges(stageBaseTree, tree, stageBaseVariables, workspaceVariables)
-  }, [showChanges, hasStagedContent, workspaceChanges, stageBaseTree, tree, stageBaseVariables, workspaceVariables])
-  const changeById = useMemo(() => new Map(workspaceChanges.map((change) => [change.id, change])), [workspaceChanges])
-  const selectedChange = showChanges ? workspaceChanges.find((change) => change.id === selectedChangeId) : undefined
-  const diffRows = useMemo(
-    () =>
-      selectedChange
-        ? diffText(
-            selectedChange.id === workspaceVariablesChangeId
-              ? workspaceVariablesDiffText(committedVariables)
-              : nodeDiffText(findNode(committedTree, selectedChange.id)),
-            selectedChange.id === workspaceVariablesChangeId
-              ? workspaceVariablesDiffText(workspaceVariables)
-              : nodeDiffText(treeIndex.nodeById.get(selectedChange.id)),
-          )
-        : [],
-    [selectedChange, committedTree, treeIndex, committedVariables, workspaceVariables],
-  )
-  const historyCommits = useMemo<WorkspaceHistoryCommit[]>(() => {
-    const combined = new Map<string, WorkspaceHistoryCommit>()
-    for (const commit of cloudCommits)
-      combined.set(commit.id, {
-        ...commit,
-        pushed: true,
-        source: 'cloud',
-      })
-    for (const commit of localCommits) {
-      const cloudVersion = combined.get(commit.id)
-      combined.set(commit.id, {
-        ...commit,
-        pushed: commit.pushed || Boolean(cloudVersion),
-        source: cloudVersion ? 'cloud' : 'local',
-      })
-    }
-    return [...combined.values()].sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))
-  }, [cloudCommits, localCommits])
-  const historyCommitById = useMemo(() => new Map(historyCommits.map((commit) => [commit.id, commit])), [historyCommits])
-  const localCommitIds = useMemo(() => new Set(localCommits.map((commit) => commit.id)), [localCommits])
-  const selectedHistoryCommit = historyCommitById.get(selectedHistoryCommitId)
-  const historyParentId = selectedHistoryCommit?.parentIds.find((id) => historyCommitById.has(id))
-  const historyParentCommit = historyParentId ? historyCommitById.get(historyParentId) : undefined
-  const historyDetailIds =
-    cloudHistoryOpen && selectedHistoryCommit
-      ? [selectedHistoryCommit.id, ...(historyParentId ? [historyParentId] : [])].filter(
-          (id) => !Array.isArray(historyCommitById.get(id)?.tree),
-        )
-      : []
+    committedTree,
+    committedVariables,
+    workspaceChanges,
+    pendingPushCount,
+    cloudHeadCommitId,
+    stagedChanges,
+    unstagedChanges,
+    changeById,
+    selectedChange,
+    diffRows,
+  } = changes
+  const history = useCommitHistoryViewModel({
+    sessionToken,
+    activeWorkspace,
+    localCommits,
+    commitDialogOpen,
+    commitDialogView,
+    selectedHistoryCommitId,
+    selectedHistoryChangeId,
+  })
   const {
-    detailsById: cloudCommitDetails,
-    loading: historyDetailLoading,
-    error: historyDetailError,
-  } = useCloudCommitDetailsViewModel({ token: sessionToken, cloudId: activeWorkspace?.cloudId ?? null, commitIds: historyDetailIds })
-  const selectedHistoryTreeValue =
-    selectedHistoryCommit?.tree ?? (selectedHistoryCommit ? cloudCommitDetails.get(selectedHistoryCommit.id)?.tree : undefined)
-  const historyParentTreeValue = historyParentCommit?.tree ?? (historyParentId ? cloudCommitDetails.get(historyParentId)?.tree : undefined)
-  const historySnapshotsReady = Boolean(
-    selectedHistoryCommit &&
-      Array.isArray(selectedHistoryTreeValue) &&
-      (!historyParentId || Array.isArray(historyParentTreeValue) || historyDetailError),
-  )
-  const historyAfterTree = useMemo(() => normalizeTree(selectedHistoryTreeValue), [selectedHistoryTreeValue])
-  const historyBeforeTree = useMemo(() => {
-    if (Array.isArray(historyParentTreeValue)) return normalizeTree(historyParentTreeValue)
-    return selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
-      ? ((activeWorkspace?.baseTree as ApiNode[]) ?? [])
-      : []
-  }, [historyParentTreeValue, selectedHistoryCommit, activeWorkspace?.baseTree])
-  const historyBeforeVariables = useMemo(
-    () =>
-      historyParentCommit?.variables
-        ? normalizeWorkspaceVariables(historyParentCommit.variables)
-        : historyParentId && cloudCommitDetails.get(historyParentId)?.variables
-          ? normalizeWorkspaceVariables(cloudCommitDetails.get(historyParentId)?.variables)
-          : selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
-            ? normalizeWorkspaceVariables(activeWorkspace?.baseVariables ?? emptyWorkspaceVariables())
-            : emptyWorkspaceVariables(),
-    [historyParentCommit, historyParentId, cloudCommitDetails, selectedHistoryCommit, activeWorkspace?.baseVariables],
-  )
-  const historyAfterVariables = useMemo(
-    () =>
-      normalizeWorkspaceVariables(
-        selectedHistoryCommit?.variables ??
-          (selectedHistoryCommit ? cloudCommitDetails.get(selectedHistoryCommit.id)?.variables : undefined),
-      ),
-    [selectedHistoryCommit, cloudCommitDetails],
-  )
-  const historyChanges = useMemo(
-    () =>
-      selectedHistoryCommit && historySnapshotsReady
-        ? getWorkspaceChanges(historyBeforeTree, historyAfterTree, historyBeforeVariables, historyAfterVariables)
-        : [],
-    [selectedHistoryCommit, historySnapshotsReady, historyBeforeTree, historyAfterTree, historyBeforeVariables, historyAfterVariables],
-  )
-  const selectedHistoryChange = historyChanges.find((change) => change.id === selectedHistoryChangeId)
-  const historyDiffRows = useMemo(
-    () =>
-      selectedHistoryCommit && selectedHistoryChange
-        ? diffText(
-            selectedHistoryChange.id === workspaceVariablesChangeId
-              ? workspaceVariablesDiffText(historyBeforeVariables)
-              : nodeDiffText(findNode(historyBeforeTree, selectedHistoryChange.id)),
-            selectedHistoryChange.id === workspaceVariablesChangeId
-              ? workspaceVariablesDiffText(historyAfterVariables)
-              : nodeDiffText(findNode(historyAfterTree, selectedHistoryChange.id)),
-          )
-        : [],
-    [selectedHistoryCommit, selectedHistoryChange, historyBeforeTree, historyAfterTree, historyAfterVariables, historyBeforeVariables],
-  )
+    historyLoading,
+    historyError,
+    historyCommits,
+    localCommitIds,
+    selectedHistoryCommit,
+    historyDetailLoading,
+    historyDetailError,
+    historySnapshotsReady,
+    historyChanges,
+    selectedHistoryChange,
+    historyDiffRows,
+  } = history
   const resolvedVariables = useMemo(
     () => activeVariableValues(workspaceVariables, activeEnvironmentId),
     [workspaceVariables, activeEnvironmentId],
