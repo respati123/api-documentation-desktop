@@ -18,4 +18,5 @@
     onInviteToken: () => () => undefined,
     sendRequest: async () => { throw new Error('Preview only') }
   }
+  window.apiDesktop = new Proxy(window.apiDesktop, { get: (target, key) => (key in target ? target[key] : (String(key).startsWith('on') ? () => () => undefined : async () => undefined)) })
 </script><script type="module" src="/src/main.tsx"></script></body></html>

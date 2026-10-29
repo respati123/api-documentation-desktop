@@ -5,10 +5,22 @@ type ApiRequest = {
   url: string
   headers: Array<{ name: string; value: string; enabled: boolean }>
   params?: Array<{ id: string; name: string; value: string; enabled: boolean; description?: string }>
-  auth?: { type: 'none' } | { type: 'bearer'; token: string } | { type: 'basic'; username: string; password: string } | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
+  auth?:
+    | { type: 'none' }
+    | { type: 'bearer'; token: string }
+    | { type: 'basic'; username: string; password: string }
+    | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
   body?: string
   bodyMode?: 'form-data' | 'urlencoded' | 'graphql' | 'json' | 'xml' | 'yaml' | 'edn' | 'text' | 'other' | 'file' | 'none'
-  bodyFields?: Array<{ id: string; name: string; value: string; enabled: boolean; type: 'text' | 'file'; filePath?: string; fileName?: string }>
+  bodyFields?: Array<{
+    id: string
+    name: string
+    value: string
+    enabled: boolean
+    type: 'text' | 'file'
+    filePath?: string
+    fileName?: string
+  }>
   bodyVariables?: string
   bodyMimeType?: string
   bodyPath?: string
@@ -79,7 +91,15 @@ interface Window {
     onNodeProgress(handler: (progress: NodeInstallProgress) => void): () => void
     onAiLog(handler: (line: string) => void): () => void
     onConnectAiMenu(handler: () => void): () => void
-    onUpdateStatus(handler: (status: { state: 'available'; version: string } | { state: 'downloading'; version: string; percent: number } | { state: 'downloaded'; version: string } | { state: 'error'; version: string; message: string }) => void): () => void
+    onUpdateStatus(
+      handler: (
+        status:
+          | { state: 'available'; version: string }
+          | { state: 'downloading'; version: string; percent: number }
+          | { state: 'downloaded'; version: string }
+          | { state: 'error'; version: string; message: string },
+      ) => void,
+    ): () => void
     onAuthCode(handler: (code: string) => void): () => void
   }
 }

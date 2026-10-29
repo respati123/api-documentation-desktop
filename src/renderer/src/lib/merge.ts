@@ -1,6 +1,14 @@
 export const bodyModes = ['form-data', 'urlencoded', 'graphql', 'json', 'xml', 'yaml', 'edn', 'text', 'other', 'file', 'none'] as const
-export type BodyMode = typeof bodyModes[number]
-export type BodyField = { id: string; name: string; value: string; enabled: boolean; type: 'text' | 'file'; filePath?: string; fileName?: string }
+export type BodyMode = (typeof bodyModes)[number]
+export type BodyField = {
+  id: string
+  name: string
+  value: string
+  enabled: boolean
+  type: 'text' | 'file'
+  filePath?: string
+  fileName?: string
+}
 export type HeaderField = { id: string; name: string; value: string; enabled: boolean; description?: string }
 export type ParamField = { id: string; name: string; value: string; enabled: boolean; description?: string }
 export type RequestAuth =
@@ -48,7 +56,7 @@ export function stripLocalFilePaths(tree: SyncTreeNode[]): SyncTreeNode[] {
     const { bodyPath: _bodyPath, ...request } = node
     return {
       ...request,
-      ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {})
+      ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {}),
     }
   })
 }
@@ -58,11 +66,13 @@ function comparableNode(node: FlatNode['node']): FlatNode['node'] {
   const { bodyPath: _bodyPath, ...request } = node
   return {
     ...request,
-    ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {})
+    ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {}),
   }
 }
 
-function isFolder(node: SyncTreeNode): node is SyncFolder { return node.kind === 'folder' }
+function isFolder(node: SyncTreeNode): node is SyncFolder {
+  return node.kind === 'folder'
+}
 
 function flatten(tree: SyncTreeNode[]): Map<string, FlatNode> {
   const result = new Map<string, FlatNode>()
@@ -86,7 +96,7 @@ export function mergeTreeSnapshots(
   baseTree: SyncTreeNode[],
   localTree: SyncTreeNode[],
   remoteTree: SyncTreeNode[],
-  choices: Record<string, 'local' | 'remote'> = {}
+  choices: Record<string, 'local' | 'remote'> = {},
 ): { tree: SyncTreeNode[]; conflicts: SyncConflict[]; unresolved: SyncConflict[] } {
   const base = flatten(baseTree)
   const local = flatten(localTree)

@@ -16,8 +16,10 @@ export type LoopbackSignIn = {
 const callbackPath = '/callback'
 const signInTimeoutMs = 5 * 60_000
 
-const signedInPage = '<!doctype html><meta charset="utf-8"><title>Signed in</title><p>Signed in. You can return to the desktop app and close this tab.</p>'
-const failedPage = '<!doctype html><meta charset="utf-8"><title>Sign-in failed</title><p>This sign-in link is invalid or expired. Start sign-in again from the desktop app.</p>'
+const signedInPage =
+  '<!doctype html><meta charset="utf-8"><title>Signed in</title><p>Signed in. You can return to the desktop app and close this tab.</p>'
+const failedPage =
+  '<!doctype html><meta charset="utf-8"><title>Sign-in failed</title><p>This sign-in link is invalid or expired. Start sign-in again from the desktop app.</p>'
 
 export function startLoopbackSignIn(onCode: (code: string) => void): Promise<LoopbackSignIn> {
   const state = randomBytes(32).toString('base64url')

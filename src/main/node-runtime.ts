@@ -1,11 +1,10 @@
-import { createHash } from 'node:crypto'
-import { existsSync } from 'node:fs'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, readFile, rm, rename, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
 import { execFile, spawn } from 'node:child_process'
-import { pipeline } from 'node:stream/promises'
+import { createHash } from 'node:crypto'
+import { createReadStream, createWriteStream, existsSync } from 'node:fs'
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 
 // Downloads an official Node.js LTS build into the app's own folder, so the app
 // can run npx and AI client CLIs without sudo or a system-wide install.
@@ -22,9 +21,7 @@ export type NodeRuntimePaths = {
   npxCli: string
 }
 
-export type NodeRuntimeStatus =
-  | { installed: false }
-  | ({ installed: true; version: string; source: 'app' | 'system' } & NodeRuntimePaths)
+export type NodeRuntimeStatus = { installed: false } | ({ installed: true; version: string; source: 'app' | 'system' } & NodeRuntimePaths)
 
 // Absolute paths inside the downloaded Node folder. Absolute paths matter because
 // GUI apps (Claude Desktop, Codex launched from a dock) do not inherit the shell PATH.
@@ -35,7 +32,7 @@ export function nodeRuntimePaths(root: string): NodeRuntimePaths {
       binDir: root,
       node: join(root, 'node.exe'),
       npm: join(root, 'npm.cmd'),
-      npxCli: join(root, 'node_modules', 'npm', 'bin', 'npx-cli.js')
+      npxCli: join(root, 'node_modules', 'npm', 'bin', 'npx-cli.js'),
     }
   }
   return {
@@ -43,7 +40,7 @@ export function nodeRuntimePaths(root: string): NodeRuntimePaths {
     binDir: join(root, 'bin'),
     node: join(root, 'bin', 'node'),
     npm: join(root, 'bin', 'npm'),
-    npxCli: join(root, 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js')
+    npxCli: join(root, 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js'),
   }
 }
 
@@ -98,7 +95,9 @@ export function findOnPath(bin: string): Promise<string | null> {
     const finder = process.platform === 'win32' ? 'where' : 'which'
     const child = spawn(finder, [bin], { stdio: ['ignore', 'pipe', 'ignore'] })
     let out = ''
-    child.stdout.on('data', (chunk) => { out += chunk })
+    child.stdout.on('data', (chunk) => {
+      out += chunk
+    })
     child.on('error', () => resolve(null))
     child.on('close', (code) => resolve(code === 0 && out.trim() ? out.trim().split(/\r?\n/)[0] : null))
   })
@@ -119,13 +118,23 @@ async function readSystemNode(): Promise<NodeRuntimeStatus> {
   const nodePath = await run(found, ['-p', 'process.execPath']).catch(() => '')
   if (!nodePath) return { installed: false }
   const binDir = dirname(nodePath)
-  const npxCandidates = process.platform === 'win32'
-    ? [join(binDir, 'node_modules', 'npm', 'bin', 'npx-cli.js')]
-    : [join(dirname(binDir), 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js')]
+  const npxCandidates =
+    process.platform === 'win32'
+      ? [join(binDir, 'node_modules', 'npm', 'bin', 'npx-cli.js')]
+      : [join(dirname(binDir), 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js')]
   const npxCli = npxCandidates.find((candidate) => existsSync(candidate))
   if (!npxCli) return { installed: false }
   const root = process.platform === 'win32' ? binDir : dirname(binDir)
-  return { installed: true, version, source: 'system', root, binDir, node: nodePath, npm: join(binDir, process.platform === 'win32' ? 'npm.cmd' : 'npm'), npxCli }
+  return {
+    installed: true,
+    version,
+    source: 'system',
+    root,
+    binDir,
+    node: nodePath,
+    npm: join(binDir, process.platform === 'win32' ? 'npm.cmd' : 'npm'),
+    npxCli,
+  }
 }
 
 // Prefers the Node.js downloaded into the app folder, then a Node.js already on this
@@ -156,7 +165,7 @@ async function readAppNodeRuntime(baseDir: string): Promise<NodeRuntimeStatus> {
 
 export async function installNodeRuntime(
   baseDir: string,
-  onProgress: (progress: NodeInstallProgress) => void = () => {}
+  onProgress: (progress: NodeInstallProgress) => void = () => {},
 ): Promise<NodeRuntimeStatus> {
   onProgress({ stage: 'checking' })
   const version = await latestLtsVersion()

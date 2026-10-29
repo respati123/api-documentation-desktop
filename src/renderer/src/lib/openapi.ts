@@ -1,5 +1,15 @@
 import { parse, stringify } from 'yaml'
-import type { BodyField, BodyMode, HeaderField, ParamField, RequestAuth, ResponseContent, ResponseDefinition, SyncRequest, SyncTreeNode } from './merge'
+import type {
+  BodyField,
+  BodyMode,
+  HeaderField,
+  ParamField,
+  RequestAuth,
+  ResponseContent,
+  ResponseDefinition,
+  SyncRequest,
+  SyncTreeNode,
+} from './merge'
 
 type OpenApiObject = Record<string, unknown>
 type ParsedRequest = { request: SyncRequest; tags: string[] }
@@ -7,7 +17,7 @@ type ParsedRequest = { request: SyncRequest; tags: string[] }
 const methods = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'] as const
 
 function record(value: unknown): OpenApiObject | null {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as OpenApiObject : null
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as OpenApiObject) : null
 }
 
 function asString(value: unknown, fallback = ''): string {
@@ -18,7 +28,10 @@ function resolveReference(spec: OpenApiObject, value: unknown): OpenApiObject | 
   const object = record(value)
   const reference = asString(object?.$ref)
   if (!reference.startsWith('#/')) return object
-  const resolved = reference.slice(2).split('/').reduce<unknown>((current, part) => record(current)?.[part.replace(/~1/g, '/').replace(/~0/g, '~')], spec)
+  const resolved = reference
+    .slice(2)
+    .split('/')
+    .reduce<unknown>((current, part) => record(current)?.[part.replace(/~1/g, '/').replace(/~0/g, '~')], spec)
   return record(resolved)
 }
 
@@ -56,21 +69,24 @@ function sampleValue(spec: OpenApiObject, media: OpenApiObject): unknown {
 }
 
 function variableSyntax(value: string, toOpenApi: boolean): string {
-  return toOpenApi
-    ? value.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, '{$1}')
-    : value.replace(/(?<!\{)\{([^{}]+)\}(?!\})/g, '{{$1}}')
+  return toOpenApi ? value.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, '{$1}') : value.replace(/(?<!\{)\{([^{}]+)\}(?!\})/g, '{{$1}}')
 }
 
 function serverUrl(spec: OpenApiObject, value: unknown): string {
   const server = resolveReference(spec, value)
   const variables = record(server?.variables) ?? {}
-  return asString(server?.url).replace(/\{([^{}]+)\}/g, (_match, name: string) => {
-    const defaultValue = record(variables[name])?.default
-    return typeof defaultValue === 'string' ? defaultValue : `{{${name}}}`
-  }).replace(/\/$/, '')
+  return asString(server?.url)
+    .replace(/\{([^{}]+)\}/g, (_match, name: string) => {
+      const defaultValue = record(variables[name])?.default
+      return typeof defaultValue === 'string' ? defaultValue : `{{${name}}}`
+    })
+    .replace(/\/$/, '')
 }
 
-function parameterFields(spec: OpenApiObject, rawParameters: unknown[]): { params: ParamField[]; pathParams: ParamField[]; headers: HeaderField[] } {
+function parameterFields(
+  spec: OpenApiObject,
+  rawParameters: unknown[],
+): { params: ParamField[]; pathParams: ParamField[]; headers: HeaderField[] } {
   const params: ParamField[] = []
   const pathParams: ParamField[] = []
   const headers: HeaderField[] = []
@@ -81,7 +97,13 @@ function parameterFields(spec: OpenApiObject, rawParameters: unknown[]): { param
     const location = asString(parameter.in)
     if (!name || !['path', 'query', 'header'].includes(location)) continue
     const example = 'example' in parameter ? parameter.example : schemaExample(spec, parameter.schema)
-    const row = { id: crypto.randomUUID(), name, value: example == null ? '' : typeof example === 'string' ? example : JSON.stringify(example) ?? String(example), enabled: true, ...(asString(parameter.description) ? { description: asString(parameter.description) } : {}) }
+    const row = {
+      id: crypto.randomUUID(),
+      name,
+      value: example == null ? '' : typeof example === 'string' ? example : (JSON.stringify(example) ?? String(example)),
+      enabled: true,
+      ...(asString(parameter.description) ? { description: asString(parameter.description) } : {}),
+    }
     if (location === 'path') pathParams.push(row)
     else if (location === 'query') params.push(row)
     else headers.push(row)
@@ -98,30 +120,52 @@ function bodyFromRequest(spec: OpenApiObject, raw: unknown): Pick<SyncRequest, '
   const media = record(content[mediaType]) ?? {}
   const sample = sampleValue(spec, media)
   const schema = record(media.schema) ?? {}
-  if (asString(schema.format) === 'binary' || mediaType === 'application/octet-stream') return { body: '', bodyMode: 'file', bodyMimeType: mediaType }
+  if (asString(schema.format) === 'binary' || mediaType === 'application/octet-stream')
+    return { body: '', bodyMode: 'file', bodyMimeType: mediaType }
   if (mediaType === 'application/x-www-form-urlencoded' || mediaType === 'multipart/form-data') {
     const fields: BodyField[] = Object.entries(record(schema.properties) ?? {}).map(([name, property]) => {
       const fieldSchema = record(property) ?? {}
       const value = record(sample)?.[name] ?? schemaExample(spec, property)
       const isFile = asString(fieldSchema.format) === 'binary' || asString(fieldSchema.format) === 'base64'
-      return { id: crypto.randomUUID(), name, value: value == null ? '' : typeof value === 'string' ? value : JSON.stringify(value), enabled: true, type: isFile ? 'file' : 'text' }
+      return {
+        id: crypto.randomUUID(),
+        name,
+        value: value == null ? '' : typeof value === 'string' ? value : JSON.stringify(value),
+        enabled: true,
+        type: isFile ? 'file' : 'text',
+      }
     })
     return { body: '', bodyMode: mediaType === 'multipart/form-data' ? 'form-data' : 'urlencoded', bodyFields: fields }
   }
-  const mode: BodyMode = mediaType.includes('json') ? 'json'
-    : mediaType.includes('xml') ? 'xml'
-      : mediaType.includes('yaml') ? 'yaml'
-        : mediaType.includes('edn') ? 'edn'
+  const mode: BodyMode = mediaType.includes('json')
+    ? 'json'
+    : mediaType.includes('xml')
+      ? 'xml'
+      : mediaType.includes('yaml')
+        ? 'yaml'
+        : mediaType.includes('edn')
+          ? 'edn'
           : 'other'
-  const body = sample == null ? '' : typeof sample === 'string' ? sample : mode === 'yaml' ? stringify(sample).trimEnd() : JSON.stringify(sample, null, 2)
+  const body =
+    sample == null
+      ? ''
+      : typeof sample === 'string'
+        ? sample
+        : mode === 'yaml'
+          ? stringify(sample).trimEnd()
+          : JSON.stringify(sample, null, 2)
   return { body, bodyMode: mode, ...(mode === 'other' ? { bodyMimeType: mediaType } : {}) }
 }
 
 function responseExampleText(value: unknown, mediaType: string): string {
   if (mediaType.toLowerCase().includes('json')) {
-    try { return JSON.stringify(value, null, 2) ?? '' } catch { return String(value) }
+    try {
+      return JSON.stringify(value, null, 2) ?? ''
+    } catch {
+      return String(value)
+    }
   }
-  return typeof value === 'string' ? value : JSON.stringify(value, null, 2) ?? String(value)
+  return typeof value === 'string' ? value : (JSON.stringify(value, null, 2) ?? String(value))
 }
 
 function responsesFromOperation(spec: OpenApiObject, raw: unknown): ResponseDefinition[] {
@@ -133,24 +177,27 @@ function responsesFromOperation(spec: OpenApiObject, raw: unknown): ResponseDefi
       const media = record(rawMedia) ?? {}
       const namedExamples = record(media.examples)
       const firstNamedExample = namedExamples ? record(Object.values(namedExamples)[0]) : null
-      const example = 'example' in media
-        ? media.example
-        : firstNamedExample && 'value' in firstNamedExample
-          ? firstNamedExample.value
-          : 'schema' in media ? schemaExample(spec, media.schema) : undefined
-      const schema = 'schema' in media ? JSON.stringify(media.schema, null, 2) ?? '' : ''
+      const example =
+        'example' in media
+          ? media.example
+          : firstNamedExample && 'value' in firstNamedExample
+            ? firstNamedExample.value
+            : 'schema' in media
+              ? schemaExample(spec, media.schema)
+              : undefined
+      const schema = 'schema' in media ? (JSON.stringify(media.schema, null, 2) ?? '') : ''
       return {
         id: crypto.randomUUID(),
         mediaType,
         schema,
-        example: example === undefined ? '' : responseExampleText(example, mediaType)
+        example: example === undefined ? '' : responseExampleText(example, mediaType),
       }
     })
     return {
       id: crypto.randomUUID(),
       statusCode,
       description: asString(response.description),
-      content
+      content,
     }
   })
 }
@@ -160,7 +207,10 @@ function referencedResponseSchemas(spec: OpenApiObject, responses: ResponseDefin
   const included: Record<string, unknown> = {}
   const pending: string[] = []
   const findReferences = (value: unknown) => {
-    if (Array.isArray(value)) { value.forEach(findReferences); return }
+    if (Array.isArray(value)) {
+      value.forEach(findReferences)
+      return
+    }
     const object = record(value)
     if (!object) return
     const reference = asString(object.$ref)
@@ -170,10 +220,15 @@ function referencedResponseSchemas(spec: OpenApiObject, responses: ResponseDefin
     }
     Object.values(object).forEach(findReferences)
   }
-  for (const response of responses) for (const content of response.content) {
-    if (!content.schema) continue
-    try { findReferences(JSON.parse(content.schema)) } catch { /* Imported OpenAPI schemas are already parsed values. */ }
-  }
+  for (const response of responses)
+    for (const content of response.content) {
+      if (!content.schema) continue
+      try {
+        findReferences(JSON.parse(content.schema))
+      } catch {
+        /* Imported OpenAPI schemas are already parsed values. */
+      }
+    }
   while (pending.length) {
     const name = pending.pop() as string
     if (Object.hasOwn(included, name) || !Object.hasOwn(available, name)) continue
@@ -188,16 +243,18 @@ function rewriteSchemaReferences(value: unknown, mapping: Map<string, string>): 
   if (Array.isArray(value)) return value.map((item) => rewriteSchemaReferences(item, mapping))
   const object = record(value)
   if (!object) return value
-  return Object.fromEntries(Object.entries(object).map(([key, item]) => {
-    if (key === '$ref' && typeof item === 'string' && item.startsWith('#/components/schemas/')) {
-      const [, , , ...path] = item.split('/')
-      const originalName = path.shift()?.replace(/~1/g, '/').replace(/~0/g, '~') ?? ''
-      const renamed = mapping.get(originalName)
-      const suffix = path.length ? `/${path.join('/')}` : ''
-      return [key, renamed ? `#/components/schemas/${renamed.replace(/~/g, '~0').replace(/\//g, '~1')}${suffix}` : item]
-    }
-    return [key, rewriteSchemaReferences(item, mapping)]
-  }))
+  return Object.fromEntries(
+    Object.entries(object).map(([key, item]) => {
+      if (key === '$ref' && typeof item === 'string' && item.startsWith('#/components/schemas/')) {
+        const [, , , ...path] = item.split('/')
+        const originalName = path.shift()?.replace(/~1/g, '/').replace(/~0/g, '~') ?? ''
+        const renamed = mapping.get(originalName)
+        const suffix = path.length ? `/${path.join('/')}` : ''
+        return [key, renamed ? `#/components/schemas/${renamed.replace(/~/g, '~0').replace(/\//g, '~1')}${suffix}` : item]
+      }
+      return [key, rewriteSchemaReferences(item, mapping)]
+    }),
+  )
 }
 
 type ComponentSchemaRegistry = { schemas: Record<string, unknown>; mappings: Map<string, Map<string, string>> }
@@ -231,24 +288,38 @@ function componentSchemaRegistry(requests: SyncRequest[]): ComponentSchemaRegist
   return { schemas, mappings }
 }
 
-function exportedResponseContent(request: SyncRequest, response: ResponseDefinition, registry: ComponentSchemaRegistry): Record<string, unknown> | undefined {
+function exportedResponseContent(
+  request: SyncRequest,
+  response: ResponseDefinition,
+  registry: ComponentSchemaRegistry,
+): Record<string, unknown> | undefined {
   const content: Record<string, unknown> = {}
   for (const item of response.content) {
     const mediaType = item.mediaType.trim()
     if (!mediaType) {
-      if (item.schema.trim() || item.example.trim()) throw new Error(`Response ${response.statusCode} has a schema or example without a content type.`)
+      if (item.schema.trim() || item.example.trim())
+        throw new Error(`Response ${response.statusCode} has a schema or example without a content type.`)
       continue
     }
-    if (Object.hasOwn(content, mediaType)) throw new Error(`Response ${response.statusCode} lists content type "${mediaType}" more than once.`)
+    if (Object.hasOwn(content, mediaType))
+      throw new Error(`Response ${response.statusCode} lists content type "${mediaType}" more than once.`)
     const media: Record<string, unknown> = {}
     if (item.schema.trim()) {
       let schema: unknown
-      try { schema = JSON.parse(item.schema) } catch { throw new Error(`The schema for response ${response.statusCode} must be valid JSON.`) }
+      try {
+        schema = JSON.parse(item.schema)
+      } catch {
+        throw new Error(`The schema for response ${response.statusCode} must be valid JSON.`)
+      }
       media.schema = rewriteSchemaReferences(schema, registry.mappings.get(request.id) ?? new Map())
     }
     if (item.example.trim()) {
       if (mediaType.toLowerCase().includes('json')) {
-        try { media.example = JSON.parse(item.example) } catch { media.example = item.example }
+        try {
+          media.example = JSON.parse(item.example)
+        } catch {
+          media.example = item.example
+        }
       } else media.example = item.example
     }
     content[mediaType] = media
@@ -262,12 +333,13 @@ function exportedResponses(request: SyncRequest, registry: ComponentSchemaRegist
   const responses: Record<string, unknown> = {}
   for (const response of defined) {
     const statusCode = response.statusCode.trim()
-    if (!/^(?:[1-5]\d\d|[1-5][xX]{2}|default)$/.test(statusCode)) throw new Error(`Response status "${statusCode}" must be a status code, 2XX-style range, or default.`)
+    if (!/^(?:[1-5]\d\d|[1-5][xX]{2}|default)$/.test(statusCode))
+      throw new Error(`Response status "${statusCode}" must be a status code, 2XX-style range, or default.`)
     if (responses[statusCode]) throw new Error(`Response status "${statusCode}" is listed more than once.`)
     const content = exportedResponseContent(request, response, registry)
     responses[statusCode] = {
       description: response.description.trim() || 'Response',
-      ...(content ? { content } : {})
+      ...(content ? { content } : {}),
     }
   }
   return responses
@@ -284,7 +356,8 @@ function authFromSecurity(spec: OpenApiObject, rawSecurity: unknown): RequestAut
       if (!scheme) continue
       if (scheme.type === 'http' && scheme.scheme === 'bearer') return { type: 'bearer', token: '' }
       if (scheme.type === 'http' && scheme.scheme === 'basic') return { type: 'basic', username: '', password: '' }
-      if (scheme.type === 'apiKey' && (scheme.in === 'header' || scheme.in === 'query')) return { type: 'api-key', name: asString(scheme.name), value: '', location: scheme.in }
+      if (scheme.type === 'apiKey' && (scheme.in === 'header' || scheme.in === 'query'))
+        return { type: 'api-key', name: asString(scheme.name), value: '', location: scheme.in }
     }
   }
   return { type: 'none' }
@@ -296,7 +369,9 @@ function uniqueRequestName(operation: OpenApiObject, method: string, path: strin
 
 export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: string; requestCount: number } {
   let parsed: unknown
-  try { parsed = parse(text) } catch (error) {
+  try {
+    parsed = parse(text)
+  } catch (error) {
     throw new Error(error instanceof Error ? `Could not parse the OpenAPI file: ${error.message}` : 'Could not parse the OpenAPI file.')
   }
   const spec = record(parsed)
@@ -320,22 +395,35 @@ export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: stri
       const endpoint = variableSyntax(path, false)
       const operationServer = record(Array.isArray(operation.servers) ? operation.servers[0] : null)
       const localServer = operationServer ? serverUrl(spec, operationServer) : rootServerUrl
-      const url = asString(operation['x-api-documentation-request-url']) || `${localServer}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
+      const url =
+        asString(operation['x-api-documentation-request-url']) || `${localServer}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
       const documentation = asString(operation.description)
       const responses = responsesFromOperation(spec, operation.responses)
       const openApiSchemas = referencedResponseSchemas(spec, responses)
       const request: SyncRequest = {
-        id: crypto.randomUUID(), kind: 'request', name: uniqueRequestName(operation, method, path), method: method.toUpperCase(), url,
-        bodyMode: 'none', headers: fields.headers, params: fields.params, pathParams: fields.pathParams,
+        id: crypto.randomUUID(),
+        kind: 'request',
+        name: uniqueRequestName(operation, method, path),
+        method: method.toUpperCase(),
+        url,
+        bodyMode: 'none',
+        headers: fields.headers,
+        params: fields.params,
+        pathParams: fields.pathParams,
         auth: authFromSecurity(spec, operation.security ?? spec.security),
         responses,
         ...(openApiSchemas ? { openApiSchemas } : {}),
         ...(documentation ? { documentation } : {}),
         ...(operation.deprecated === true ? { deprecated: true } : {}),
-        ...(asString(operation['x-api-documentation-deprecation-reason']) ? { deprecationReason: asString(operation['x-api-documentation-deprecation-reason']) } : {}),
-        ...bodyFromRequest(spec, operation.requestBody)
+        ...(asString(operation['x-api-documentation-deprecation-reason'])
+          ? { deprecationReason: asString(operation['x-api-documentation-deprecation-reason']) }
+          : {}),
+        ...bodyFromRequest(spec, operation.requestBody),
       }
-      parsedRequests.push({ request, tags: Array.isArray(operation.tags) ? operation.tags.filter((tag): tag is string => typeof tag === 'string' && !!tag.trim()) : [] })
+      parsedRequests.push({
+        request,
+        tags: Array.isArray(operation.tags) ? operation.tags.filter((tag): tag is string => typeof tag === 'string' && !!tag.trim()) : [],
+      })
     }
   }
   if (!parsedRequests.length) throw new Error('No supported HTTP operations were found in the OpenAPI paths.')
@@ -358,9 +446,11 @@ export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: stri
 }
 
 function flattenRequests(tree: SyncTreeNode[], parentFolders: string[] = []): Array<{ request: SyncRequest; tags: string[] }> {
-  return tree.flatMap((node) => node.kind === 'folder'
-    ? flattenRequests(node.children, [...parentFolders, node.name])
-    : [{ request: node, tags: parentFolders.slice(-1) }])
+  return tree.flatMap((node) =>
+    node.kind === 'folder'
+      ? flattenRequests(node.children, [...parentFolders, node.name])
+      : [{ request: node, tags: parentFolders.slice(-1) }],
+  )
 }
 
 function requestRoute(url: string): { path: string; server?: string } {
@@ -375,7 +465,8 @@ function queryParams(request: SyncRequest): ParamField[] {
   const query = request.url.match(/[?]([^#]*)/)
   if (!query) return explicit
   for (const [name, value] of new URLSearchParams(query[1]).entries()) {
-    if (!explicit.some((param) => param.name === name && param.value === value)) explicit.push({ id: crypto.randomUUID(), name, value, enabled: true })
+    if (!explicit.some((param) => param.name === name && param.value === value))
+      explicit.push({ id: crypto.randomUUID(), name, value, enabled: true })
   }
   return explicit
 }
@@ -398,17 +489,30 @@ function bodyContent(request: SyncRequest): Record<string, unknown> | undefined 
     }
     return { [mediaType]: { schema: { type: 'object', properties }, example } }
   }
-  const mediaType = mode === 'json' || mode === 'graphql' ? 'application/json'
-    : mode === 'xml' ? 'application/xml'
-      : mode === 'yaml' ? 'application/yaml'
-        : mode === 'edn' ? 'application/edn'
-          : request.bodyMimeType || 'text/plain'
+  const mediaType =
+    mode === 'json' || mode === 'graphql'
+      ? 'application/json'
+      : mode === 'xml'
+        ? 'application/xml'
+        : mode === 'yaml'
+          ? 'application/yaml'
+          : mode === 'edn'
+            ? 'application/edn'
+            : request.bodyMimeType || 'text/plain'
   let example: unknown = request.body
   if (mode === 'json') {
-    try { example = JSON.parse(request.body) } catch { /* Keep invalid JSON as the request's literal text. */ }
+    try {
+      example = JSON.parse(request.body)
+    } catch {
+      /* Keep invalid JSON as the request's literal text. */
+    }
   } else if (mode === 'graphql') {
     let variables: unknown = {}
-    try { variables = JSON.parse(request.bodyVariables || '{}') } catch { /* Keep the editor content intact. */ }
+    try {
+      variables = JSON.parse(request.bodyVariables || '{}')
+    } catch {
+      /* Keep the editor content intact. */
+    }
     example = { query: request.body, variables }
   }
   return { [mediaType]: { ...(mode === 'json' || mode === 'graphql' ? { schema: { type: 'object' } } : {}), example } }
@@ -417,11 +521,22 @@ function bodyContent(request: SyncRequest): Record<string, unknown> | undefined 
 function exportedAuth(request: SyncRequest, schemes: Record<string, unknown>): Record<string, unknown> | undefined {
   const auth = request.auth ?? { type: 'none' as const }
   if (auth.type === 'none') return undefined
-  const keySuffix = auth.type === 'api-key' ? auth.name.replace(/[^A-Za-z0-9]+(.)?/g, (_match, next: string | undefined) => next ? next.toUpperCase() : '') : ''
-  const baseName = auth.type === 'bearer' ? 'BearerAuth' : auth.type === 'basic' ? 'BasicAuth' : `ApiKey${auth.location === 'header' ? 'Header' : 'Query'}${keySuffix}`
-  const scheme = auth.type === 'bearer' ? { type: 'http', scheme: 'bearer' }
-    : auth.type === 'basic' ? { type: 'http', scheme: 'basic' }
-      : { type: 'apiKey', in: auth.location, name: auth.name || 'api_key' }
+  const keySuffix =
+    auth.type === 'api-key'
+      ? auth.name.replace(/[^A-Za-z0-9]+(.)?/g, (_match, next: string | undefined) => (next ? next.toUpperCase() : ''))
+      : ''
+  const baseName =
+    auth.type === 'bearer'
+      ? 'BearerAuth'
+      : auth.type === 'basic'
+        ? 'BasicAuth'
+        : `ApiKey${auth.location === 'header' ? 'Header' : 'Query'}${keySuffix}`
+  const scheme =
+    auth.type === 'bearer'
+      ? { type: 'http', scheme: 'bearer' }
+      : auth.type === 'basic'
+        ? { type: 'http', scheme: 'basic' }
+        : { type: 'apiKey', in: auth.location, name: auth.name || 'api_key' }
   let name = baseName || 'ApiKey'
   let suffix = 2
   while (schemes[name] && JSON.stringify(schemes[name]) !== JSON.stringify(scheme)) name = `${baseName}${suffix++}`
@@ -430,7 +545,11 @@ function exportedAuth(request: SyncRequest, schemes: Record<string, unknown>): R
 }
 
 function toOperationId(value: string, used: Set<string>): string {
-  const base = value.trim().replace(/[^A-Za-z0-9]+(.)?/g, (_match, next: string | undefined) => next ? next.toUpperCase() : '').replace(/^[^A-Za-z]+/, '') || 'request'
+  const base =
+    value
+      .trim()
+      .replace(/[^A-Za-z0-9]+(.)?/g, (_match, next: string | undefined) => (next ? next.toUpperCase() : ''))
+      .replace(/^[^A-Za-z]+/, '') || 'request'
   let candidate = base
   let suffix = 2
   while (used.has(candidate)) candidate = `${base}${suffix++}`
@@ -463,7 +582,7 @@ export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObjec
       operationId: toOperationId(request.name, operationIds),
       summary: request.name,
       responses: exportedResponses(request, schemaRegistry),
-      'x-api-documentation-request-url': request.url
+      'x-api-documentation-request-url': request.url,
     }
     if (request.deprecated) operation.deprecated = true
     if (request.deprecationReason?.trim()) operation['x-api-documentation-deprecation-reason'] = request.deprecationReason
@@ -472,13 +591,36 @@ export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObjec
     const parameters: Array<Record<string, unknown>> = []
     for (const match of path.matchAll(/\{([^{}]+)\}/g)) {
       const pathParam = request.pathParams?.find((param) => param.name === match[1])
-      parameters.push({ name: match[1], in: 'path', required: true, ...(pathParam?.description ? { description: pathParam.description } : {}), ...(pathParam?.value && !/token|key|secret|password|auth/i.test(pathParam.name) ? { example: pathParam.value } : {}), schema: { type: 'string' } })
+      parameters.push({
+        name: match[1],
+        in: 'path',
+        required: true,
+        ...(pathParam?.description ? { description: pathParam.description } : {}),
+        ...(pathParam?.value && !/token|key|secret|password|auth/i.test(pathParam.name) ? { example: pathParam.value } : {}),
+        schema: { type: 'string' },
+      })
     }
-    for (const param of queryParams(request)) if (param.enabled && param.name.trim()) parameters.push({ name: param.name, in: 'query', required: false, ...(param.description ? { description: param.description } : {}), ...(/token|key|secret|password|auth/i.test(param.name) ? {} : { example: param.value }), schema: { type: 'string' } })
+    for (const param of queryParams(request))
+      if (param.enabled && param.name.trim())
+        parameters.push({
+          name: param.name,
+          in: 'query',
+          required: false,
+          ...(param.description ? { description: param.description } : {}),
+          ...(/token|key|secret|password|auth/i.test(param.name) ? {} : { example: param.value }),
+          schema: { type: 'string' },
+        })
     for (const header of request.headers ?? []) {
       if (!header.enabled || !header.name.trim() || header.name.toLowerCase() === 'content-type') continue
       const sensitive = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key)$/i.test(header.name.trim())
-      parameters.push({ name: header.name, in: 'header', required: false, ...(header.description ? { description: header.description } : {}), ...(!sensitive ? { example: header.value } : {}), schema: { type: 'string' } })
+      parameters.push({
+        name: header.name,
+        in: 'header',
+        required: false,
+        ...(header.description ? { description: header.description } : {}),
+        ...(!sensitive ? { example: header.value } : {}),
+        schema: { type: 'string' },
+      })
     }
     if (parameters.length) operation.parameters = parameters
     const content = bodyContent(request)
@@ -492,12 +634,12 @@ export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObjec
     openapi: '3.1.0',
     info: { title: title.trim() || 'API workspace', version: '1.0.0' },
     ...(globalServer ? { servers: [{ url: globalServer }] } : {}),
-    paths
+    paths,
   }
   if (Object.keys(schemes).length || Object.keys(schemaRegistry.schemas).length) {
     spec.components = {
       ...(Object.keys(schemaRegistry.schemas).length ? { schemas: schemaRegistry.schemas } : {}),
-      ...(Object.keys(schemes).length ? { securitySchemes: schemes } : {})
+      ...(Object.keys(schemes).length ? { securitySchemes: schemes } : {}),
     }
   }
   return spec

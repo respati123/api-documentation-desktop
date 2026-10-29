@@ -1,4 +1,18 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type FocusEvent, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import {
+  type ClipboardEvent,
+  type FocusEvent,
+  type InputHTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,7 +33,12 @@ type TextareaProps = CommonProps & Omit<TextareaHTMLAttributes<HTMLTextAreaEleme
 type Match = { start: number; cursor: number; prefix: string }
 type MenuPosition = { left: number; top: number; width: number }
 
-export function useDebouncedEditorValue(value: string, onValueChange: (value: string) => void, delay = 250, maxWait = 1000): [string, (value: string) => void, () => void] {
+export function useDebouncedEditorValue(
+  value: string,
+  onValueChange: (value: string) => void,
+  delay = 250,
+  maxWait = 1000,
+): [string, (value: string) => void, () => void] {
   const [draft, setDraft] = useState(value)
   const draftRef = useRef(value)
   const parentValueRef = useRef(value)
@@ -42,14 +61,17 @@ export function useDebouncedEditorValue(value: string, onValueChange: (value: st
     parentValueRef.current = draftRef.current
     callbackRef.current(draftRef.current)
   }, [clearTimers])
-  const update = useCallback((nextValue: string) => {
-    draftRef.current = nextValue
-    setDraft(nextValue)
-    pendingRef.current = true
-    if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
-    debounceTimerRef.current = window.setTimeout(flush, delay)
-    if (maxWaitTimerRef.current === undefined) maxWaitTimerRef.current = window.setTimeout(flush, maxWait)
-  }, [delay, flush, maxWait])
+  const update = useCallback(
+    (nextValue: string) => {
+      draftRef.current = nextValue
+      setDraft(nextValue)
+      pendingRef.current = true
+      if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = window.setTimeout(flush, delay)
+      if (maxWaitTimerRef.current === undefined) maxWaitTimerRef.current = window.setTimeout(flush, maxWait)
+    },
+    [delay, flush, maxWait],
+  )
 
   useEffect(() => {
     if (value === parentValueRef.current) return
@@ -77,9 +99,10 @@ function getMenuPosition(element: HTMLElement): MenuPosition {
   const width = Math.min(Math.max(rect.width, 220), 300, window.innerWidth - 16)
   const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
   const estimatedHeight = 230
-  const top = window.innerHeight - rect.bottom < estimatedHeight && rect.top > estimatedHeight
-    ? Math.max(8, rect.top - estimatedHeight - 4)
-    : Math.min(window.innerHeight - 8, rect.bottom + 4)
+  const top =
+    window.innerHeight - rect.bottom < estimatedHeight && rect.top > estimatedHeight
+      ? Math.max(8, rect.top - estimatedHeight - 4)
+      : Math.min(window.innerHeight - 8, rect.bottom + 4)
   return { left, top, width }
 }
 
@@ -96,18 +119,30 @@ function renderVariableText(value: string, suggestions: VariableSuggestion[], on
   const tokens = /\{\{\s*([^{}]+?)\s*\}\}/g
   const parts: ReactNode[] = []
   let cursor = 0
-  let match: RegExpExecArray | null
-  while ((match = tokens.exec(value))) {
+  for (let match = tokens.exec(value); match; match = tokens.exec(value)) {
     const name = match[1].trim()
     const prefix = value.slice(cursor, match.index)
     if (prefix) parts.push(<span key={`text-${cursor}`}>{masked ? '•'.repeat(prefix.length) : prefix}</span>)
     const known = knownNames.has(name)
-    parts.push(<span
-      key={`variable-${match.index}`}
-      className={cn('variable-token', !known && 'variable-token-missing')}
-      title={getVariableTooltip(known ? suggestionByName.get(name) : undefined, name, masked)}
-      onClick={(event) => { event.stopPropagation(); onClick(name) }}
-    >{`{{${name}}}`}</span>)
+    parts.push(
+      <span
+        key={`variable-${match.index}`}
+        className={cn('variable-token', !known && 'variable-token-missing')}
+        title={getVariableTooltip(known ? suggestionByName.get(name) : undefined, name, masked)}
+        role="button"
+        tabIndex={0}
+        onClick={(event) => {
+          event.stopPropagation()
+          onClick(name)
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          event.preventDefault()
+          event.stopPropagation()
+          onClick(name)
+        }}
+      >{`{{${name}}}`}</span>,
+    )
     cursor = match.index + match[0].length
   }
   const suffix = value.slice(cursor)
@@ -141,9 +176,10 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
     const overlay = overlayRef.current
     if (!element || !overlay) return
     const style = getComputedStyle(element)
-    overlay.style.fontFamily = element instanceof HTMLInputElement && element.type === 'password'
-      ? 'ui-monospace, SFMono-Regular, Menlo, monospace'
-      : style.fontFamily
+    overlay.style.fontFamily =
+      element instanceof HTMLInputElement && element.type === 'password'
+        ? 'ui-monospace, SFMono-Regular, Menlo, monospace'
+        : style.fontFamily
     overlay.style.fontSize = style.fontSize
     overlay.style.fontWeight = style.fontWeight
     overlay.style.fontStyle = style.fontStyle
@@ -185,7 +221,10 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
     })
   }
 
-  function onKeyDown<T extends HTMLInputElement | HTMLTextAreaElement>(event: ReactKeyboardEvent<T>, userHandler?: (event: ReactKeyboardEvent<T>) => void) {
+  function onKeyDown<T extends HTMLInputElement | HTMLTextAreaElement>(
+    event: ReactKeyboardEvent<T>,
+    userHandler?: (event: ReactKeyboardEvent<T>) => void,
+  ) {
     userHandler?.(event)
     if (event.defaultPrevented || !match || !filtered.length) return
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -212,78 +251,174 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
   return { elementRef, overlayRef, menuId, match, filtered, selectedIndex, position, syncMatch, choose, onKeyDown, onScroll, setMatch }
 }
 
-function SuggestionsMenu({ id, items, selectedIndex, position, onChoose }: { id: string; items: VariableSuggestion[]; selectedIndex: number; position: MenuPosition | null; onChoose: (name: string) => void }) {
+function SuggestionsMenu({
+  id,
+  items,
+  selectedIndex,
+  position,
+  onChoose,
+}: {
+  id: string
+  items: VariableSuggestion[]
+  selectedIndex: number
+  position: MenuPosition | null
+  onChoose: (name: string) => void
+}) {
   if (!items.length || !position) return null
-  return createPortal(<div id={id} className="variable-suggestions" role="listbox" aria-label="Environment variable suggestions" style={position}>
-    {items.map((item, index) => <button
-      type="button"
-      role="option"
-      id={`${id}-option-${index}`}
-      aria-selected={index === selectedIndex}
-      className={cn('variable-suggestion', index === selectedIndex && 'variable-suggestion-active')}
-      key={`${item.scope}-${item.name}`}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={() => onChoose(item.name)}
-    ><span className="variable-suggestion-mark">{'{{'}</span><span className="variable-suggestion-name">{item.name}</span><span className="variable-suggestion-scope">{item.scope}</span></button>)}
-  </div>, document.body)
+  return createPortal(
+    <div id={id} className="variable-suggestions" role="listbox" aria-label="Environment variable suggestions" style={position}>
+      {items.map((item, index) => (
+        <button
+          type="button"
+          role="option"
+          id={`${id}-option-${index}`}
+          aria-selected={index === selectedIndex}
+          className={cn('variable-suggestion', index === selectedIndex && 'variable-suggestion-active')}
+          key={`${item.scope}-${item.name}`}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onChoose(item.name)}
+        >
+          <span className="variable-suggestion-mark">{'{{'}</span>
+          <span className="variable-suggestion-name">{item.name}</span>
+          <span className="variable-suggestion-scope">{item.scope}</span>
+        </button>
+      ))}
+    </div>,
+    document.body,
+  )
 }
 
-export function VariableInput({ value, onValueChange, suggestions, onVariableClick, className, onFocus, onBlur, onKeyDown, onScroll, type = 'text', ...props }: InputProps) {
+export function VariableInput({
+  value,
+  onValueChange,
+  suggestions,
+  onVariableClick,
+  className,
+  onFocus,
+  onBlur,
+  onKeyDown,
+  onScroll,
+  type = 'text',
+  ...props
+}: InputProps) {
   const [draft, updateDraft, flushDraft] = useDebouncedEditorValue(value, onValueChange)
   const field = useVariableField(draft, updateDraft, suggestions)
   const masked = type === 'password'
-  return <div className={cn('variable-field', 'variable-field-input', field.match && 'variable-field-open')}>
-    <Input
-      {...props}
-      ref={(element) => { field.elementRef.current = element }}
-      type={type}
-      className={cn('variable-field-control', masked && 'variable-password-control', className)}
-      value={draft}
-      onChange={(event) => { updateDraft(event.target.value); field.syncMatch(event.target) }}
-      onFocus={(event) => { onFocus?.(event); field.syncMatch(event.currentTarget) }}
-      onBlur={(event) => { flushDraft(); onBlur?.(event); field.setMatch(null) }}
-      onKeyDown={(event) => { if (event.ctrlKey && event.key === 'Enter') flushDraft(); field.onKeyDown(event, onKeyDown) }}
-      onScroll={(event) => { onScroll?.(event); field.onScroll(event.currentTarget) }}
-      role="combobox"
-      aria-haspopup="listbox"
-      aria-controls={field.menuId}
-      aria-activedescendant={field.match && field.filtered.length ? `${field.menuId}-option-${field.selectedIndex}` : undefined}
-      aria-autocomplete="list"
-      aria-expanded={Boolean(field.match && field.filtered.length)}
-    />
-    <div ref={field.overlayRef} className="variable-field-overlay variable-input-overlay" aria-hidden="true">
-      {renderVariableText(draft, suggestions, (name) => onVariableClick(name, draft), masked)}
+  return (
+    <div className={cn('variable-field', 'variable-field-input', field.match && 'variable-field-open')}>
+      <Input
+        {...props}
+        ref={(element) => {
+          field.elementRef.current = element
+        }}
+        type={type}
+        className={cn('variable-field-control', masked && 'variable-password-control', className)}
+        value={draft}
+        onChange={(event) => {
+          updateDraft(event.target.value)
+          field.syncMatch(event.target)
+        }}
+        onFocus={(event) => {
+          onFocus?.(event)
+          field.syncMatch(event.currentTarget)
+        }}
+        onBlur={(event) => {
+          flushDraft()
+          onBlur?.(event)
+          field.setMatch(null)
+        }}
+        onKeyDown={(event) => {
+          if (event.ctrlKey && event.key === 'Enter') flushDraft()
+          field.onKeyDown(event, onKeyDown)
+        }}
+        onScroll={(event) => {
+          onScroll?.(event)
+          field.onScroll(event.currentTarget)
+        }}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-controls={field.menuId}
+        aria-activedescendant={field.match && field.filtered.length ? `${field.menuId}-option-${field.selectedIndex}` : undefined}
+        aria-autocomplete="list"
+        aria-expanded={Boolean(field.match && field.filtered.length)}
+      />
+      <div ref={field.overlayRef} className="variable-field-overlay variable-input-overlay" aria-hidden="true">
+        {renderVariableText(draft, suggestions, (name) => onVariableClick(name, draft), masked)}
+      </div>
+      <SuggestionsMenu
+        id={field.menuId}
+        items={field.filtered}
+        selectedIndex={field.selectedIndex}
+        position={field.position}
+        onChoose={field.choose}
+      />
     </div>
-    <SuggestionsMenu id={field.menuId} items={field.filtered} selectedIndex={field.selectedIndex} position={field.position} onChoose={field.choose} />
-  </div>
+  )
 }
 
-export function VariableTextarea({ value, onValueChange, suggestions, onVariableClick, className, onFocus, onBlur, onKeyDown, onScroll, ...props }: TextareaProps) {
+export function VariableTextarea({
+  value,
+  onValueChange,
+  suggestions,
+  onVariableClick,
+  className,
+  onFocus,
+  onBlur,
+  onKeyDown,
+  onScroll,
+  ...props
+}: TextareaProps) {
   const [draft, updateDraft, flushDraft] = useDebouncedEditorValue(value, onValueChange)
   const field = useVariableField(draft, updateDraft, suggestions)
-  return <div className={cn('variable-field', 'variable-field-textarea', field.match && 'variable-field-open')}>
-    <Textarea
-      {...props}
-      ref={(element) => { field.elementRef.current = element }}
-      className={cn('variable-field-control', 'variable-textarea-control', className)}
-      value={draft}
-      onChange={(event) => { updateDraft(event.target.value); field.syncMatch(event.target) }}
-      onFocus={(event) => { onFocus?.(event); field.syncMatch(event.currentTarget) }}
-      onBlur={(event) => { flushDraft(); onBlur?.(event); field.setMatch(null) }}
-      onKeyDown={(event) => { if (event.ctrlKey && event.key === 'Enter') flushDraft(); field.onKeyDown(event, onKeyDown) }}
-      onScroll={(event) => { onScroll?.(event); field.onScroll(event.currentTarget) }}
-      role="combobox"
-      aria-haspopup="listbox"
-      aria-controls={field.menuId}
-      aria-activedescendant={field.match && field.filtered.length ? `${field.menuId}-option-${field.selectedIndex}` : undefined}
-      aria-autocomplete="list"
-      aria-expanded={Boolean(field.match && field.filtered.length)}
-    />
-    <div ref={field.overlayRef} className="variable-field-overlay variable-textarea-overlay" aria-hidden="true">
-      {renderVariableText(draft, suggestions, (name) => onVariableClick(name, draft), false)}
+  return (
+    <div className={cn('variable-field', 'variable-field-textarea', field.match && 'variable-field-open')}>
+      <Textarea
+        {...props}
+        ref={(element) => {
+          field.elementRef.current = element
+        }}
+        className={cn('variable-field-control', 'variable-textarea-control', className)}
+        value={draft}
+        onChange={(event) => {
+          updateDraft(event.target.value)
+          field.syncMatch(event.target)
+        }}
+        onFocus={(event) => {
+          onFocus?.(event)
+          field.syncMatch(event.currentTarget)
+        }}
+        onBlur={(event) => {
+          flushDraft()
+          onBlur?.(event)
+          field.setMatch(null)
+        }}
+        onKeyDown={(event) => {
+          if (event.ctrlKey && event.key === 'Enter') flushDraft()
+          field.onKeyDown(event, onKeyDown)
+        }}
+        onScroll={(event) => {
+          onScroll?.(event)
+          field.onScroll(event.currentTarget)
+        }}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-controls={field.menuId}
+        aria-activedescendant={field.match && field.filtered.length ? `${field.menuId}-option-${field.selectedIndex}` : undefined}
+        aria-autocomplete="list"
+        aria-expanded={Boolean(field.match && field.filtered.length)}
+      />
+      <div ref={field.overlayRef} className="variable-field-overlay variable-textarea-overlay" aria-hidden="true">
+        {renderVariableText(draft, suggestions, (name) => onVariableClick(name, draft), false)}
+      </div>
+      <SuggestionsMenu
+        id={field.menuId}
+        items={field.filtered}
+        selectedIndex={field.selectedIndex}
+        position={field.position}
+        onChoose={field.choose}
+      />
     </div>
-    <SuggestionsMenu id={field.menuId} items={field.filtered} selectedIndex={field.selectedIndex} position={field.position} onChoose={field.choose} />
-  </div>
+  )
 }
 
 type VariableUrlFieldProps = CommonProps & {
@@ -296,9 +431,13 @@ type VariableUrlFieldProps = CommonProps & {
 }
 
 function getEditableValue(editor: HTMLDivElement): string {
-  return Array.from(editor.childNodes).map((node) => node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).dataset.variableToken === 'true'
-    ? (node as HTMLElement).dataset.tokenValue ?? node.textContent ?? ''
-    : node.textContent ?? '').join('')
+  return Array.from(editor.childNodes)
+    .map((node) =>
+      node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).dataset.variableToken === 'true'
+        ? ((node as HTMLElement).dataset.tokenValue ?? node.textContent ?? '')
+        : (node.textContent ?? ''),
+    )
+    .join('')
 }
 
 function hasPlainVariable(editor: HTMLDivElement): boolean {
@@ -316,17 +455,18 @@ function hasRenderedVariable(editor: HTMLDivElement): boolean {
 
 function getEditorNodeLength(node: Node): number {
   return node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).dataset.variableToken === 'true'
-    ? (node as HTMLElement).dataset.tokenValue?.length ?? node.textContent?.length ?? 0
-    : node.textContent?.length ?? 0
+    ? ((node as HTMLElement).dataset.tokenValue?.length ?? node.textContent?.length ?? 0)
+    : (node.textContent?.length ?? 0)
 }
 
 function getEditableCaretOffset(editor: HTMLDivElement): number {
   const selection = window.getSelection()
   const anchor = selection?.anchorNode
-  if (!selection || !anchor || !editor.contains(anchor) && anchor !== editor) return getEditableValue(editor).length
+  if (!selection || !anchor || (!editor.contains(anchor) && anchor !== editor)) return getEditableValue(editor).length
   let offset = 0
   if (anchor === editor) {
-    for (let index = 0; index < Math.min(selection.anchorOffset, editor.childNodes.length); index += 1) offset += getEditorNodeLength(editor.childNodes[index])
+    for (let index = 0; index < Math.min(selection.anchorOffset, editor.childNodes.length); index += 1)
+      offset += getEditorNodeLength(editor.childNodes[index])
     return offset
   }
   for (const child of Array.from(editor.childNodes)) {
@@ -340,7 +480,7 @@ function getEditableCaretOffset(editor: HTMLDivElement): number {
 function setEditableCaretOffset(editor: HTMLDivElement, requestedOffset: number) {
   const selection = window.getSelection()
   if (!selection) return
-  let offset = Math.max(0, requestedOffset)
+  const offset = Math.max(0, requestedOffset)
   const children = Array.from(editor.childNodes)
   let consumed = 0
   for (let index = 0; index < children.length; index += 1) {
@@ -392,10 +532,13 @@ function adjacentVariableToken(editor: HTMLDivElement, selection: Selection, dir
   } else if (anchor.parentNode === editor && anchor.nodeType === Node.TEXT_NODE) {
     const textLength = anchor.textContent?.length ?? 0
     if (direction === 'backward' && selection.anchorOffset === 0) childIndex = Array.prototype.indexOf.call(editor.childNodes, anchor) - 1
-    if (direction === 'forward' && selection.anchorOffset === textLength) childIndex = Array.prototype.indexOf.call(editor.childNodes, anchor) + 1
+    if (direction === 'forward' && selection.anchorOffset === textLength)
+      childIndex = Array.prototype.indexOf.call(editor.childNodes, anchor) + 1
   }
   const candidate = editor.childNodes[childIndex]
-  return candidate?.nodeType === Node.ELEMENT_NODE && (candidate as HTMLElement).dataset.variableToken === 'true' ? candidate as HTMLElement : null
+  return candidate?.nodeType === Node.ELEMENT_NODE && (candidate as HTMLElement).dataset.variableToken === 'true'
+    ? (candidate as HTMLElement)
+    : null
 }
 
 function renderEditableVariables(editor: HTMLDivElement, value: string, suggestions: VariableSuggestion[]) {
@@ -404,8 +547,7 @@ function renderEditableVariables(editor: HTMLDivElement, value: string, suggesti
   const tokens = /\{\{\s*([^{}]+?)\s*\}\}/g
   const parts: Node[] = []
   let cursor = 0
-  let match: RegExpExecArray | null
-  while ((match = tokens.exec(value))) {
+  for (let match = tokens.exec(value); match; match = tokens.exec(value)) {
     const name = match[1].trim()
     if (match.index > cursor) parts.push(document.createTextNode(value.slice(cursor, match.index)))
     const known = knownNames.has(name)
@@ -423,7 +565,18 @@ function renderEditableVariables(editor: HTMLDivElement, value: string, suggesti
   editor.replaceChildren(...parts)
 }
 
-export function VariableUrlField({ value, onValueChange, suggestions, onVariableClick, className, readOnly = false, placeholder, spellCheck = false, 'aria-label': ariaLabel, onBlur }: VariableUrlFieldProps) {
+export function VariableUrlField({
+  value,
+  onValueChange,
+  suggestions,
+  onVariableClick,
+  className,
+  readOnly = false,
+  placeholder,
+  spellCheck = false,
+  'aria-label': ariaLabel,
+  onBlur,
+}: VariableUrlFieldProps) {
   const [draft, updateDraft, flushDraft] = useDebouncedEditorValue(value, onValueChange)
   const editorRef = useRef<HTMLDivElement>(null)
   const suggestionKey = JSON.stringify(suggestions.map(({ name, scope, value, secret }) => [name, scope, value, secret]))
@@ -466,7 +619,8 @@ export function VariableUrlField({ value, onValueChange, suggestions, onVariable
     const editor = editorRef.current
     if (!editor) return
     const suggestionsChanged = previousSuggestionKey.current !== suggestionKey
-    const needsRender = getEditableValue(editor) !== draft || (suggestionsChanged && (hasPlainVariable(editor) || hasRenderedVariable(editor)))
+    const needsRender =
+      getEditableValue(editor) !== draft || (suggestionsChanged && (hasPlainVariable(editor) || hasRenderedVariable(editor)))
     previousSuggestionKey.current = suggestionKey
     if (!needsRender) return
     const isFocused = document.activeElement === editor
@@ -477,7 +631,9 @@ export function VariableUrlField({ value, onValueChange, suggestions, onVariable
 
   useEffect(() => {
     if (!match) return
-    const update = () => { if (editorRef.current) setPosition(getMenuPosition(editorRef.current)) }
+    const update = () => {
+      if (editorRef.current) setPosition(getMenuPosition(editorRef.current))
+    }
     window.addEventListener('resize', update)
     window.addEventListener('scroll', update, true)
     return () => {
@@ -547,7 +703,7 @@ export function VariableUrlField({ value, onValueChange, suggestions, onVariable
     if (!editor) return
     const selection = window.getSelection()
     const range = selection?.rangeCount ? selection.getRangeAt(0) : null
-    if (!range || !editor.contains(range.commonAncestorContainer) && range.commonAncestorContainer !== editor) return
+    if (!range || (!editor.contains(range.commonAncestorContainer) && range.commonAncestorContainer !== editor)) return
     const text = event.clipboardData.getData('text/plain').replace(/[\r\n]+/g, ' ')
     range.deleteContents()
     const textNode = document.createTextNode(text)
@@ -559,34 +715,41 @@ export function VariableUrlField({ value, onValueChange, suggestions, onVariable
     syncFromEditor(editor)
   }
 
-  return <>
-    <div
-      ref={editorRef}
-      className={cn('variable-url-editor', 'url-input', className)}
-      role="combobox"
-      aria-label={ariaLabel}
-      aria-haspopup="listbox"
-      aria-controls={menuId}
-      aria-activedescendant={match && filtered.length ? `${menuId}-option-${selectedIndex}` : undefined}
-      aria-autocomplete="list"
-      aria-expanded={Boolean(match && filtered.length)}
-      aria-readonly={readOnly}
-      contentEditable={!readOnly}
-      suppressContentEditableWarning
-      spellCheck={spellCheck}
-      data-placeholder={placeholder}
-      onInput={(event) => syncFromEditor(event.currentTarget)}
-      onFocus={(event) => updateSuggestions(event.currentTarget)}
-      onBlur={(event) => { flushDraft(); onBlur?.(event); setMatch(null) }}
-      onClick={(event) => {
-        const token = (event.target as HTMLElement).closest<HTMLElement>('[data-variable-token="true"]')
-        if (!token) return
-        const name = (token.dataset.tokenValue ?? '').match(/^\{\{\s*([^{}]+?)\s*\}\}$/)?.[1]?.trim()
-        if (name) onVariableClick(name, getEditableValue(event.currentTarget))
-      }}
-      onKeyDown={handleKeyDown}
-      onPaste={handlePaste}
-    />
-    <SuggestionsMenu id={menuId} items={filtered} selectedIndex={selectedIndex} position={position} onChoose={chooseSuggestion} />
-  </>
+  return (
+    <>
+      <div
+        ref={editorRef}
+        className={cn('variable-url-editor', 'url-input', className)}
+        role="combobox"
+        tabIndex={0}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-controls={menuId}
+        aria-activedescendant={match && filtered.length ? `${menuId}-option-${selectedIndex}` : undefined}
+        aria-autocomplete="list"
+        aria-expanded={Boolean(match && filtered.length)}
+        aria-readonly={readOnly}
+        contentEditable={!readOnly}
+        suppressContentEditableWarning
+        spellCheck={spellCheck}
+        data-placeholder={placeholder}
+        onInput={(event) => syncFromEditor(event.currentTarget)}
+        onFocus={(event) => updateSuggestions(event.currentTarget)}
+        onBlur={(event) => {
+          flushDraft()
+          onBlur?.(event)
+          setMatch(null)
+        }}
+        onClick={(event) => {
+          const token = (event.target as HTMLElement).closest<HTMLElement>('[data-variable-token="true"]')
+          if (!token) return
+          const name = (token.dataset.tokenValue ?? '').match(/^\{\{\s*([^{}]+?)\s*\}\}$/)?.[1]?.trim()
+          if (name) onVariableClick(name, getEditableValue(event.currentTarget))
+        }}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
+      />
+      <SuggestionsMenu id={menuId} items={filtered} selectedIndex={selectedIndex} position={position} onChoose={chooseSuggestion} />
+    </>
+  )
 }

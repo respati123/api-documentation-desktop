@@ -1,12 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
-import { DatabaseSync } from 'node:sqlite'
 import { readFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
-import type { WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
-import { startLoopbackSignIn, type LoopbackSignIn } from './loopback-auth'
-import { installNodeRuntime, readNodeRuntime, type NodeRuntimePaths } from './node-runtime'
-import { connectAiTool, getAiConnectStatus, installCli, type AiToolId } from './ai-connect'
+import { DatabaseSync } from 'node:sqlite'
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
 import updaterModule from 'electron-updater'
+import type { WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
+import { type AiToolId, connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
+import { type LoopbackSignIn, startLoopbackSignIn } from './loopback-auth'
+import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
 
 // electron-updater is CommonJS; named imports fail when Electron loads the ESM main bundle.
 const { autoUpdater } = updaterModule
@@ -30,10 +30,22 @@ type ApiRequest = {
   url: string
   headers: Array<{ name: string; value: string; enabled: boolean }>
   params?: Array<{ id: string; name: string; value: string; enabled: boolean; description?: string }>
-  auth?: { type: 'none' } | { type: 'bearer'; token: string } | { type: 'basic'; username: string; password: string } | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
+  auth?:
+    | { type: 'none' }
+    | { type: 'bearer'; token: string }
+    | { type: 'basic'; username: string; password: string }
+    | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
   body?: string
   bodyMode?: 'form-data' | 'urlencoded' | 'graphql' | 'json' | 'xml' | 'yaml' | 'edn' | 'text' | 'other' | 'file' | 'none'
-  bodyFields?: Array<{ id: string; name: string; value: string; enabled: boolean; type: 'text' | 'file'; filePath?: string; fileName?: string }>
+  bodyFields?: Array<{
+    id: string
+    name: string
+    value: string
+    enabled: boolean
+    type: 'text' | 'file'
+    filePath?: string
+    fileName?: string
+  }>
   bodyVariables?: string
   bodyMimeType?: string
   bodyPath?: string
@@ -69,7 +81,9 @@ function receiveInviteLink(link: string): void {
       mainWindow.webContents.send('invite:token', token)
       pendingInviteToken = undefined
     }
-  } catch { /* Ignore unrelated protocol links. */ }
+  } catch {
+    /* Ignore unrelated protocol links. */
+  }
 }
 
 function database(): DatabaseSync {
@@ -108,50 +122,60 @@ function stripSecretVariableValues(value: WorkspaceVariables | undefined): Works
   const cleanRows = (rows: WorkspaceVariables['globals']) => rows.map((item) => ({ ...item, value: item.secret ? '' : item.value }))
   return {
     globals: cleanRows(variables.globals),
-    environments: variables.environments.map((environment) => ({ ...environment, variables: cleanRows(environment.variables) }))
+    environments: variables.environments.map((environment) => ({ ...environment, variables: cleanRows(environment.variables) })),
   }
 }
 
 function restoreSecretVariableValues(workspaceId: string, value: WorkspaceVariables | undefined): WorkspaceVariables {
   const variables = value ?? { globals: [], environments: [] }
   if (!safeStorage.isEncryptionAvailable()) return variables
-  const restoreRows = (rows: WorkspaceVariables['globals']) => rows.map((item) => {
-    if (!item.secret) return item
-    const key = `workspace-variable:${workspaceId}:${item.id}`
-    const row = database().prepare('SELECT value FROM secrets WHERE key = ?').get(key) as { value: Uint8Array } | undefined
-    return row ? { ...item, value: safeStorage.decryptString(Buffer.from(row.value)) } : item
-  })
+  const restoreRows = (rows: WorkspaceVariables['globals']) =>
+    rows.map((item) => {
+      if (!item.secret) return item
+      const key = `workspace-variable:${workspaceId}:${item.id}`
+      const row = database().prepare('SELECT value FROM secrets WHERE key = ?').get(key) as { value: Uint8Array } | undefined
+      return row ? { ...item, value: safeStorage.decryptString(Buffer.from(row.value)) } : item
+    })
   return {
     globals: restoreRows(variables.globals),
-    environments: variables.environments.map((environment) => ({ ...environment, variables: restoreRows(environment.variables) }))
+    environments: variables.environments.map((environment) => ({ ...environment, variables: restoreRows(environment.variables) })),
   }
 }
 
 function persistWorkspace(workspace: LocalWorkspace): boolean {
   const db = database()
   const variables = workspace.variables ?? { globals: [], environments: [] }
-  const secretRows = [...variables.globals, ...variables.environments.flatMap((environment) => environment.variables)].filter((item) => item.secret)
+  const secretRows = [...variables.globals, ...variables.environments.flatMap((environment) => environment.variables)].filter(
+    (item) => item.secret,
+  )
   const canEncrypt = safeStorage.isEncryptionAvailable()
   const prefix = `workspace-variable:${workspace.id}:`
   const activeKeys = new Set(secretRows.map((item) => `${prefix}${item.id}`))
   const existing = db.prepare('SELECT key FROM secrets').all() as { key: string }[]
-  for (const row of existing) if (row.key.startsWith(prefix) && !activeKeys.has(row.key)) db.prepare('DELETE FROM secrets WHERE key = ?').run(row.key)
+  for (const row of existing)
+    if (row.key.startsWith(prefix) && !activeKeys.has(row.key)) db.prepare('DELETE FROM secrets WHERE key = ?').run(row.key)
   if (canEncrypt) {
     for (const item of secretRows) {
       const key = `${prefix}${item.id}`
       if (!item.value) db.prepare('DELETE FROM secrets WHERE key = ?').run(key)
       else {
         const encrypted = safeStorage.encryptString(item.value)
-        db.prepare('INSERT INTO secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, encrypted)
+        db.prepare('INSERT INTO secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(
+          key,
+          encrypted,
+        )
       }
     }
   }
   const stored = {
     ...workspace,
     variables: stripSecretVariableValues(variables),
-    baseVariables: stripSecretVariableValues(workspace.baseVariables)
+    baseVariables: stripSecretVariableValues(workspace.baseVariables),
   }
-  db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data').run(workspace.id, JSON.stringify(stored))
+  db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data').run(
+    workspace.id,
+    JSON.stringify(stored),
+  )
   return canEncrypt || secretRows.every((item) => !item.value)
 }
 
@@ -172,13 +196,15 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
-    }
+      sandbox: true,
+    },
   })
   mainWindow = window
   // Check again when the user brings the app back to the front.
   window.on('focus', () => checkForUpdatesNow?.())
-  window.on('closed', () => { if (mainWindow === window) mainWindow = undefined })
+  window.on('closed', () => {
+    if (mainWindow === window) mainWindow = undefined
+  })
   window.webContents.once('did-finish-load', () => {
     if (pendingInviteToken) {
       window.webContents.send('invite:token', pendingInviteToken)
@@ -208,7 +234,8 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
   if (!headers.has('User-Agent')) headers.set('User-Agent', 'API-Documentation/0.1.0')
   const auth = request.auth ?? { type: 'none' as const }
   if (auth.type === 'bearer' && auth.token) headers.set('Authorization', `Bearer ${auth.token}`)
-  if (auth.type === 'basic' && (auth.username || auth.password)) headers.set('Authorization', `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`)
+  if (auth.type === 'basic' && (auth.username || auth.password))
+    headers.set('Authorization', `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`)
   if (auth.type === 'api-key' && auth.name.trim() && auth.value) {
     if (auth.location === 'query') targetUrl.searchParams.append(auth.name, auth.value)
     else headers.set(auth.name, auth.value)
@@ -217,14 +244,24 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
   let requestBody: BodyInit | undefined
   const canSendBody = !['GET', 'HEAD'].includes(request.method.toUpperCase()) && mode !== 'none'
   if (mode !== 'none' && !(mode === 'form-data' && canSendBody) && !headers.has('Content-Type')) {
-    const contentType = mode === 'form-data' ? 'multipart/form-data'
-      : mode === 'urlencoded' ? 'application/x-www-form-urlencoded;charset=UTF-8'
-        : mode === 'file' ? request.bodyMimeType || 'application/octet-stream'
-          : mode === 'other' ? request.bodyMimeType || 'text/plain'
-            : mode === 'graphql' || mode === 'json' ? 'application/json'
-              : mode === 'xml' ? 'application/xml'
-                : mode === 'yaml' ? 'application/yaml'
-                  : mode === 'edn' ? 'application/edn' : 'text/plain'
+    const contentType =
+      mode === 'form-data'
+        ? 'multipart/form-data'
+        : mode === 'urlencoded'
+          ? 'application/x-www-form-urlencoded;charset=UTF-8'
+          : mode === 'file'
+            ? request.bodyMimeType || 'application/octet-stream'
+            : mode === 'other'
+              ? request.bodyMimeType || 'text/plain'
+              : mode === 'graphql' || mode === 'json'
+                ? 'application/json'
+                : mode === 'xml'
+                  ? 'application/xml'
+                  : mode === 'yaml'
+                    ? 'application/yaml'
+                    : mode === 'edn'
+                      ? 'application/edn'
+                      : 'text/plain'
     headers.set('Content-Type', contentType)
   }
 
@@ -252,17 +289,26 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
       requestBody = new Uint8Array(await readFile(request.bodyPath))
     } else if (mode === 'graphql') {
       let variables: unknown = {}
-      try { variables = JSON.parse(request.bodyVariables || '{}') } catch { throw new Error('GraphQL variables must contain valid JSON.') }
+      try {
+        variables = JSON.parse(request.bodyVariables || '{}')
+      } catch {
+        throw new Error('GraphQL variables must contain valid JSON.')
+      }
       if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
       requestBody = JSON.stringify({ query: request.body ?? '', variables })
     } else {
-      const contentType = mode === 'other'
-        ? request.bodyMimeType || 'text/plain'
-        : mode === 'json' ? 'application/json'
-          : mode === 'xml' ? 'application/xml'
-            : mode === 'yaml' ? 'application/yaml'
-              : mode === 'edn' ? 'application/edn'
-                : 'text/plain'
+      const contentType =
+        mode === 'other'
+          ? request.bodyMimeType || 'text/plain'
+          : mode === 'json'
+            ? 'application/json'
+            : mode === 'xml'
+              ? 'application/xml'
+              : mode === 'yaml'
+                ? 'application/yaml'
+                : mode === 'edn'
+                  ? 'application/edn'
+                  : 'text/plain'
       if (!headers.has('Content-Type')) headers.set('Content-Type', contentType)
       requestBody = request.body ?? ''
     }
@@ -273,17 +319,22 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
     response = await fetch(targetUrl, {
       method: request.method,
       headers,
-      body: requestBody
+      body: requestBody,
     })
   } catch (error) {
     const cause = error && typeof error === 'object' && 'cause' in error ? error.cause : undefined
-    const details = cause && typeof cause === 'object' ? cause as { code?: string; message?: string } : undefined
+    const details = cause && typeof cause === 'object' ? (cause as { code?: string; message?: string }) : undefined
     const code = details?.code
-    const reason = code === 'ECONNREFUSED' ? 'The server refused the connection. Check that the API is running and the host and port are correct.'
-      : code === 'ENOTFOUND' || code === 'EAI_AGAIN' ? 'The hostname could not be resolved. Check the URL and network connection.'
-        : code === 'ETIMEDOUT' ? 'The connection timed out. Check the server and network.'
-          : code?.startsWith('CERT_') || code?.startsWith('ERR_TLS_') ? 'The TLS certificate could not be verified.'
-            : details?.message || (error instanceof Error ? error.message : 'Unknown network error.')
+    const reason =
+      code === 'ECONNREFUSED'
+        ? 'The server refused the connection. Check that the API is running and the host and port are correct.'
+        : code === 'ENOTFOUND' || code === 'EAI_AGAIN'
+          ? 'The hostname could not be resolved. Check the URL and network connection.'
+          : code === 'ETIMEDOUT'
+            ? 'The connection timed out. Check the server and network.'
+            : code?.startsWith('CERT_') || code?.startsWith('ERR_TLS_')
+              ? 'The TLS certificate could not be verified.'
+              : details?.message || (error instanceof Error ? error.message : 'Unknown network error.')
     throw new Error(`Could not reach ${targetUrl.origin}. ${reason}${code ? ` (${code})` : ''}`)
   }
   const body = await response.text()
@@ -293,8 +344,13 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
     statusText: response.statusText,
     duration: Math.round(performance.now() - startedAt),
     headers: Object.fromEntries(response.headers.entries()),
-    cookies: typeof response.headers.getSetCookie === 'function' ? response.headers.getSetCookie() : (response.headers.get('set-cookie') ? [response.headers.get('set-cookie') as string] : []),
-    body
+    cookies:
+      typeof response.headers.getSetCookie === 'function'
+        ? response.headers.getSetCookie()
+        : response.headers.get('set-cookie')
+          ? [response.headers.get('set-cookie') as string]
+          : [],
+    body,
   }
 })
 
@@ -310,7 +366,18 @@ ipcMain.handle('workspace:load', (_event, legacyTree: unknown[]) => {
   if (saved) return loadWorkspaceData(saved.data)
   const tree = Array.isArray(legacyTree) ? legacyTree : []
   const variables = { globals: [], environments: [] }
-  const workspace: LocalWorkspace = { id: 'local-default', cloudId: null, name: 'My workspace', tree, baseTree: tree, variables, baseVariables: variables, activeEnvironmentId: null, baseCommitId: null, localHeadId: null }
+  const workspace: LocalWorkspace = {
+    id: 'local-default',
+    cloudId: null,
+    name: 'My workspace',
+    tree,
+    baseTree: tree,
+    variables,
+    baseVariables: variables,
+    activeEnvironmentId: null,
+    baseCommitId: null,
+    localHeadId: null,
+  }
   db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?)').run(workspace.id, JSON.stringify(workspace))
   return workspace
 })
@@ -323,29 +390,42 @@ ipcMain.handle('workspace:save', (_event, workspace: LocalWorkspace) => {
 })
 
 ipcMain.handle('workspace:list', () => {
-  return (database().prepare('SELECT data FROM workspaces ORDER BY rowid').all() as { data: string }[]).map((row) => loadWorkspaceData(row.data))
+  return (database().prepare('SELECT data FROM workspaces ORDER BY rowid').all() as { data: string }[]).map((row) =>
+    loadWorkspaceData(row.data),
+  )
 })
 
 ipcMain.handle('commit:save', (_event, workspaceId: string, commit: unknown) => {
   if (typeof workspaceId !== 'string' || !commit || typeof commit !== 'object') throw new TypeError('Invalid commit data.')
   const id = (commit as { id?: unknown }).id
   if (typeof id !== 'string') throw new TypeError('Commit id is required.')
-  const safeCommit = { ...(commit as Record<string, unknown>), variables: stripSecretVariableValues((commit as { variables?: WorkspaceVariables }).variables) }
-  database().prepare('INSERT OR REPLACE INTO commits (id, workspace_id, data) VALUES (?, ?, ?)').run(id, workspaceId, JSON.stringify(safeCommit))
+  const safeCommit = {
+    ...(commit as Record<string, unknown>),
+    variables: stripSecretVariableValues((commit as { variables?: WorkspaceVariables }).variables),
+  }
+  database()
+    .prepare('INSERT OR REPLACE INTO commits (id, workspace_id, data) VALUES (?, ?, ?)')
+    .run(id, workspaceId, JSON.stringify(safeCommit))
 })
 
 ipcMain.handle('commit:list', (_event, workspaceId: string) => {
-  return (database().prepare('SELECT data FROM commits WHERE workspace_id = ? ORDER BY rowid').all(workspaceId) as { data: string }[]).map((row) => {
-    const commit = JSON.parse(row.data) as Record<string, unknown>
-    return { ...commit, variables: stripSecretVariableValues(commit.variables as WorkspaceVariables | undefined) }
-  })
+  return (database().prepare('SELECT data FROM commits WHERE workspace_id = ? ORDER BY rowid').all(workspaceId) as { data: string }[]).map(
+    (row) => {
+      const commit = JSON.parse(row.data) as Record<string, unknown>
+      return { ...commit, variables: stripSecretVariableValues(commit.variables as WorkspaceVariables | undefined) }
+    },
+  )
 })
 
 ipcMain.handle('secret:available', () => safeStorage.isEncryptionAvailable())
 
 ipcMain.handle('auth:begin', async (_event, cloudUrl: string) => {
   let base: URL
-  try { base = new URL(cloudUrl) } catch { throw new TypeError('Invalid cloud URL.') }
+  try {
+    base = new URL(cloudUrl)
+  } catch {
+    throw new TypeError('Invalid cloud URL.')
+  }
   if (base.protocol !== 'http:' && base.protocol !== 'https:') throw new TypeError('Cloud URL must be http or https.')
   activeSignIn?.close()
   activeSignIn = await startLoopbackSignIn((code) => {
@@ -371,7 +451,9 @@ ipcMain.handle('session:load', () => {
 ipcMain.handle('session:save', (_event, token: string) => {
   if (!safeStorage.isEncryptionAvailable()) return false
   const encrypted = safeStorage.encryptString(token)
-  database().prepare('INSERT INTO secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run('api-session', encrypted)
+  database()
+    .prepare('INSERT INTO secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+    .run('api-session', encrypted)
   return true
 })
 
@@ -444,7 +526,9 @@ async function requireNodeRuntime(): Promise<NodeRuntimePaths> {
 
 ipcMain.handle('ai:status', () => getAiConnectStatus(app.getPath('userData')))
 ipcMain.handle('ai:install-node', async () => {
-  const status = await installNodeRuntime(join(app.getPath('userData'), 'runtime'), (progress) => sendToWindow('ai:node-progress', progress))
+  const status = await installNodeRuntime(join(app.getPath('userData'), 'runtime'), (progress) =>
+    sendToWindow('ai:node-progress', progress),
+  )
   return status.installed ? status.version : null
 })
 ipcMain.handle('ai:install-tool', async (_event, id: 'codex' | 'claude-cli') => {
@@ -457,7 +541,12 @@ ipcMain.handle('ai:connect', async (_event, id: AiToolId) => {
 })
 
 function showAbout(): void {
-  const options = { type: 'info' as const, title: 'About API Documentation', message: 'API Documentation', detail: `Version ${app.getVersion()}` }
+  const options = {
+    type: 'info' as const,
+    title: 'About API Documentation',
+    message: 'API Documentation',
+    detail: `Version ${app.getVersion()}`,
+  }
   if (mainWindow && !mainWindow.isDestroyed()) void dialog.showMessageBox(mainWindow, options)
   else void dialog.showMessageBox(options)
 }
@@ -474,9 +563,9 @@ function buildApplicationMenu(): Menu {
       submenu: [
         { label: 'Connect AI assistant…', click: () => sendToWindow('menu:connect-ai') },
         { type: 'separator' },
-        { label: 'About API Documentation', click: showAbout }
-      ]
-    }
+        { label: 'About API Documentation', click: showAbout },
+      ],
+    },
   ])
 }
 

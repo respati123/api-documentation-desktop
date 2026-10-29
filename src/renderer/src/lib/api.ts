@@ -9,12 +9,25 @@ export function apiWebSocketUrl(path: string): string {
 }
 
 export type ApiUser = { id: string; email: string }
-export type CloudWorkspace = { id: string; name: string; role: 'owner' | 'editor' | 'viewer'; headCommitId: string; tree?: unknown[]; variables?: WorkspaceVariables }
+export type CloudWorkspace = {
+  id: string
+  name: string
+  role: 'owner' | 'editor' | 'viewer'
+  headCommitId: string
+  tree?: unknown[]
+  variables?: WorkspaceVariables
+}
 export type CloudCommit = { id: string; parentIds: string[]; message: string; createdAt: string }
 export type CloudCommitDetail = CloudCommit & { tree: unknown[]; variables?: WorkspaceVariables }
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number, public data: unknown) { super(message) }
+  constructor(
+    message: string,
+    public status: number,
+    public data: unknown,
+  ) {
+    super(message)
+  }
 }
 
 type RequestOptions = { token?: string; method?: string; body?: unknown }
@@ -28,11 +41,11 @@ async function send(path: string, options: RequestOptions): Promise<unknown> {
     method: options.method || 'GET',
     headers: {
       ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {})
+      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
     },
-    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) })
+    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   })
-  const result = await response.json().catch(() => ({})) as { error?: string }
+  const result = (await response.json().catch(() => ({}))) as { error?: string }
   if (!response.ok) throw new ApiError(result.error || `API request failed (${response.status}).`, response.status, result)
   return result
 }
@@ -49,7 +62,7 @@ export async function apiListAll<T>(path: string, key: string, options: { token?
   for (let page = 0; page < listPageCap; page++) {
     const query = new URLSearchParams({ limit: String(listPageLimit) })
     if (cursor) query.set('cursor', cursor)
-    const result = await send(`${path}?${query}`, options) as ListResult<T>
+    const result = (await send(`${path}?${query}`, options)) as ListResult<T>
     items.push(...readListItems(result, key))
     cursor = readNextCursor(result)
     if (!cursor) return items
@@ -67,4 +80,3 @@ function readNextCursor(result: ListResult<unknown>): string | null {
   const cursor = result.meta?.nextCursor
   return typeof cursor === 'string' ? cursor : null
 }
-

@@ -6,7 +6,9 @@ const inviteHandlers = new Set<(token: string) => void>()
 
 ipcRenderer.on('invite:token', (_event, token: string) => {
   pendingInviteToken = token
-  inviteHandlers.forEach((handler) => handler(token))
+  inviteHandlers.forEach((handler) => {
+    handler(token)
+  })
   if (inviteHandlers.size) pendingInviteToken = null
 })
 
@@ -23,14 +25,20 @@ type UpdateStatus =
   | { state: 'downloaded'; version: string }
   | { state: 'error'; version: string; message: string }
 const updateHandlers = new Set<(status: UpdateStatus) => void>()
-ipcRenderer.on('update:status', (_event, status: UpdateStatus) => updateHandlers.forEach((handler) => handler(status)))
+ipcRenderer.on('update:status', (_event, status: UpdateStatus) =>
+  updateHandlers.forEach((handler) => {
+    handler(status)
+  }),
+)
 
 let pendingAuthCode: string | null = null
 const authCodeHandlers = new Set<(code: string) => void>()
 
 ipcRenderer.on('auth:code', (_event, code: string) => {
   pendingAuthCode = code
-  authCodeHandlers.forEach((handler) => handler(code))
+  authCodeHandlers.forEach((handler) => {
+    handler(code)
+  })
   if (authCodeHandlers.size) pendingAuthCode = null
 })
 
@@ -81,7 +89,9 @@ contextBridge.exposeInMainWorld('apiDesktop', {
   },
   onUpdateStatus: (handler: (status: UpdateStatus) => void) => {
     updateHandlers.add(handler)
-    void ipcRenderer.invoke('update:latest').then((status: UpdateStatus | null) => { if (status) handler(status) })
+    void ipcRenderer.invoke('update:latest').then((status: UpdateStatus | null) => {
+      if (status) handler(status)
+    })
     return () => updateHandlers.delete(handler)
   },
   beginBrowserSignIn: (cloudUrl: string) => ipcRenderer.invoke('auth:begin', cloudUrl) as Promise<void>,
@@ -92,7 +102,7 @@ contextBridge.exposeInMainWorld('apiDesktop', {
       pendingAuthCode = null
     }
     return () => authCodeHandlers.delete(handler)
-  }
+  },
 })
 
 export type LocalWorkspace = {
@@ -124,10 +134,22 @@ export type ApiRequest = {
   url: string
   headers: Array<{ name: string; value: string; enabled: boolean }>
   params?: Array<{ id: string; name: string; value: string; enabled: boolean; description?: string }>
-  auth?: { type: 'none' } | { type: 'bearer'; token: string } | { type: 'basic'; username: string; password: string } | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
+  auth?:
+    | { type: 'none' }
+    | { type: 'bearer'; token: string }
+    | { type: 'basic'; username: string; password: string }
+    | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
   body?: string
   bodyMode?: 'form-data' | 'urlencoded' | 'graphql' | 'json' | 'xml' | 'yaml' | 'edn' | 'text' | 'other' | 'file' | 'none'
-  bodyFields?: Array<{ id: string; name: string; value: string; enabled: boolean; type: 'text' | 'file'; filePath?: string; fileName?: string }>
+  bodyFields?: Array<{
+    id: string
+    name: string
+    value: string
+    enabled: boolean
+    type: 'text' | 'file'
+    filePath?: string
+    fileName?: string
+  }>
   bodyVariables?: string
   bodyMimeType?: string
   bodyPath?: string

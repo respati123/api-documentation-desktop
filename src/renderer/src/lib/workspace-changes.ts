@@ -1,5 +1,10 @@
 import type { SyncFolder, SyncRequest, SyncTreeNode } from './merge'
-import { emptyWorkspaceVariables, shareableWorkspaceVariables, workspaceVariablesChangeId, type WorkspaceVariables } from './workspace-variables'
+import {
+  emptyWorkspaceVariables,
+  shareableWorkspaceVariables,
+  type WorkspaceVariables,
+  workspaceVariablesChangeId,
+} from './workspace-variables'
 
 export type ChangeStatus = 'added' | 'modified' | 'deleted'
 export type WorkspaceChange = { id: string; name: string; status: ChangeStatus }
@@ -30,7 +35,11 @@ function flatten(tree: SyncTreeNode[]) {
 
 function sameEntry(left: FlatNode | undefined, right: FlatNode | undefined) {
   if (!left || !right) return left === right
-  return left.parentId === right.parentId && left.order === right.order && (left.node === right.node || nodeSignature(left.node) === nodeSignature(right.node))
+  return (
+    left.parentId === right.parentId &&
+    left.order === right.order &&
+    (left.node === right.node || nodeSignature(left.node) === nodeSignature(right.node))
+  )
 }
 
 function comparableNode(node: FlatResource): FlatResource {
@@ -43,7 +52,7 @@ export function getWorkspaceChanges(
   baseTree: SyncTreeNode[],
   workingTree: SyncTreeNode[],
   baseVariables: WorkspaceVariables = emptyWorkspaceVariables(),
-  workingVariables: WorkspaceVariables = emptyWorkspaceVariables()
+  workingVariables: WorkspaceVariables = emptyWorkspaceVariables(),
 ): WorkspaceChange[] {
   const base = flatten(baseTree)
   const working = flatten(workingTree)
@@ -81,10 +90,12 @@ export function buildStagedSnapshot(baseTree: SyncTreeNode[], workingTree: SyncT
   }
 
   function build(parentId: string): SyncTreeNode[] {
-    return (childrenByParent.get(parentId) ?? []).sort((a, b) => a[1].order - b[1].order).map(([, entry]) => {
-      if (entry.node.kind === 'request') return entry.node
-      return { ...entry.node, children: build(entry.node.id) }
-    })
+    return (childrenByParent.get(parentId) ?? [])
+      .sort((a, b) => a[1].order - b[1].order)
+      .map(([, entry]) => {
+        if (entry.node.kind === 'request') return entry.node
+        return { ...entry.node, children: build(entry.node.id) }
+      })
   }
   return build('')
 }
