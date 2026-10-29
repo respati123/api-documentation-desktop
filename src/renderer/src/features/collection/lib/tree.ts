@@ -167,6 +167,13 @@ export function appendToFolder(folder: FolderNode, targetId: string, item: ApiNo
   return { ...folder, children: folder.children.map((child) => (isFolder(child) ? appendToFolder(child, targetId, item) : child)) }
 }
 
+// Adds an item at the end of the folder with parentId. A missing parent, or one that is not a folder, adds it at the root.
+export function addToTree(nodes: ApiNode[], parentId: string, item: ApiNode): ApiNode[] {
+  const parent = findNode(nodes, parentId)
+  if (!parent || !isFolder(parent)) return [...nodes, item]
+  return nodes.map((node) => (isFolder(node) ? appendToFolder(node, parent.id, item) : node))
+}
+
 export function firstRequestId(nodes: ApiNode[]): string {
   for (const node of nodes) {
     if (isRequest(node)) return node.id

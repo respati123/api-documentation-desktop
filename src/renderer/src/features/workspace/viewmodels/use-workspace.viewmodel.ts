@@ -2,7 +2,7 @@ import { type FormEvent, useCallback, useEffect, useEffectEvent, useLayoutEffect
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
-  appendToFolder,
+  addToTree,
   clampCollectionWidth,
   collectionWidthLimit,
   collectionWidthStorageKey,
@@ -1202,17 +1202,7 @@ export function useWorkspaceViewModel() {
   function createFolderInTree(parentId: string, name: string) {
     if (isReadOnly) return
     const folder: FolderNode = { id: crypto.randomUUID(), kind: 'folder', name, children: [] }
-    setTree((current) => {
-      const parent = findNode(current, parentId)
-      if (!parent || !isFolder(parent)) return [...current, folder]
-      return current.map((node) =>
-        isFolder(node) && node.id === parent.id
-          ? { ...node, children: [...node.children, folder] }
-          : isFolder(node)
-            ? appendToFolder(node, parent.id, folder)
-            : node,
-      )
-    })
+    setTree((current) => addToTree(current, parentId, folder))
     setSelectedFolderId(folder.id)
     setExpandedFolders((current) => new Set(current).add(folder.id))
   }
@@ -1272,17 +1262,7 @@ export function useWorkspaceViewModel() {
       params: [],
       auth: { type: 'none' },
     }
-    setTree((current) => {
-      const folder = findNode(current, folderId)
-      if (!folder || !isFolder(folder)) return [...current, request]
-      return current.map((node) =>
-        isFolder(node) && node.id === folder.id
-          ? { ...node, children: [...node.children, request] }
-          : isFolder(node)
-            ? appendToFolder(node, folder.id, request)
-            : node,
-      )
-    })
+    setTree((current) => addToTree(current, folderId, request))
     const tab: WorkspaceTab = { kind: 'request', id: request.id }
     setWorkspaceTabs((current) => [...current.filter((item) => workspaceTabKey(item) !== workspaceTabKey(tab)), tab])
     setActiveWorkspaceTabKey(workspaceTabKey(tab))
