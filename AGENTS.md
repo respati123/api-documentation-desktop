@@ -44,6 +44,7 @@ Run the typecheck and build before you hand off any change in `src/`.
 - **MANDATORY: no text literals in views or viewmodels.** A view calls `t(CONSTANT)`, where the constant is an `as const` object in `features/<name>/constants/`. Constants hold locale keys, and the words live in `id` and `en` locale files. Literal or template keys such as `t('list.create')` are not allowed. `src/app/ui-rules.test.ts` enforces this. See `references/i18n.md`.
 - **All imports are absolute, with the `@/` alias** (`@/` points to `src/`). No `../` or `./` imports.
 - **Pages have no logic. Views only render.** All process logic (fetching, handlers, state, derived values) lives in the ViewModel.
+- **Views contain no logic at all.** A view file has no `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, no handler bodies, no conditionals that compute data, no data transforms, and no calls to `window.apiDesktop` or `fetch`. It receives props and renders JSX. Event handlers come in as props from the ViewModel. Anything that needs a decision is computed in the ViewModel and passed down as a plain value. The ViewModel is a hook (`use<Name>.viewmodel.ts`) in `viewmodels/` and it owns every piece of state, effect, and handler the view uses.
 - **No redundant API calls.** Fetch through TanStack Query in a ViewModel. Never fetch in `useEffect`, and never fetch the same data twice.
 - **Performance work uses the vercel-react-best-practices skill**, installed at `.agents/skills/vercel-react-best-practices/`, with the project overrides in `references/performance.md`. React Compiler is on: no manual `useMemo`, `useCallback`, or `React.memo` without a Profiler reason.
 - **All user-facing text is translated** in `id` and `en`. Keys in both languages.
@@ -51,6 +52,7 @@ Run the typecheck and build before you hand off any change in `src/`.
 - **Every route has an error boundary.** Async errors are handled in the ViewModel.
 - **Loading uses skeletons that match the final layout.** Scroll areas hide their scrollbar when there is nothing to scroll.
 - **MVVM with feature folders.** Features import from each other only through `@/features/<name>`.
+- **Reusable UI is shared, never copied.** A component that is used by more than one feature, or that repeats the same markup or behavior, moves to `src/renderer/src/shared/components/` (or `shared/hooks/`, `shared/utils/`) and is imported from there. Two copies of the same component in two features is a defect to fix before the change is done. A component used once stays in its feature.
 - **Every interactive element has a `data-testid`**, format `[feature]-[component]-[element]`.
 - **Types have one owner.** Feature-only types live in `features/<name>/models`. A type used by two or more features lives in `shared/models`, and features import it from there. See `references/architecture.md`.
 - **No `any`.** Validate every API response with a `zod` schema in the service, and infer the type from it.

@@ -1,9 +1,9 @@
 import { memo, useState } from 'react'
-import { DebouncedInput } from '@/components/debounced-field'
 import { Button } from '@/components/ui/button'
-import { VariableInput, type VariableSuggestion } from '@/components/variable-field'
 import type { HeaderField } from '@/lib/merge'
 import type { SavedRequest } from '@/models/workspace.model'
+import { DebouncedInput } from '@/shared/components/debounced-field'
+import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
 
 export type HeaderEditorProps = {
   request: SavedRequest

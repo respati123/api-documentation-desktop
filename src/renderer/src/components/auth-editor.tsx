@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { VariableInput, type VariableSuggestion } from '@/components/variable-field'
 import type { RequestAuth } from '@/lib/merge'
 import type { SavedRequest } from '@/models/workspace.model'
+import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
 
 export function AuthEditor({
   request,

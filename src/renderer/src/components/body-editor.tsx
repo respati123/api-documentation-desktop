@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { VariableInput, type VariableSuggestion, VariableTextarea } from '@/components/variable-field'
 import { type BodyField, type BodyMode, bodyModes } from '@/lib/merge'
 import { cn } from '@/lib/utils'
 import type { SavedRequest } from '@/models/workspace.model'
+import { VariableInput, type VariableSuggestion, VariableTextarea } from '@/shared/components/variable-field'
 
 export const bodyModeLabels: Record<BodyMode, string> = {
   'form-data': 'Form Data',

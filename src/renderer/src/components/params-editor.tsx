@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { DebouncedInput } from '@/components/debounced-field'
 import { Button } from '@/components/ui/button'
-import { VariableInput, type VariableSuggestion } from '@/components/variable-field'
 import type { ParamField } from '@/lib/merge'
 import { cn } from '@/lib/utils'
 import type { SavedRequest } from '@/models/workspace.model'
+import { DebouncedInput } from '@/shared/components/debounced-field'
+import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
 
 export function ParamsEditor({
   request,
