@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { SavedRequest } from '@/features/workspace'
 import { type BodyField, type BodyMode, bodyModes } from '@/lib/merge'
 import { cn } from '@/lib/utils'
+import { LabeledField } from '@/shared/components/labeled-field'
 import { Button } from '@/shared/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { VariableInput, type VariableSuggestion, VariableTextarea } from '@/shared/components/variable-field'
@@ -209,8 +210,7 @@ export function BodyEditor({
       {['json', 'xml', 'yaml', 'edn', 'text', 'other'].includes(mode) && (
         <div className="body-raw-fields">
           {mode === 'other' && (
-            <label className="body-mime-field">
-              <span>Content-Type</span>
+            <LabeledField className="body-mime-field" label="Content-Type">
               <VariableInput
                 aria-label="Body content type"
                 value={request.bodyMimeType ?? 'text/plain'}
@@ -220,7 +220,7 @@ export function BodyEditor({
                 onValueChange={(value) => onChange({ bodyMimeType: value })}
                 placeholder="application/octet-stream"
               />
-            </label>
+            </LabeledField>
           )}
           <VariableTextarea
             className="code-field"

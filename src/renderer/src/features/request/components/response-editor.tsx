@@ -1,5 +1,6 @@
 import type { ResponseContent, ResponseDefinition } from '@/lib/merge'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
+import { SectionHeading } from '@/shared/components/section-heading'
 import { Button } from '@/shared/components/ui/button'
 
 function newContent(): ResponseContent {
@@ -32,15 +33,16 @@ export function ResponseEditor({
 
   return (
     <div className="responses-editor">
-      <div className="responses-editor-heading">
-        <div>
-          <strong>Response contract</strong>
-          <span>Document the status codes and payloads the frontend can expect.</span>
-        </div>
-        <Button type="button" variant="outline" size="sm" disabled={readOnly} onClick={() => onChange([...responses, newResponse()])}>
-          ＋ Add response
-        </Button>
-      </div>
+      <SectionHeading
+        className="responses-editor-heading"
+        title="Response contract"
+        description="Document the status codes and payloads the frontend can expect."
+        action={
+          <Button type="button" variant="outline" size="sm" disabled={readOnly} onClick={() => onChange([...responses, newResponse()])}>
+            ＋ Add response
+          </Button>
+        }
+      />
       {!responses.length && (
         <div className="responses-empty">
           <strong>No responses documented</strong>

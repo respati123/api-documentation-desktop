@@ -1,5 +1,6 @@
 import type { SavedRequest } from '@/features/workspace'
 import type { RequestAuth } from '@/lib/merge'
+import { LabeledField } from '@/shared/components/labeled-field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
 
@@ -44,8 +45,7 @@ export function AuthEditor({
         </Select>
       </label>
       {auth.type === 'bearer' && (
-        <label className="auth-field">
-          <span>Token</span>
+        <LabeledField className="auth-field" label="Token">
           <VariableInput
             aria-label="Bearer token"
             type="password"
@@ -57,12 +57,11 @@ export function AuthEditor({
             onValueChange={(value) => updateAuth({ token: value })}
             placeholder="Enter token"
           />
-        </label>
+        </LabeledField>
       )}
       {auth.type === 'basic' && (
         <div className="auth-field-grid">
-          <label className="auth-field">
-            <span>Username</span>
+          <LabeledField className="auth-field" label="Username">
             <VariableInput
               aria-label="Basic auth username"
               autoComplete="off"
@@ -73,9 +72,8 @@ export function AuthEditor({
               onValueChange={(value) => updateAuth({ username: value })}
               placeholder="Username"
             />
-          </label>
-          <label className="auth-field">
-            <span>Password</span>
+          </LabeledField>
+          <LabeledField className="auth-field" label="Password">
             <VariableInput
               aria-label="Basic auth password"
               type="password"
@@ -87,13 +85,12 @@ export function AuthEditor({
               onValueChange={(value) => updateAuth({ password: value })}
               placeholder="Password"
             />
-          </label>
+          </LabeledField>
         </div>
       )}
       {auth.type === 'api-key' && (
         <div className="auth-field-grid">
-          <label className="auth-field">
-            <span>Key</span>
+          <LabeledField className="auth-field" label="Key">
             <VariableInput
               aria-label="API key name"
               autoComplete="off"
@@ -104,9 +101,8 @@ export function AuthEditor({
               onValueChange={(value) => updateAuth({ name: value })}
               placeholder="e.g. X-API-Key"
             />
-          </label>
-          <label className="auth-field">
-            <span>Value</span>
+          </LabeledField>
+          <LabeledField className="auth-field" label="Value">
             <VariableInput
               aria-label="API key value"
               type="password"
@@ -118,9 +114,8 @@ export function AuthEditor({
               onValueChange={(value) => updateAuth({ value })}
               placeholder="Enter API key"
             />
-          </label>
-          <label className="auth-field">
-            <span>Add to</span>
+          </LabeledField>
+          <LabeledField className="auth-field" label="Add to">
             <Select
               value={auth.location}
               onValueChange={(location) => updateAuth({ location: location as 'header' | 'query' })}
@@ -134,7 +129,7 @@ export function AuthEditor({
                 <SelectItem value="query">Query params</SelectItem>
               </SelectContent>
             </Select>
-          </label>
+          </LabeledField>
         </div>
       )}
       {auth.type === 'none' && <p className="auth-help">This request will not add an authorization header.</p>}

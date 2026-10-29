@@ -3,6 +3,7 @@ import type { SavedRequest } from '@/features/workspace'
 import type { ParamField } from '@/lib/merge'
 import { cn } from '@/lib/utils'
 import { DebouncedInput } from '@/shared/components/debounced-field'
+import { KeyValueTable } from '@/shared/components/key-value-table'
 import { Button } from '@/shared/components/ui/button'
 import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
 
@@ -45,67 +46,60 @@ export function ParamsEditor({
         </Button>
         <span className="params-count">{params.length} params</span>
       </div>
-      <div className="params-table" role="table" aria-label="Query parameters">
-        <div className={cn('params-heading', showDescriptions && 'params-heading-with-description')} role="row">
-          <span aria-hidden="true" />
-          <span role="columnheader">Parameter</span>
-          <span role="columnheader">Value</span>
-          {showDescriptions && <span role="columnheader">Description</span>}
-          <span aria-hidden="true" />
-        </div>
-        {params.map((param, index) => (
-          <div className="params-entry" key={param.id}>
-            <div className={cn('params-row', showDescriptions && 'params-row-with-description')} role="row">
-              <input
-                aria-label={`Enable parameter ${index + 1}`}
-                className="param-enabled"
-                type="checkbox"
-                checked={param.enabled}
-                disabled={readOnly}
-                onChange={(event) => updateParam(param.id, { enabled: event.target.checked })}
-              />
-              <VariableInput
-                aria-label={`Parameter name ${index + 1}`}
-                value={param.name}
-                suggestions={suggestions}
-                onVariableClick={onVariableClick}
+      <KeyValueTable
+        label="Query parameters"
+        columns={[null, 'Parameter', 'Value', showDescriptions ? 'Description' : false]}
+        rows={params}
+        readOnly={readOnly}
+        classNames={{
+          table: 'params-table',
+          heading: cn('params-heading', showDescriptions && 'params-heading-with-description'),
+          entry: 'params-entry',
+          row: cn('params-row', showDescriptions && 'params-row-with-description'),
+          remove: 'param-remove',
+        }}
+        renderCells={(param, index) => (
+          <>
+            <input
+              aria-label={`Enable parameter ${index + 1}`}
+              className="param-enabled"
+              type="checkbox"
+              checked={param.enabled}
+              disabled={readOnly}
+              onChange={(event) => updateParam(param.id, { enabled: event.target.checked })}
+            />
+            <VariableInput
+              aria-label={`Parameter name ${index + 1}`}
+              value={param.name}
+              suggestions={suggestions}
+              onVariableClick={onVariableClick}
+              readOnly={readOnly}
+              placeholder="Parameter"
+              onValueChange={(value) => updateParam(param.id, { name: value })}
+            />
+            <VariableInput
+              aria-label={`Parameter value ${index + 1}`}
+              value={param.value}
+              suggestions={suggestions}
+              onVariableClick={onVariableClick}
+              readOnly={readOnly}
+              placeholder="Value"
+              onValueChange={(value) => updateParam(param.id, { value })}
+            />
+            {showDescriptions && (
+              <DebouncedInput
+                aria-label={`Description for parameter ${index + 1}`}
+                value={param.description ?? ''}
                 readOnly={readOnly}
-                placeholder="Parameter"
-                onValueChange={(value) => updateParam(param.id, { name: value })}
+                placeholder="Description"
+                onValueChange={(value) => updateParam(param.id, { description: value })}
               />
-              <VariableInput
-                aria-label={`Parameter value ${index + 1}`}
-                value={param.value}
-                suggestions={suggestions}
-                onVariableClick={onVariableClick}
-                readOnly={readOnly}
-                placeholder="Value"
-                onValueChange={(value) => updateParam(param.id, { value })}
-              />
-              {showDescriptions && (
-                <DebouncedInput
-                  aria-label={`Description for parameter ${index + 1}`}
-                  value={param.description ?? ''}
-                  readOnly={readOnly}
-                  placeholder="Description"
-                  onValueChange={(value) => updateParam(param.id, { description: value })}
-                />
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="param-remove"
-                aria-label={`Delete parameter ${index + 1}`}
-                disabled={readOnly}
-                onClick={() => onChange({ params: params.filter((item) => item.id !== param.id) })}
-              >
-                ×
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+            )}
+          </>
+        )}
+        removeLabel={(_param, index) => `Delete parameter ${index + 1}`}
+        onRemove={(param) => onChange({ params: params.filter((item) => item.id !== param.id) })}
+      />
     </div>
   )
 }

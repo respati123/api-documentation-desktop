@@ -1,4 +1,5 @@
 import type { WorkspaceVariable } from '@/lib/workspace-variables'
+import { KeyValueTable } from '@/shared/components/key-value-table'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 
@@ -17,15 +18,14 @@ export function VariableRows({
 
   return (
     <div className="variable-scope-body">
-      <div className="variable-table" role="table" aria-label="Variables">
-        <div className="variable-table-heading" role="row">
-          <span role="columnheader">Name</span>
-          <span role="columnheader">Value</span>
-          <span role="columnheader">Secret</span>
-          <span aria-hidden="true" />
-        </div>
-        {rows.map((row, index) => (
-          <div className="variable-table-row" role="row" key={row.id}>
+      <KeyValueTable
+        label="Variables"
+        columns={['Name', 'Value', 'Secret']}
+        rows={rows}
+        readOnly={readOnly}
+        classNames={{ table: 'variable-table', heading: 'variable-table-heading', row: 'variable-table-row', remove: 'variable-remove' }}
+        renderCells={(row, index) => (
+          <>
             <Input
               aria-label={`Variable name ${index + 1}`}
               maxLength={160}
@@ -52,21 +52,12 @@ export function VariableRows({
               />
               <span>Secret</span>
             </label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="variable-remove"
-              aria-label={`Delete variable ${row.name || index + 1}`}
-              disabled={readOnly}
-              onClick={() => onChange(rows.filter((item) => item.id !== row.id))}
-            >
-              ×
-            </Button>
-          </div>
-        ))}
-        {!rows.length && <p className="variable-empty">No variables yet.</p>}
-      </div>
+          </>
+        )}
+        removeLabel={(row, index) => `Delete variable ${row.name || index + 1}`}
+        onRemove={(row) => onChange(rows.filter((item) => item.id !== row.id))}
+        empty={!rows.length && <p className="variable-empty">No variables yet.</p>}
+      />
       <Button
         type="button"
         variant="outline"

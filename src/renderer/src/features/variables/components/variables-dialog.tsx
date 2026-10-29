@@ -3,6 +3,7 @@ import { VariableRows } from '@/features/variables/components/variable-rows'
 import { cn } from '@/lib/utils'
 import type { WorkspaceEnvironment, WorkspaceVariable, WorkspaceVariables } from '@/lib/workspace-variables'
 import { AppDialog } from '@/shared/components/app-dialog'
+import { SectionHeading } from '@/shared/components/section-heading'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Select } from '@/shared/components/ui/select'
@@ -96,13 +97,12 @@ export function VariablesDialog({
         </TabsContent>
         <TabsContent value="environment" className="variables-pane">
           <section className="environment-list-section" aria-label="Environment list">
-            <div className="environment-section-heading">
-              <div>
-                <strong>Environment list</strong>
-                <span>Choose one to edit. Requests use the active environment.</span>
-              </div>
-              <span className="environment-total">{variables.environments.length} / 100</span>
-            </div>
+            <SectionHeading
+              className="environment-section-heading"
+              title="Environment list"
+              description="Choose one to edit. Requests use the active environment."
+              action={<span className="environment-total">{variables.environments.length} / 100</span>}
+            />
             <div className="environment-list" role="group" aria-label="Choose active environment">
               <button
                 type="button"
