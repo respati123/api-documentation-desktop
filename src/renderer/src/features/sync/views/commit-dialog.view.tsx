@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import type { useCommitDialogViewModel } from '@/features/sync/viewmodels/use-commit-dialog.viewmodel'
 import { ChangeRow, HistoryChangeRow } from '@/features/sync/views/change-rows.view'
 import type { TextDiffRow } from '@/lib/text-diff'
+import { plainButtonClass } from '@/shared/components/plain-button'
 import { Button } from '@/shared/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import { Input } from '@/shared/components/ui/input'
@@ -68,9 +69,16 @@ function ChangesPane({ changes }: { changes: CommitDialogViewProps['changes'] })
             <div className="change-list-heading">
               <strong>{changes.stagedHeading}</strong>
               <span>{changes.stagedCount}</span>
-              <button type="button" className="text-action" onClick={changes.onUnstageAll} disabled={!changes.canUnstageAll}>
+              <Button
+                type="button"
+                variant="ghost"
+                className={cn(plainButtonClass, 'text-action')}
+                data-testid="commit-dialog-unstage-all"
+                onClick={changes.onUnstageAll}
+                disabled={!changes.canUnstageAll}
+              >
                 {changes.unstageAllLabel}
-              </button>
+              </Button>
             </div>
             {changes.stagedRows.length ? (
               changes.stagedRows.map((row) => (
@@ -91,9 +99,16 @@ function ChangesPane({ changes }: { changes: CommitDialogViewProps['changes'] })
             <div className="change-list-heading">
               <strong>{changes.unstagedHeading}</strong>
               <span>{changes.unstagedCount}</span>
-              <button type="button" className="text-action" onClick={changes.onStageAll} disabled={!changes.canStageAll}>
+              <Button
+                type="button"
+                variant="ghost"
+                className={cn(plainButtonClass, 'text-action')}
+                data-testid="commit-dialog-stage-all"
+                onClick={changes.onStageAll}
+                disabled={!changes.canStageAll}
+              >
                 {changes.stageAllLabel}
-              </button>
+              </Button>
             </div>
             {changes.unstagedRows.length ? (
               changes.unstagedRows.map((row) => (
@@ -157,10 +172,12 @@ function HistoryPane({ history }: { history: CommitDialogViewProps['history'] })
           )}
           {history.emptyText && <p className="change-empty">{history.emptyText}</p>}
           {history.commits.map((commit) => (
-            <button
+            <Button
               key={commit.id}
               type="button"
-              className={cn('history-commit-row', commit.selected && 'history-commit-row-selected')}
+              variant="ghost"
+              className={cn(plainButtonClass, 'history-commit-row', commit.selected && 'history-commit-row-selected')}
+              data-testid="commit-dialog-history-commit"
               aria-pressed={commit.selected}
               onClick={() => history.onSelectCommit(commit.id)}
             >
@@ -169,7 +186,7 @@ function HistoryPane({ history }: { history: CommitDialogViewProps['history'] })
                 <strong title={commit.message}>{commit.message}</strong>
                 <small>{commit.date}</small>
               </span>
-            </button>
+            </Button>
           ))}
         </section>
         {history.selectedCommit && (
@@ -223,18 +240,29 @@ export function CommitDialogView(props: CommitDialogViewProps): ReactElement {
           <DialogDescription>{props.description}</DialogDescription>
         </DialogHeader>
         <div className="commit-view-tabs" role="tablist" aria-label={props.tabs.label}>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             role="tab"
+            className={plainButtonClass}
+            data-testid="commit-dialog-tab-changes"
             aria-selected={props.tabs.view === 'changes'}
             disabled={props.tabs.changesDisabled}
             onClick={() => props.tabs.onSelect('changes')}
           >
             {props.tabs.changesLabel} <span>{props.tabs.changesCount}</span>
-          </button>
-          <button type="button" role="tab" aria-selected={props.tabs.view === 'history'} onClick={() => props.tabs.onSelect('history')}>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            role="tab"
+            className={plainButtonClass}
+            data-testid="commit-dialog-tab-history"
+            aria-selected={props.tabs.view === 'history'}
+            onClick={() => props.tabs.onSelect('history')}
+          >
             {props.tabs.historyLabel} <span>{props.tabs.historyCount}</span>
-          </button>
+          </Button>
         </div>
         {props.tabs.view === 'changes' ? <ChangesPane changes={props.changes} /> : <HistoryPane history={props.history} />}
       </DialogContent>

@@ -14,6 +14,8 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { plainButtonClass } from '@/shared/components/plain-button'
+import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { cn } from '@/shared/utils/cn'
@@ -269,12 +271,14 @@ function SuggestionsMenu({
   return createPortal(
     <div id={id} className="variable-suggestions" role="listbox" aria-label="Environment variable suggestions" style={position}>
       {items.map((item, index) => (
-        <button
+        <Button
           type="button"
+          variant="ghost"
           role="option"
           id={`${id}-option-${index}`}
           aria-selected={index === selectedIndex}
-          className={cn('variable-suggestion', index === selectedIndex && 'variable-suggestion-active')}
+          className={cn(plainButtonClass, 'variable-suggestion', index === selectedIndex && 'variable-suggestion-active')}
+          data-testid="variable-field-suggestion"
           key={`${item.scope}-${item.name}`}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => onChoose(item.name)}
@@ -282,7 +286,7 @@ function SuggestionsMenu({
           <span className="variable-suggestion-mark">{'{{'}</span>
           <span className="variable-suggestion-name">{item.name}</span>
           <span className="variable-suggestion-scope">{item.scope}</span>
-        </button>
+        </Button>
       ))}
     </div>,
     document.body,

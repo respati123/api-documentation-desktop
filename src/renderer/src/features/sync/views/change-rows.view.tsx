@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react'
 import { changeStatusCode } from '@/features/sync/lib/change-status'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
+import { plainButtonClass } from '@/shared/components/plain-button'
+import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/utils/cn'
 
 export function ChangeRow({
@@ -19,12 +21,25 @@ export function ChangeRow({
   return (
     <div className={cn('change-row', selected && 'change-row-selected')}>
       <span className={`change-badge change-${change.status}`}>{changeStatusCode(change.status)}</span>
-      <button type="button" className="change-name" aria-pressed={selected} onClick={onSelect}>
+      <Button
+        type="button"
+        variant="ghost"
+        className={cn(plainButtonClass, 'change-name')}
+        aria-pressed={selected}
+        data-testid="commit-dialog-change-select"
+        onClick={onSelect}
+      >
         {change.name}
-      </button>
-      <button type="button" className="text-action" onClick={onAction}>
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        className={cn(plainButtonClass, 'text-action')}
+        data-testid="commit-dialog-change-action"
+        onClick={onAction}
+      >
         {actionLabel}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -41,15 +56,17 @@ export function HistoryChangeRow({
   statusText: string
 }): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className={cn('history-change-row', selected && 'history-change-row-selected')}
+      variant="ghost"
+      className={cn(plainButtonClass, 'history-change-row', selected && 'history-change-row-selected')}
+      data-testid="commit-dialog-history-change"
       aria-pressed={selected}
       onClick={onSelect}
     >
       <span className={`change-badge change-${change.status}`}>{changeStatusCode(change.status)}</span>
       <span>{change.name}</span>
       <small>{statusText}</small>
-    </button>
+    </Button>
   )
 }

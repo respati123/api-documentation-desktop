@@ -1,7 +1,9 @@
 import type { ReactElement } from 'react'
 import type { useAuthDialogViewModel } from '@/features/sync/viewmodels/use-auth-dialog.viewmodel'
 import { AppDialog } from '@/shared/components/app-dialog'
+import { plainButtonClass } from '@/shared/components/plain-button'
 import { Button } from '@/shared/components/ui/button'
+import { cn } from '@/shared/utils/cn'
 
 export type AuthDialogViewProps = ReturnType<typeof useAuthDialogViewModel>
 
@@ -44,9 +46,15 @@ export function AuthDialogView({
             </Button>
           )}
           {pending && (
-            <button className="dialog-link" type="button" onClick={onSignIn}>
+            <Button
+              variant="ghost"
+              className={cn(plainButtonClass, 'dialog-link')}
+              type="button"
+              data-testid="auth-dialog-retry"
+              onClick={onSignIn}
+            >
               {retryLabel}
-            </button>
+            </Button>
           )}
         </div>
       </AppDialog>
