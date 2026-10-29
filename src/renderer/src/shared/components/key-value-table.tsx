@@ -33,7 +33,10 @@ export function KeyValueTable<T extends { id: string }>({
   empty?: ReactNode
 }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change
     <div className={classNames.table} role="table" aria-label={label}>
+      {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
+      {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
       <div className={classNames.heading} role="row">
         {columns.map((column, index) => {
           if (column === false) return null
@@ -43,6 +46,8 @@ export function KeyValueTable<T extends { id: string }>({
             <span key={index} aria-hidden="true" />
           ) : (
             // biome-ignore lint/suspicious/noArrayIndexKey: columns are fixed and carry no id
+            // biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change
+            // biome-ignore lint/a11y/useFocusableInteractive: the column heading is a layout container, not a control
             <span key={index} role="columnheader">
               {column}
             </span>
@@ -52,6 +57,8 @@ export function KeyValueTable<T extends { id: string }>({
       </div>
       {rows.map((row, index) => (
         <KeyValueEntry key={row.id} className={classNames.entry}>
+          {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
+          {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
           <div className={classNames.row} role="row">
             {renderCells(row, index)}
             <Button

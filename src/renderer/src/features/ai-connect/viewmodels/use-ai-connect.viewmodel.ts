@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AI_CONNECT_TEXT } from '@/features/ai-connect/constants/ai-connect-text.constants'
 import { type AiToolId, installableToolSchema } from '@/features/ai-connect/models/ai-connect.model'
@@ -51,7 +51,8 @@ export function useAiConnectViewModel() {
     setOpen(true)
   }
 
-  useEffect(() => aiConnectService.onMenuOpen(openDialog), [])
+  const handleMenuOpen = useEffectEvent(openDialog)
+  useEffect(() => aiConnectService.onMenuOpen(() => handleMenuOpen()), [])
 
   useEffect(() => {
     if (!open) return

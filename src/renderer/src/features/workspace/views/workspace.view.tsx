@@ -148,6 +148,7 @@ export function WorkspaceView({
   accountMenuRef,
   aiConnect,
   updateStatus,
+  onDownloadUpdate,
   setUpdateStatus,
   signOut,
   activateWorkspace,
@@ -267,6 +268,7 @@ export function WorkspaceView({
             </button>
             {changeById.has(node.id) && (
               <span
+                role="img"
                 className={`change-badge change-${changeById.get(node.id)?.status}`}
                 aria-label={`${changeStatusText(changeById.get(node.id)?.status)}: ${node.name}`}
               >
@@ -320,6 +322,7 @@ export function WorkspaceView({
             </span>
             {changeById.has(node.id) && (
               <span
+                role="img"
                 className={`change-badge change-${changeById.get(node.id)?.status}`}
                 aria-label={`${changeStatusText(changeById.get(node.id)?.status)}: ${node.name}`}
               >
@@ -400,7 +403,7 @@ export function WorkspaceView({
             </div>
           )}
           {updateStatus?.state === 'available' && (
-            <Button size="sm" onClick={() => void window.apiDesktop.downloadUpdate(updateStatus.version)}>
+            <Button size="sm" onClick={() => void onDownloadUpdate(updateStatus.version)}>
               Update to v{updateStatus.version}
             </Button>
           )}
@@ -626,6 +629,7 @@ export function WorkspaceView({
                 <button
                   type="button"
                   role="menuitem"
+                  // biome-ignore lint/a11y/noAutofocus: an open menu moves focus to its first item, as the menu pattern expects
                   autoFocus
                   onClick={() => {
                     setSyncMenuOpen(false)
@@ -710,6 +714,7 @@ export function WorkspaceView({
             <WorkspaceStorageIcon kind={activeWorkspace?.cloudId ? 'cloud' : 'local'} className="sidebar-sync-trigger-icon" />
             <span className="sidebar-sync-trigger-label">Changes</span>
             {workspaceChanges.length > 0 && <span className="sidebar-sync-trigger-count">{workspaceChanges.length}</span>}
+            {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the label summarizes the children, which stay readable */}
             <span
               className="sidebar-sync-trigger-meta"
               aria-label={`${activeWorkspace?.cloudId ? `${pendingPushCount} commits to push` : 'Saved locally'}${cloudUpdateAvailable ? ', cloud update available' : ''}`}
@@ -754,6 +759,7 @@ export function WorkspaceView({
         </div>
       </aside>
 
+      {/* biome-ignore lint/a11y/useSemanticElements: a resizer needs a separator with value controls, which hr does not offer */}
       <div
         className="sidebar-resizer"
         role="separator"
@@ -813,7 +819,7 @@ export function WorkspaceView({
                     )}
                     <span className="workspace-tab-title">{title}</span>
                     {tab.kind !== 'environment' && request && isRequest(request) && changeById.has(request.id) && (
-                      <span className="workspace-tab-change" aria-label="Has uncommitted changes" />
+                      <span className="workspace-tab-change" role="img" aria-label="Has uncommitted changes" />
                     )}
                   </button>
                   <button
@@ -895,20 +901,16 @@ export function WorkspaceView({
               />
             </section>
           )
+        ) : requestWorkbench ? (
+          <RequestWorkbenchPage {...requestWorkbench} />
         ) : (
-          <>
-            {requestWorkbench ? (
-              <RequestWorkbenchPage {...requestWorkbench} />
-            ) : (
-              <section className="request-card">
-                <StateMessage
-                  testId="workspace-main-no-request-state"
-                  title="No request selected"
-                  description="Choose a request or create one in the selected folder."
-                />
-              </section>
-            )}
-          </>
+          <section className="request-card">
+            <StateMessage
+              testId="workspace-main-no-request-state"
+              title="No request selected"
+              description="Choose a request or create one in the selected folder."
+            />
+          </section>
         )}
       </section>
       {contextMenu && !isReadOnly && (
@@ -929,7 +931,13 @@ export function WorkspaceView({
               } else if (event.key === 'Escape') setContextMenu(null)
             }}
           >
-            <button type="button" role="menuitem" autoFocus onClick={() => openCreateFolder(contextMenu.parentFolderId)}>
+            <button
+              type="button"
+              role="menuitem"
+              // biome-ignore lint/a11y/noAutofocus: an open menu moves focus to its first item, as the menu pattern expects
+              autoFocus
+              onClick={() => openCreateFolder(contextMenu.parentFolderId)}
+            >
               <span aria-hidden="true">＋</span>Create folder
             </button>
             <button type="button" role="menuitem" onClick={createRequestFromMenu}>
@@ -940,6 +948,7 @@ export function WorkspaceView({
                 const target = treeIndex.nodeById.get(contextMenu.targetNodeId)
                 return target && isFolder(target) ? (
                   <>
+                    {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
                     <div className="tree-context-menu-divider" role="separator" />
                     <button type="button" role="menuitem" onClick={renameFolderFromMenu}>
                       <span aria-hidden="true">✎</span>Rename folder
@@ -950,6 +959,7 @@ export function WorkspaceView({
                   </>
                 ) : target && isRequest(target) ? (
                   <>
+                    {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
                     <div className="tree-context-menu-divider" role="separator" />
                     <button type="button" role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
                       <span aria-hidden="true">×</span>Delete request
@@ -1235,8 +1245,10 @@ export function WorkspaceView({
                       <span>Previous</span>
                       <span>Working tree</span>
                     </div>
+                    {/* biome-ignore lint/a11y/useSemanticElements: the diff pane is a labelled region with a scroll container, which keeps its current layout */}
                     <div className="diff-scroll" role="region" aria-label={`Diff for ${selectedChange.name}`}>
                       {diffRows.map((row, index) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: diff rows have no id, and the list is rebuilt whole each time it changes
                         <div className="diff-row" key={`${row.kind}-${row.leftLine ?? 'x'}-${row.rightLine ?? 'x'}-${index}`}>
                           <div className={`diff-cell ${row.kind === 'removed' ? 'diff-cell-removed' : ''}`}>
                             <span className="diff-gutter">{row.leftLine ?? ''}</span>
@@ -1346,8 +1358,10 @@ export function WorkspaceView({
                       <span>Parent version</span>
                       <span>{selectedHistoryCommit.message}</span>
                     </div>
+                    {/* biome-ignore lint/a11y/useSemanticElements: the diff pane is a labelled region with a scroll container, which keeps its current layout */}
                     <div className="diff-scroll" role="region" aria-label={`Commit diff for ${selectedHistoryChange.name}`}>
                       {historyDiffRows.map((row, index) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: diff rows have no id, and the list is rebuilt whole each time it changes
                         <div className="diff-row" key={`${row.kind}-${row.leftLine ?? 'x'}-${row.rightLine ?? 'x'}-${index}`}>
                           <div className={`diff-cell ${row.kind === 'removed' ? 'diff-cell-removed' : ''}`}>
                             <span className="diff-gutter">{row.leftLine ?? ''}</span>

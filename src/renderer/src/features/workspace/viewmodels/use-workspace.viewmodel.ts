@@ -36,6 +36,9 @@ import type {
   WorkspaceTab,
   WorkspaceUpdateEvent,
 } from '@/features/workspace/models/workspace.model'
+import { appUpdateService } from '@/features/workspace/services/app-update.service'
+import { sessionService } from '@/features/workspace/services/session.service'
+import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import {
   ApiError,
   type ApiUser,
@@ -205,7 +208,7 @@ export function useWorkspaceViewModel() {
   useEffect(() => {
     let active = true
     const legacyTree = readTree()
-    void window.apiDesktop
+    void workspaceStorageService
       .secureStorageAvailable()
       .then((available) => {
         if (active) setSecureStorageAvailable(available)
@@ -213,10 +216,10 @@ export function useWorkspaceViewModel() {
       .catch(() => {
         if (active) setSecureStorageAvailable(false)
       })
-    void window.apiDesktop
+    void workspaceStorageService
       .loadWorkspace(legacyTree)
       .then(async (defaultWorkspace) => {
-        const storedRecords = await window.apiDesktop.listWorkspaces()
+        const storedRecords = await workspaceStorageService.listWorkspaces()
         if (!active) return
         const records = storedRecords.map((item) => ({
           ...item,
@@ -256,8 +259,8 @@ export function useWorkspaceViewModel() {
         setStorageLoaded(true)
       })
       .catch((error) => setAuthError(error instanceof Error ? error.message : 'Could not load local workspace.'))
-    void window.apiDesktop
-      .loadSession()
+    void sessionService
+      .load()
       .then(async (token) => {
         if (!token || !active) return
         try {
@@ -266,7 +269,7 @@ export function useWorkspaceViewModel() {
           setSessionToken(token)
           setUser(result.user)
         } catch {
-          await window.apiDesktop.clearSession()
+          await sessionService.clear()
         }
       })
       .catch(() => undefined)
@@ -277,8 +280,8 @@ export function useWorkspaceViewModel() {
 
   useEffect(
     () =>
-      window.apiDesktop.onExternalWorkspaceChange(() => {
-        void window.apiDesktop
+      workspaceStorageService.onExternalChange(() => {
+        void workspaceStorageService
           .listWorkspaces()
           .then((storedRecords) => {
             const records = storedRecords.map((item) => ({
@@ -338,7 +341,7 @@ export function useWorkspaceViewModel() {
         if (!active) return
         setCloudWorkspaces(workspaces)
         if (records.length) {
-          await Promise.all(records.map((record) => window.apiDesktop.saveWorkspace(record)))
+          await Promise.all(records.map((record) => workspaceStorageService.saveWorkspace(record)))
           setLocalWorkspaces((current) => {
             const localOnly = current.filter((item) => !item.cloudId)
             return [...localOnly, ...records]
@@ -359,20 +362,20 @@ export function useWorkspaceViewModel() {
     if (!current) return
     const pending = pendingWorkspaceSaveRef.current
     if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
-    if (pending && pending.id !== currentWorkspaceId) void window.apiDesktop.saveWorkspace(pending)
+    if (pending && pending.id !== currentWorkspaceId) void workspaceStorageService.saveWorkspace(pending)
     pendingWorkspaceSaveRef.current = { ...current, tree: tree as unknown[], variables: workspaceVariables, activeEnvironmentId }
     workspaceSaveTimerRef.current = window.setTimeout(() => {
       const latest = pendingWorkspaceSaveRef.current
       pendingWorkspaceSaveRef.current = null
       workspaceSaveTimerRef.current = undefined
-      if (latest) void window.apiDesktop.saveWorkspace(latest)
+      if (latest) void workspaceStorageService.saveWorkspace(latest)
     }, 350)
   }, [tree, workspaceVariables, activeEnvironmentId, localWorkspaces, currentWorkspaceId, storageLoaded])
 
   useEffect(
     () => () => {
       if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
-      if (pendingWorkspaceSaveRef.current) void window.apiDesktop.saveWorkspace(pendingWorkspaceSaveRef.current)
+      if (pendingWorkspaceSaveRef.current) void workspaceStorageService.saveWorkspace(pendingWorkspaceSaveRef.current)
     },
     [],
   )
@@ -412,7 +415,7 @@ export function useWorkspaceViewModel() {
       return
     }
     let active = true
-    void window.apiDesktop
+    void workspaceStorageService
       .listCommits(currentWorkspaceId)
       .then((commits) => {
         if (active) setLocalCommits(commits as LocalCommit[])
@@ -795,7 +798,7 @@ export function useWorkspaceViewModel() {
 
   useEffect(
     () =>
-      window.apiDesktop.onInviteToken((token) => {
+      sessionService.onInviteToken((token) => {
         setInviteTokenDraft(token)
         if (sessionTokenRef.current) setTeamDialogOpen(true)
         else setAuthOpenRequest((current) => current + 1)
@@ -850,11 +853,11 @@ export function useWorkspaceViewModel() {
   const beginBrowserSignIn = useCallback(async () => {
     setAuthError('')
     const cloudUrl = (import.meta.env.VITE_CLOUD_URL || 'http://localhost:5174').replace(/\/+$/, '')
-    await window.apiDesktop.beginBrowserSignIn(cloudUrl)
+    await sessionService.beginBrowserSignIn(cloudUrl)
   }, [])
   useEffect(
     () =>
-      window.apiDesktop.onAuthCode((code) => {
+      sessionService.onAuthCode((code) => {
         void (async () => {
           try {
             const result = await apiCall<{ token: string; user: ApiUser }>('/api/desktop-login/exchange', {
@@ -863,7 +866,7 @@ export function useWorkspaceViewModel() {
             })
             setSessionToken(result.token)
             setUser(result.user)
-            const saved = await window.apiDesktop.saveSession(result.token)
+            const saved = await sessionService.save(result.token)
             if (!saved) setSyncStatus('Session will last until the app closes because secure storage is unavailable on this system.')
             if (inviteTokenDraft) setTeamDialogOpen(true)
           } catch (error) {
@@ -897,11 +900,11 @@ export function useWorkspaceViewModel() {
     | { state: 'error'; version: string; message: string }
     | null
   >(null)
-  useEffect(() => window.apiDesktop.onUpdateStatus(setUpdateStatus), [])
+  useEffect(() => appUpdateService.onStatus(setUpdateStatus), [])
 
   async function signOut() {
     if (sessionToken) await apiCall('/api/auth/logout', { token: sessionToken, method: 'POST' }).catch(() => undefined)
-    await window.apiDesktop.clearSession()
+    await sessionService.clear()
     setSessionToken(null)
     setUser(null)
     setCloudWorkspaces([])
@@ -916,7 +919,7 @@ export function useWorkspaceViewModel() {
     const pending = pendingWorkspaceSaveRef.current
     pendingWorkspaceSaveRef.current = null
     workspaceSaveTimerRef.current = undefined
-    if (pending) void window.apiDesktop.saveWorkspace(pending)
+    if (pending) void workspaceStorageService.saveWorkspace(pending)
     setLocalWorkspaces((current) =>
       current.map((item) =>
         item.id === currentWorkspaceId ? { ...item, tree: tree as unknown[], variables: workspaceVariables, activeEnvironmentId } : item,
@@ -966,7 +969,7 @@ export function useWorkspaceViewModel() {
         localHeadId: result.workspace.headCommitId,
         role: 'owner',
       }
-      await window.apiDesktop.saveWorkspace(workspace)
+      await workspaceStorageService.saveWorkspace(workspace)
       setLocalWorkspaces((current) => [...current, workspace])
       setCloudWorkspaces((current) => [...current, result.workspace])
       setCloudWorkspaceName('')
@@ -1043,7 +1046,7 @@ export function useWorkspaceViewModel() {
         localHeadId: result.workspace.headCommitId,
         role: result.workspace.role,
       }
-      await window.apiDesktop.saveWorkspace(workspace)
+      await workspaceStorageService.saveWorkspace(workspace)
       setLocalWorkspaces((current) => [...current, workspace])
       setCloudWorkspaces((current) => [...current, result.workspace])
       setInviteTokenDraft('')
@@ -1072,7 +1075,7 @@ export function useWorkspaceViewModel() {
       activeEnvironmentId: Object.hasOwn(patch, 'activeEnvironmentId') ? patch.activeEnvironmentId : activeEnvironmentId,
     }
     setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-    void window.apiDesktop.saveWorkspace(updated)
+    void workspaceStorageService.saveWorkspace(updated)
   }
 
   function updateWorkspaceVariables(next: WorkspaceVariables) {
@@ -1256,7 +1259,7 @@ export function useWorkspaceViewModel() {
       createdAt: new Date().toISOString(),
       pushed: false,
     }
-    await window.apiDesktop.saveCommit(activeWorkspace.id, commit)
+    await workspaceStorageService.saveCommit(activeWorkspace.id, commit)
     setLocalCommits((current) => [...current.filter((item) => item.id !== commit.id), commit])
     persistActiveWorkspace({ localHeadId: commit.id })
     setStagedSnapshot(null)
@@ -1300,7 +1303,7 @@ export function useWorkspaceViewModel() {
         setSyncStatus('Workspace is up to date.')
         return
       }
-      const commits = await window.apiDesktop.listCommits(activeWorkspace.id)
+      const commits = await workspaceStorageService.listCommits(activeWorkspace.id)
       const localCommit = commits.find((item) => item.id === activeWorkspace.localHeadId)
       const expectedTree = localCommit?.tree ?? activeWorkspace.baseTree
       const expectedVariables = normalizeSharedVariables(localCommit?.variables ?? activeWorkspace.baseVariables)
@@ -1329,7 +1332,7 @@ export function useWorkspaceViewModel() {
           localHeadId: result.workspace.headCommitId,
         }
         setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-        await window.apiDesktop.saveWorkspace(updated)
+        await workspaceStorageService.saveWorkspace(updated)
         setTree(remoteTree)
         setWorkspaceVariables(nextVariables)
         setActiveEnvironmentId(nextEnvironmentId)
@@ -1367,7 +1370,7 @@ export function useWorkspaceViewModel() {
         createdAt: new Date().toISOString(),
         pushed: false,
       }
-      await window.apiDesktop.saveCommit(activeWorkspace.id, mergeCommit)
+      await workspaceStorageService.saveCommit(activeWorkspace.id, mergeCommit)
       const nextEnvironmentId =
         activeEnvironmentId && variableMerge.variables.environments.some((environment) => environment.id === activeEnvironmentId)
           ? activeEnvironmentId
@@ -1383,7 +1386,7 @@ export function useWorkspaceViewModel() {
         localHeadId: mergeCommit.id,
       }
       setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-      await window.apiDesktop.saveWorkspace(updated)
+      await workspaceStorageService.saveWorkspace(updated)
       setTree(merged.tree)
       setWorkspaceVariables(variableMerge.variables)
       setActiveEnvironmentId(nextEnvironmentId)
@@ -1400,7 +1403,7 @@ export function useWorkspaceViewModel() {
       setSyncStatus('Viewer access cannot push changes.')
       return
     }
-    const commits = await window.apiDesktop.listCommits(activeWorkspace.id)
+    const commits = await workspaceStorageService.listCommits(activeWorkspace.id)
     let pending = commits.filter((commit) => !commit.pushed)
     if (!pending.length) {
       setSyncStatus('No local commits to push.')
@@ -1440,7 +1443,7 @@ export function useWorkspaceViewModel() {
           baseVariables: cloudBaseVariables,
           baseCommitId: created.workspace.headCommitId,
         }
-        await window.apiDesktop.saveWorkspace(targetWorkspace)
+        await workspaceStorageService.saveWorkspace(targetWorkspace)
         setLocalWorkspaces((current) => current.map((item) => (item.id === targetWorkspace.id ? targetWorkspace : item)))
         setCloudWorkspaces((current) => [...current.filter((item) => item.id !== targetCloudId), created.workspace])
 
@@ -1449,7 +1452,7 @@ export function useWorkspaceViewModel() {
           const localParents = commit.parentIds.filter((parentId) => pendingIds.has(parentId))
           return { ...commit, parentIds: localParents.length ? localParents : [created.workspace.headCommitId] }
         })
-        await Promise.all(pending.map((commit) => window.apiDesktop.saveCommit(activeWorkspace.id, commit)))
+        await Promise.all(pending.map((commit) => workspaceStorageService.saveCommit(activeWorkspace.id, commit)))
         const rebasedById = new Map(pending.map((commit) => [commit.id, commit]))
         setLocalCommits((current) => current.map((commit) => rebasedById.get(commit.id) ?? commit))
       }
@@ -1464,7 +1467,7 @@ export function useWorkspaceViewModel() {
         method: 'POST',
         body: { commits: sharedCommits },
       })
-      await Promise.all(pending.map((commit) => window.apiDesktop.saveCommit(activeWorkspace.id, { ...commit, pushed: true })))
+      await Promise.all(pending.map((commit) => workspaceStorageService.saveCommit(activeWorkspace.id, { ...commit, pushed: true })))
       const pushedIds = new Set(pending.map((commit) => commit.id))
       const pushedById = new Map(pending.map((commit) => [commit.id, { ...commit, pushed: true }]))
       setLocalCommits((current) => current.map((commit) => (pushedIds.has(commit.id) ? (pushedById.get(commit.id) ?? commit) : commit)))
@@ -1481,7 +1484,7 @@ export function useWorkspaceViewModel() {
         localHeadId: result.headCommitId,
       }
       setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-      await window.apiDesktop.saveWorkspace(updated)
+      await workspaceStorageService.saveWorkspace(updated)
       setCloudWorkspaces((current) =>
         current.map((item) => (item.id === targetCloudId ? { ...item, headCommitId: result.headCommitId } : item)),
       )
@@ -1515,7 +1518,7 @@ export function useWorkspaceViewModel() {
       createdAt: new Date().toISOString(),
       pushed: false,
     }
-    await window.apiDesktop.saveCommit(activeWorkspace.id, commit)
+    await workspaceStorageService.saveCommit(activeWorkspace.id, commit)
     const nextEnvironmentId =
       activeEnvironmentId && variableMerge.variables.environments.some((environment) => environment.id === activeEnvironmentId)
         ? activeEnvironmentId
@@ -1531,7 +1534,7 @@ export function useWorkspaceViewModel() {
       localHeadId: commit.id,
     }
     setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-    await window.apiDesktop.saveWorkspace(updated)
+    await workspaceStorageService.saveWorkspace(updated)
     setTree(merged.tree)
     setWorkspaceVariables(variableMerge.variables)
     setActiveEnvironmentId(nextEnvironmentId)
@@ -1919,6 +1922,7 @@ export function useWorkspaceViewModel() {
     accountMenuRef,
     aiConnect,
     updateStatus,
+    onDownloadUpdate: appUpdateService.download,
     setUpdateStatus,
     signOut,
     activateWorkspace,

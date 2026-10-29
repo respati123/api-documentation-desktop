@@ -21,7 +21,7 @@ function sourceFiles(dir: string): string[] {
   })
 }
 
-export function findViolations(path: string): string[] {
+function findViolations(path: string): string[] {
   const text = readFileSync(path, 'utf8')
   const file = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const isView = path.endsWith('.view.tsx')

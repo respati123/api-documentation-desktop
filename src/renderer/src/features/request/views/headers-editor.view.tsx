@@ -65,16 +65,26 @@ export function HeadersEditorView({
           {countText}
         </span>
       </div>
+      {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
       <div className="headers-table" role="table" aria-label={t(REQUEST_TEXT.headers.tableLabel)}>
+        {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
+        {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
         <div className="headers-heading" role="row">
           <span aria-hidden="true" />
           <span aria-hidden="true" />
+          {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
+          {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
           <span role="columnheader">{t(REQUEST_TEXT.headers.columnHeader)}</span>
+          {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
+          {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
           <span role="columnheader">{t(REQUEST_TEXT.headers.columnValue)}</span>
           <span aria-hidden="true" />
         </div>
         {rows.map((header) => (
+          // biome-ignore lint/a11y/noStaticElementInteractions: drag and drop is on this row; keyboard reordering uses the row handle button
           <div className="headers-entry" key={header.id} onDragOver={onDragOver} onDrop={(event) => onDrop(header.id, event)}>
+            {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
+            {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
             <div className="headers-row" role="row">
               <Button
                 type="button"
@@ -145,6 +155,8 @@ export function HeadersEditorView({
         ))}
         <div className="headers-generated-label">{t(REQUEST_TEXT.headers.generatedLabel)}</div>
         {generated.map((header) => (
+          // biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change
+          // biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus
           <div className="headers-generated-row" role="row" key={header.name}>
             <span aria-hidden="true" />
             <Checkbox

@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createQueryWrapper } from '@/app/test-utils'
+import { clearTestQueries, QueryWrapper } from '@/app/test-utils'
 import type { AiConnectStatus } from '@/features/ai-connect/models/ai-connect.model'
 import { aiConnectService } from '@/features/ai-connect/services/ai-connect.service'
 import { useAiConnectViewModel } from '@/features/ai-connect/viewmodels/use-ai-connect.viewmodel'
@@ -26,11 +26,14 @@ function setup(status: AiConnectStatus = idle) {
     openFromMenu = handler
     return () => undefined
   })
-  return renderHook(() => useAiConnectViewModel(), { wrapper: createQueryWrapper() })
+  return renderHook(() => useAiConnectViewModel(), { wrapper: QueryWrapper })
 }
 
 describe('useAiConnectViewModel', () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => {
+    vi.resetAllMocks()
+    clearTestQueries()
+  })
 
   it('stays closed and does not ask for the status until it opens', () => {
     const { result } = setup()

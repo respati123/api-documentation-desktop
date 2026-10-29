@@ -125,6 +125,7 @@ function renderVariableText(value: string, suggestions: VariableSuggestion[], on
     if (prefix) parts.push(<span key={`text-${cursor}`}>{masked ? '•'.repeat(prefix.length) : prefix}</span>)
     const known = knownNames.has(name)
     parts.push(
+      // biome-ignore lint/a11y/useSemanticElements: the token must stay a span so it can sit inside the text editor overlay
       <span
         key={`variable-${match.index}`}
         className={cn('variable-token', !known && 'variable-token-missing')}
@@ -193,7 +194,7 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
     overlay.style.tabSize = style.tabSize
     overlay.scrollTop = element.scrollTop
     overlay.scrollLeft = element.scrollLeft
-  }, [value])
+  })
 
   useEffect(() => {
     if (!match) return
@@ -627,7 +628,7 @@ export function VariableUrlField({
     const caretOffset = getEditableCaretOffset(editor)
     renderEditableVariables(editor, draft, suggestions)
     if (isFocused) setEditableCaretOffset(editor, caretOffset)
-  }, [draft, suggestionKey])
+  }, [draft, suggestionKey, suggestions])
 
   useEffect(() => {
     if (!match) return

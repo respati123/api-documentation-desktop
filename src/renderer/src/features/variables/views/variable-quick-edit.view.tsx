@@ -82,7 +82,6 @@ export function VariableQuickEditView({
           <Input
             id="variable-quick-value"
             data-testid={VARIABLES_TEST_IDS.quickValue}
-            // biome-ignore lint/a11y/noAutofocus: the dialog exists to edit this one value, so focus starts here
             autoFocus
             aria-label={valueAriaLabel}
             type={valueIsSecret ? 'password' : 'text'}
