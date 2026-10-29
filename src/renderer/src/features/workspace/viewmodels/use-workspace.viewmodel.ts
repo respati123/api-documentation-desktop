@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   appendToFolder,
   clampCollectionWidth,
@@ -26,6 +26,7 @@ import {
 } from '@/features/collection'
 import { buildCurlCommand, replaceUrlParams, syncUrlParams, toApiRequest } from '@/features/request'
 import { downloadResponse } from '@/features/response'
+import { useVariableQuickEditViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type {
@@ -206,14 +207,15 @@ export function useWorkspaceViewModel() {
       commitCollectionWidth(nextWidth)
     }
   }
+  const constrainCollectionWidth = useEffectEvent(() => {
+    const nextWidth = clampCollectionWidth(collectionWidthRef.current)
+    if (nextWidth !== collectionWidthRef.current) commitCollectionWidth(nextWidth)
+  })
   useEffect(() => {
-    const constrainCollectionWidth = () => {
-      const nextWidth = clampCollectionWidth(collectionWidthRef.current)
-      if (nextWidth !== collectionWidthRef.current) commitCollectionWidth(nextWidth)
-    }
     window.addEventListener('resize', constrainCollectionWidth)
     return () => window.removeEventListener('resize', constrainCollectionWidth)
   }, [])
+  const restoreTabsEvent = useEffectEvent(restoreTabs)
   useEffect(() => {
     let active = true
     const legacyTree = readTree()
@@ -261,7 +263,7 @@ export function useWorkspaceViewModel() {
             ? current.activeEnvironmentId
             : null
         setActiveEnvironmentId(savedEnvironmentId)
-        restoreTabs(current.id, normalizedTree, normalizedVariables)
+        restoreTabsEvent(current.id, normalizedTree, normalizedVariables)
         setExpandedFolders(new Set(normalizedTree.filter(isFolder).map((folder) => folder.id)))
         localStorage.removeItem('api-docs-workspace')
         localStorage.removeItem('api-docs-collections')
@@ -313,6 +315,7 @@ export function useWorkspaceViewModel() {
     [currentWorkspaceId],
   )
 
+  const findLocalWorkspaceByCloudId = useEffectEvent((cloudId: string) => localWorkspaces.find((item) => item.cloudId === cloudId))
   useEffect(() => {
     if (!sessionToken || !user || !storageLoaded) return
     let active = true
@@ -321,7 +324,7 @@ export function useWorkspaceViewModel() {
         const records: LocalWorkspace[] = []
         for (const cloud of workspaces) {
           if (!active) return
-          const existing = localWorkspaces.find((item) => item.cloudId === cloud.id)
+          const existing = findLocalWorkspaceByCloudId(cloud.id)
           if (existing) {
             records.push({ ...existing, name: cloud.name, role: cloud.role })
           } else {
@@ -415,7 +418,7 @@ export function useWorkspaceViewModel() {
         setSelectedFolderId(treeIndex.parentFolderById.get(fallback.id) ?? '')
       } else if (fallback?.kind === 'environment') setActiveEnvironmentId(fallback.id)
     }
-  }, [treeIndex, workspaceVariables, workspaceTabs])
+  }, [treeIndex, workspaceVariables, workspaceTabs, activeWorkspaceTabKey])
 
   useEffect(() => {
     if (!currentWorkspaceId) {
@@ -822,17 +825,17 @@ export function useWorkspaceViewModel() {
       }),
     [],
   )
-  useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'Enter') {
-        event.preventDefault()
-        setSendMenuOpen(false)
-        if (activeWorkspaceTab?.kind === 'request' && response.kind !== 'loading') void executeRequest()
-      }
+  const handleSendShortcut = useEffectEvent((event: KeyboardEvent) => {
+    if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault()
+      setSendMenuOpen(false)
+      if (activeWorkspaceTab?.kind === 'request' && response.kind !== 'loading') void executeRequest()
     }
-    window.addEventListener('keydown', handleShortcut)
-    return () => window.removeEventListener('keydown', handleShortcut)
-  }, [activeRequest, activeWorkspaceTab, downloadAfterSend, response.kind])
+  })
+  useEffect(() => {
+    window.addEventListener('keydown', handleSendShortcut)
+    return () => window.removeEventListener('keydown', handleSendShortcut)
+  }, [])
   function updateActiveRequest(patch: Partial<SavedRequest>) {
     const request =
       activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : treeIndex.nodeById.get(selectedRequestId)
@@ -892,6 +895,16 @@ export function useWorkspaceViewModel() {
   } = useSendTimersViewModel({
     readRequest: () => (activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : activeRequest),
     executeRequest,
+  })
+
+  const variableQuickEdit = useVariableQuickEditViewModel({
+    target: quickEditTarget,
+    variables: workspaceVariables,
+    activeEnvironmentId,
+    resolvedValues: resolvedVariables,
+    readOnly: Boolean(isReadOnly),
+    onClose: () => setQuickEditTarget(null),
+    onSave: saveQuickVariable,
   })
 
   const beginBrowserSignIn = useCallback(async () => {
@@ -1866,6 +1879,7 @@ export function useWorkspaceViewModel() {
     setOpenApiDialogOpen,
     quickEditTarget,
     setQuickEditTarget,
+    variableQuickEdit,
     secureStorageAvailable,
     localWorkspaces,
     currentWorkspaceId,

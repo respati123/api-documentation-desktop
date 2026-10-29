@@ -13,7 +13,7 @@ import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, ResponseEditor } from '@/features/request'
 import { ResponseInspector } from '@/features/response'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
-import { VariableQuickEditDialog, VariableRows, VariablesDialog } from '@/features/variables'
+import { VariableQuickEditView, VariableRows, VariablesDialog } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { TreeNode, WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
@@ -44,6 +44,7 @@ export function WorkspaceView({
   setOpenApiDialogOpen,
   quickEditTarget,
   setQuickEditTarget,
+  variableQuickEdit,
   secureStorageAvailable,
   localWorkspaces,
   currentWorkspaceId,
@@ -516,15 +517,7 @@ export function WorkspaceView({
         onVariablesChange={updateWorkspaceVariables}
         onActiveEnvironmentChange={(id) => (id ? openEnvironmentTab(id) : updateActiveEnvironment(null))}
       />
-      <VariableQuickEditDialog
-        target={quickEditTarget}
-        variables={workspaceVariables}
-        activeEnvironmentId={activeEnvironmentId}
-        resolvedValues={resolvedVariables}
-        readOnly={Boolean(isReadOnly)}
-        onClose={() => setQuickEditTarget(null)}
-        onSave={saveQuickVariable}
-      />
+      <VariableQuickEditView {...variableQuickEdit} />
       <OpenApiDialog
         open={openApiDialogOpen}
         onOpenChange={setOpenApiDialogOpen}
