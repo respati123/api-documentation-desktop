@@ -42,8 +42,6 @@ export function WorkspaceView({
   setVariablesDialogOpen,
   openApiDialogOpen,
   setOpenApiDialogOpen,
-  quickEditTarget,
-  setQuickEditTarget,
   variableQuickEdit,
   secureStorageAvailable,
   localWorkspaces,
@@ -172,7 +170,6 @@ export function WorkspaceView({
   historyChanges,
   selectedHistoryChange,
   historyDiffRows,
-  resolvedVariables,
   variableSuggestions,
   updateActiveRequest,
   executeRequest,
@@ -200,7 +197,6 @@ export function WorkspaceView({
   closeWorkspaceTab,
   updateEnvironmentTab,
   openVariableEditor,
-  saveQuickVariable,
   stageChanges,
   stageChange,
   saveCommit,
@@ -269,6 +265,7 @@ export function WorkspaceView({
               </div>
             ) : (
               <button
+                type="button"
                 className={cn(
                   'tree-row',
                   'folder-row',
@@ -302,6 +299,7 @@ export function WorkspaceView({
               </button>
             )}
             <button
+              type="button"
               className="tree-menu-trigger"
               aria-label={`Actions for ${node.name}`}
               aria-haspopup="menu"
@@ -334,6 +332,7 @@ export function WorkspaceView({
       ) : (
         <div key={node.id} className="tree-request-line" style={{ '--tree-depth': depth } as React.CSSProperties}>
           <button
+            type="button"
             className={cn(
               'tree-row',
               'request-row',
@@ -631,6 +630,7 @@ export function WorkspaceView({
               </SelectContent>
             </Select>
             <button
+              type="button"
               className="tree-menu-trigger workspace-menu-trigger"
               aria-label="Workspace actions"
               aria-haspopup="menu"
@@ -1381,10 +1381,10 @@ export function WorkspaceView({
               } else if (event.key === 'Escape') setContextMenu(null)
             }}
           >
-            <button role="menuitem" autoFocus onClick={() => openCreateFolder(contextMenu.parentFolderId)}>
+            <button type="button" role="menuitem" autoFocus onClick={() => openCreateFolder(contextMenu.parentFolderId)}>
               <span aria-hidden="true">＋</span>Create folder
             </button>
-            <button role="menuitem" onClick={createRequestFromMenu}>
+            <button type="button" role="menuitem" onClick={createRequestFromMenu}>
               <span aria-hidden="true">↳</span>Create request
             </button>
             {contextMenu.targetNodeId &&
@@ -1393,17 +1393,17 @@ export function WorkspaceView({
                 return target && isFolder(target) ? (
                   <>
                     <div className="tree-context-menu-divider" role="separator" />
-                    <button role="menuitem" onClick={renameFolderFromMenu}>
+                    <button type="button" role="menuitem" onClick={renameFolderFromMenu}>
                       <span aria-hidden="true">✎</span>Rename folder
                     </button>
-                    <button role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
+                    <button type="button" role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
                       <span aria-hidden="true">×</span>Delete folder
                     </button>
                   </>
                 ) : target && isRequest(target) ? (
                   <>
                     <div className="tree-context-menu-divider" role="separator" />
-                    <button role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
+                    <button type="button" role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
                       <span aria-hidden="true">×</span>Delete request
                     </button>
                   </>
