@@ -22,8 +22,6 @@ export function OpenApiDialog({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<{ tree: TreeNode[]; title: string; fileName: string; requestCount: number } | null>(null)
   const [error, setError] = useState('')
-  const requestCount = (nodes: TreeNode[]): number =>
-    nodes.reduce((count, node) => count + (node.kind === 'folder' ? requestCount(node.children) : 1), 0)
 
   useEffect(() => {
     if (open) return

@@ -6,7 +6,6 @@ import { AppDialog } from '@/shared/components/app-dialog'
 import { SectionHeading } from '@/shared/components/section-heading'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
-import { Select } from '@/shared/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 
 export function VariablesDialog({

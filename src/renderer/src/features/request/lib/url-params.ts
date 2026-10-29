@@ -50,8 +50,7 @@ export function encodeQueryComponent(value: string): string {
   const variableToken = /\{\{\s*[^{}]+?\s*\}\}/g
   let result = ''
   let cursor = 0
-  let match: RegExpExecArray | null
-  while ((match = variableToken.exec(value))) {
+  for (const match of value.matchAll(variableToken)) {
     result += `${encodeURIComponent(value.slice(cursor, match.index))}${match[0]}`
     cursor = match.index + match[0].length
   }

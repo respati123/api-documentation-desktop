@@ -1,4 +1,3 @@
-import { Cloud } from 'lucide-react'
 import { AiConnectDialog } from '@/features/ai-connect'
 import {
   CollectionFolderIcon,
@@ -16,7 +15,7 @@ import { ResponseInspector } from '@/features/response'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
 import { VariableQuickEditDialog, VariableRows, VariablesDialog } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import { Folder, type TreeNode, type WorkspaceTab } from '@/features/workspace/models/workspace.model'
+import type { TreeNode, WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
 import { cn } from '@/lib/utils'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
@@ -1008,7 +1007,7 @@ export function WorkspaceView({
                         {activeFolder && isFolder(activeFolder) ? activeFolder.name : 'Workspace'} / Request builder
                       </p>
                       <DebouncedInput
-                        key={currentWorkspaceId + ':' + activeRequest.id + ':name'}
+                        key={`${currentWorkspaceId}:${activeRequest.id}:name`}
                         aria-label="Request name"
                         className="request-name-input"
                         value={activeRequest.name}
@@ -1047,7 +1046,7 @@ export function WorkspaceView({
                       </SelectContent>
                     </Select>
                     <VariableUrlField
-                      key={currentWorkspaceId + ':' + activeRequest.id + ':url'}
+                      key={`${currentWorkspaceId}:${activeRequest.id}:url`}
                       aria-label="Request URL"
                       className="url-input"
                       value={activeRequest.url}
@@ -1241,7 +1240,7 @@ export function WorkspaceView({
                     </TabsList>
                     <TabsContent value="params" className="editor-pane">
                       <ParamsEditor
-                        key={currentWorkspaceId + ':' + activeRequest.id}
+                        key={`${currentWorkspaceId}:${activeRequest.id}`}
                         request={activeRequest}
                         readOnly={isReadOnly}
                         suggestions={variableSuggestions}
@@ -1251,7 +1250,7 @@ export function WorkspaceView({
                     </TabsContent>
                     <TabsContent value="body" className="editor-pane">
                       <BodyEditor
-                        key={currentWorkspaceId + ':' + activeRequest.id}
+                        key={`${currentWorkspaceId}:${activeRequest.id}`}
                         request={activeRequest}
                         readOnly={isReadOnly}
                         suggestions={variableSuggestions}
@@ -1261,7 +1260,7 @@ export function WorkspaceView({
                     </TabsContent>
                     <TabsContent value="auth" className="editor-pane">
                       <AuthEditor
-                        key={currentWorkspaceId + ':' + activeRequest.id}
+                        key={`${currentWorkspaceId}:${activeRequest.id}`}
                         request={activeRequest}
                         readOnly={isReadOnly}
                         suggestions={variableSuggestions}
@@ -1271,7 +1270,7 @@ export function WorkspaceView({
                     </TabsContent>
                     <TabsContent value="headers" className="editor-pane">
                       <HeaderEditor
-                        key={currentWorkspaceId + ':' + activeRequest.id}
+                        key={`${currentWorkspaceId}:${activeRequest.id}`}
                         request={activeRequest}
                         readOnly={isReadOnly}
                         suggestions={variableSuggestions}
@@ -1281,7 +1280,7 @@ export function WorkspaceView({
                     </TabsContent>
                     <TabsContent value="responses" className="editor-pane">
                       <ResponseEditor
-                        key={currentWorkspaceId + ':' + activeRequest.id}
+                        key={`${currentWorkspaceId}:${activeRequest.id}`}
                         responses={activeRequest.responses ?? []}
                         readOnly={isReadOnly}
                         onChange={(responses) => updateActiveRequest({ responses })}
@@ -1289,7 +1288,7 @@ export function WorkspaceView({
                     </TabsContent>
                     <TabsContent value="docs" className="editor-pane">
                       <DebouncedTextarea
-                        key={currentWorkspaceId + ':' + activeRequest.id + ':docs'}
+                        key={`${currentWorkspaceId}:${activeRequest.id}:docs`}
                         aria-label="Request documentation"
                         className="request-docs-field"
                         maxLength={100000}

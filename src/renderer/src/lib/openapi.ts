@@ -576,7 +576,8 @@ export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObjec
   for (const { request, tags } of requests) {
     const route = requestRoute(request.url)
     const path = route.path.split('?')[0] || '/'
-    const pathItem = paths[path] ?? (paths[path] = {})
+    const pathItem = paths[path] ?? {}
+    paths[path] = pathItem
     const method = request.method.toLowerCase()
     const operation: Record<string, unknown> = {
       operationId: toOperationId(request.name, operationIds),

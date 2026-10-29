@@ -12,8 +12,12 @@ export function readWorkspaceTabs(
   variables: WorkspaceVariables,
 ): { tabs: WorkspaceTab[]; activeKey: string } {
   const requestIds = new Set<string>()
-  const collectRequests = (nodes: TreeNode[]) =>
-    nodes.forEach((node) => (node.kind === 'request' ? requestIds.add(node.id) : collectRequests(node.children)))
+  const collectRequests = (nodes: TreeNode[]) => {
+    for (const node of nodes) {
+      if (node.kind === 'request') requestIds.add(node.id)
+      else collectRequests(node.children)
+    }
+  }
   collectRequests(tree)
   const environmentIds = new Set(variables.environments.map((environment) => environment.id))
   const firstId = firstRequestId(tree)

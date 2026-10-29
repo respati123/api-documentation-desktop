@@ -1,4 +1,3 @@
-import { Cloud } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   appendToFolder,
@@ -27,7 +26,6 @@ import {
 } from '@/features/collection'
 import { buildCurlCommand, replaceUrlParams, syncUrlParams, toApiRequest } from '@/features/request'
 import { downloadResponse } from '@/features/response'
-import { useSendTimersViewModel } from '@/features/workspace/viewmodels/use-send-timers.viewmodel'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type {
@@ -42,6 +40,7 @@ import type {
   WorkspaceTab,
   WorkspaceUpdateEvent,
 } from '@/features/workspace/models/workspace.model'
+import { useSendTimersViewModel } from '@/features/workspace/viewmodels/use-send-timers.viewmodel'
 import {
   ApiError,
   type ApiUser,
@@ -68,7 +67,6 @@ import {
   workspaceVariablesChangeId,
   workspaceVariablesDiffText,
 } from '@/lib/workspace-variables'
-import { Select } from '@/shared/components/ui/select'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
 
 export function useWorkspaceViewModel() {
@@ -1524,7 +1522,7 @@ export function useWorkspaceViewModel() {
       await Promise.all(pending.map((commit) => window.apiDesktop.saveCommit(activeWorkspace.id, { ...commit, pushed: true })))
       const pushedIds = new Set(pending.map((commit) => commit.id))
       const pushedById = new Map(pending.map((commit) => [commit.id, { ...commit, pushed: true }]))
-      setLocalCommits((current) => current.map((commit) => (pushedIds.has(commit.id) ? pushedById.get(commit.id)! : commit)))
+      setLocalCommits((current) => current.map((commit) => (pushedIds.has(commit.id) ? (pushedById.get(commit.id) ?? commit) : commit)))
       const pushedTree = pending[pending.length - 1]?.tree ?? tree
       const pushedVariables = normalizeSharedVariables(pending[pending.length - 1]?.variables ?? activeWorkspace.baseVariables)
       const updated = {
