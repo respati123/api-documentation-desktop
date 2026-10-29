@@ -52,6 +52,7 @@ import { workspaceStorageService } from '@/features/workspace/services/workspace
 import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
 import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
+import { useWorkspacePersistenceViewModel } from '@/features/workspace/viewmodels/use-workspace-persistence.viewmodel'
 import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
 import { type ApiUser, apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
@@ -294,38 +295,20 @@ export function useWorkspaceViewModel() {
     }
   }, [sessionToken, user, storageLoaded])
 
-  useEffect(() => {
-    if (!storageLoaded || !currentWorkspaceId) return
-    const current = localWorkspaces.find((item) => item.id === currentWorkspaceId)
-    if (!current) return
-    const pending = pendingWorkspaceSaveRef.current
-    if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
-    if (pending && pending.id !== currentWorkspaceId) void workspaceStorageService.saveWorkspace(pending)
-    pendingWorkspaceSaveRef.current = { ...current, tree: tree as unknown[], variables: workspaceVariables, activeEnvironmentId }
-    workspaceSaveTimerRef.current = window.setTimeout(() => {
-      const latest = pendingWorkspaceSaveRef.current
-      pendingWorkspaceSaveRef.current = null
-      workspaceSaveTimerRef.current = undefined
-      if (latest) void workspaceStorageService.saveWorkspace(latest)
-    }, 350)
-  }, [tree, workspaceVariables, activeEnvironmentId, localWorkspaces, currentWorkspaceId, storageLoaded])
-
-  useEffect(
-    () => () => {
-      if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
-      if (pendingWorkspaceSaveRef.current) void workspaceStorageService.saveWorkspace(pendingWorkspaceSaveRef.current)
-    },
-    [],
-  )
-
-  useEffect(() => {
-    if (!storageLoaded || !currentWorkspaceId) return
-    localStorage.setItem(
-      `api-docs-open-tabs-${currentWorkspaceId}`,
-      JSON.stringify({ tabs: workspaceTabs, activeKey: activeWorkspaceTabKey }),
-    )
-  }, [workspaceTabs, activeWorkspaceTabKey, currentWorkspaceId, storageLoaded])
-
+  useWorkspacePersistenceViewModel({
+    tree,
+    workspaceVariables,
+    activeEnvironmentId,
+    localWorkspaces,
+    currentWorkspaceId,
+    storageLoaded,
+    workspaceTabs,
+    activeWorkspaceTabKey,
+    stagedSnapshot,
+    stagedVariables,
+    isStagedFor: (workspaceId) => stagedWorkspaceIdRef.current === workspaceId,
+    setLocalCommits,
+  })
   useEffect(() => {
     const next = workspaceTabs.filter((tab) =>
       tab.kind === 'environment'
@@ -346,40 +329,6 @@ export function useWorkspaceViewModel() {
       } else if (fallback?.kind === 'environment') setActiveEnvironmentId(fallback.id)
     }
   }, [treeIndex, workspaceVariables, workspaceTabs, activeWorkspaceTabKey])
-
-  useEffect(() => {
-    if (!currentWorkspaceId) {
-      setLocalCommits([])
-      return
-    }
-    let active = true
-    void workspaceStorageService
-      .listCommits(currentWorkspaceId)
-      .then((commits) => {
-        if (active) setLocalCommits(commits as LocalCommit[])
-      })
-      .catch(() => {
-        if (active) setLocalCommits([])
-      })
-    return () => {
-      active = false
-    }
-  }, [currentWorkspaceId])
-
-  useEffect(() => {
-    if (!currentWorkspaceId || stagedWorkspaceIdRef.current !== currentWorkspaceId) return
-    const key = `api-docs-staged-${currentWorkspaceId}`
-    if (stagedSnapshot) localStorage.setItem(key, JSON.stringify(stagedSnapshot))
-    else localStorage.removeItem(key)
-  }, [stagedSnapshot, currentWorkspaceId])
-
-  useEffect(() => {
-    if (!currentWorkspaceId || stagedWorkspaceIdRef.current !== currentWorkspaceId) return
-    const key = `api-docs-staged-variables-${currentWorkspaceId}`
-    if (stagedVariables) localStorage.setItem(key, JSON.stringify(shareableWorkspaceVariables(stagedVariables)))
-    else localStorage.removeItem(key)
-  }, [stagedVariables, currentWorkspaceId])
-
   const activeRequest = treeIndex.nodeById.get(selectedRequestId)
   const activeRequestRef = useRef<RequestNode | undefined>(undefined)
   useLayoutEffect(() => {
