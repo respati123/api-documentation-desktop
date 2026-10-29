@@ -27,5 +27,8 @@
     "other": "Lainnya",
     "file": "File",
     "none": "Tanpa Body"
+  },
+  "suggestions": {
+    "variables": "Saran variabel environment"
   }
 }

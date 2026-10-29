@@ -27,5 +27,8 @@
     "other": "Other",
     "file": "File",
     "none": "No Body"
+  },
+  "suggestions": {
+    "variables": "Environment variable suggestions"
   }
 }

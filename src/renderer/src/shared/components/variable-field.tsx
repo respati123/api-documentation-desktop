@@ -14,10 +14,12 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { plainButtonClass } from '@/shared/components/plain-button'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
+import { COMMON_TEXT } from '@/shared/constants/common-text.constants'
 import { cn } from '@/shared/utils/cn'
 
 export type VariableSuggestion = { name: string; scope: string; value?: string; secret?: boolean }
@@ -267,9 +269,10 @@ function SuggestionsMenu({
   position: MenuPosition | null
   onChoose: (name: string) => void
 }) {
+  const { t } = useTranslation('common')
   if (!items.length || !position) return null
   return createPortal(
-    <div id={id} className="variable-suggestions" role="listbox" aria-label="Environment variable suggestions" style={position}>
+    <div id={id} className="variable-suggestions" role="listbox" aria-label={t(COMMON_TEXT.suggestions.variables)} style={position}>
       {items.map((item, index) => (
         <Button
           type="button"
