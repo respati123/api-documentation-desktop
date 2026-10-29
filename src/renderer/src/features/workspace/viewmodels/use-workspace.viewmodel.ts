@@ -32,6 +32,8 @@ import {
   changeStatusKey,
   useCommitDialogStateViewModel,
   useCommitDialogViewModel,
+  useDiscardDialogViewModel,
+  useMergeDialogViewModel,
   useTeamDialogsViewModel,
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
@@ -1677,6 +1679,20 @@ export function useWorkspaceViewModel() {
       },
     },
   })
+  const mergeDialog = useMergeDialogViewModel({
+    conflicts: pendingMerge ? pendingMerge.conflicts : null,
+    variableConflict: Boolean(pendingMerge?.variableConflict),
+    choices: mergeChoices,
+    variablesKey: workspaceVariablesChangeId,
+    onChoose: (id, choice) => setMergeChoices((current) => ({ ...current, [id]: choice })),
+    onSave: () => void applyMergeResolution(),
+    onClose: () => setPendingMerge(null),
+  })
+  const discardDialog = useDiscardDialogViewModel({
+    open: discardConfirmOpen,
+    onOpenChange: setDiscardConfirmOpen,
+    onConfirm: discardLocalChanges,
+  })
   const team = useTeamDialogsViewModel({
     sessionToken,
     activeWorkspace,
@@ -1715,6 +1731,8 @@ export function useWorkspaceViewModel() {
     collection,
     team,
     commitDialog,
+    mergeDialog,
+    discardDialog,
     importTree,
     statusText,
     requestWorkbench,

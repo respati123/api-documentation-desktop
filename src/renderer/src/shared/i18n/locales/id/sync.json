@@ -96,5 +96,23 @@
     "loadingCloudHistory": "Memuat riwayat commit cloud…",
     "selectCommit": "Pilih commit untuk melihat item yang berubah.",
     "firstCommit": "Riwayat commit akan muncul di sini setelah commit pertama."
+  },
+  "discard": {
+    "title": "Buang perubahan lokal?",
+    "description": "Ini mengembalikan definisi koleksi dan variabel ke commit lokal terakhir. Perubahan yang belum di-commit akan hilang; nilai rahasia tetap tersimpan di perangkat ini.",
+    "cancel": "Batal",
+    "confirm": "Buang perubahan"
+  },
+  "merge": {
+    "title": "Selesaikan konflik workspace",
+    "description": "Pilih versi yang ingin dipertahankan untuk setiap item yang berubah di lokal dan di cloud.",
+    "deletedItem": "Item yang dihapus",
+    "keepLocal": "Pertahankan lokal",
+    "keepCloud": "Pertahankan cloud",
+    "deleted": "(dihapus)",
+    "variables": "Variabel workspace",
+    "keepLocalVariables": "Pertahankan definisi variabel dan nilai bersama lokal",
+    "keepCloudVariables": "Pertahankan definisi variabel dan nilai bersama cloud",
+    "save": "Simpan merge"
   }
 }

@@ -96,5 +96,23 @@
     "loadingCloudHistory": "Loading cloud commit history…",
     "selectCommit": "Select a commit to view its changed items.",
     "firstCommit": "Commit history will appear here after your first commit."
+  },
+  "discard": {
+    "title": "Discard local changes?",
+    "description": "This restores the collection and variable definitions to the latest local commit. Uncommitted edits will be lost; secret values remain stored on this device.",
+    "cancel": "Cancel",
+    "confirm": "Discard changes"
+  },
+  "merge": {
+    "title": "Resolve workspace conflicts",
+    "description": "Choose which version to keep for each item changed both locally and in the cloud.",
+    "deletedItem": "Deleted item",
+    "keepLocal": "Keep local",
+    "keepCloud": "Keep cloud",
+    "deleted": "(deleted)",
+    "variables": "Workspace variables",
+    "keepLocalVariables": "Keep local variable definitions and shared values",
+    "keepCloudVariables": "Keep cloud variable definitions and shared values",
+    "save": "Save merge"
   }
 }

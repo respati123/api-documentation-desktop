@@ -14,12 +14,18 @@ import {
 
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
-import { AuthDialog, CommitDialogView, CreateWorkspaceDialogView, TeamDialogView } from '@/features/sync'
+import {
+  AuthDialog,
+  CommitDialogView,
+  CreateWorkspaceDialogView,
+  DiscardDialogView,
+  MergeDialogView,
+  TeamDialogView,
+} from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
-import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
 import { StateMessage } from '@/shared/components/state-message'
 import { Button } from '@/shared/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
@@ -43,6 +49,8 @@ export function WorkspaceView({
   collection,
   team,
   commitDialog,
+  mergeDialog,
+  discardDialog,
   importTree,
   variablesDialog,
   environmentTab,
@@ -56,13 +64,8 @@ export function WorkspaceView({
   authError,
   syncMenuOpen,
   setSyncMenuOpen,
-  discardConfirmOpen,
   setDiscardConfirmOpen,
   syncStatus,
-  pendingMerge,
-  setPendingMerge,
-  mergeChoices,
-  setMergeChoices,
   treeIndex,
   startCollectionResize,
   moveCollectionResize,
@@ -97,10 +100,8 @@ export function WorkspaceView({
   openEnvironmentTab,
   selectWorkspaceTab,
   closeWorkspaceTab,
-  discardLocalChanges,
   pullWorkspace,
   pushWorkspace,
-  applyMergeResolution,
 }: WorkspaceViewProps) {
   return (
     <main ref={appShellRef} className="app-shell" style={{ '--sidebar-width': `${collectionWidth}px` } as React.CSSProperties}>
@@ -617,105 +618,13 @@ export function WorkspaceView({
       <CreateWorkspaceDialogView createWorkspace={team.createWorkspace} />
       <TeamDialogView team={team.team} />
 
-      <Dialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Discard local changes?</DialogTitle>
-            <DialogDescription>
-              This restores the collection and variable definitions to the latest local commit. Uncommitted edits will be lost; secret
-              values remain stored on this device.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="dialog-actions">
-            <Button type="button" variant="outline" onClick={() => setDiscardConfirmOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="button" variant="destructive" onClick={discardLocalChanges}>
-              Discard changes
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DiscardDialogView {...discardDialog} />
 
       <DeleteItemDialogView deleteDialog={collection.deleteDialog} />
 
       <CommitDialogView {...commitDialog} />
 
-      <Dialog
-        open={!!pendingMerge}
-        onOpenChange={(open) => {
-          if (!open) setPendingMerge(null)
-        }}
-      >
-        <DialogContent className="merge-dialog">
-          <DialogHeader>
-            <DialogTitle>Resolve workspace conflicts</DialogTitle>
-            <DialogDescription>Choose which version to keep for each item changed both locally and in the cloud.</DialogDescription>
-          </DialogHeader>
-          <div className="merge-conflicts">
-            {pendingMerge?.conflicts.map((conflict) => (
-              <section key={conflict.id} className="merge-conflict">
-                <strong>{conflict.local?.name ?? conflict.remote?.name ?? 'Deleted item'}</strong>
-                <div className="merge-choices">
-                  <label>
-                    <input
-                      type="radio"
-                      name={`merge-${conflict.id}`}
-                      checked={mergeChoices[conflict.id] === 'local'}
-                      onChange={() => setMergeChoices((current) => ({ ...current, [conflict.id]: 'local' }))}
-                    />
-                    <span>Keep local{conflict.local ? `: ${conflict.local.name}` : ' (deleted)'}</span>
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name={`merge-${conflict.id}`}
-                      checked={mergeChoices[conflict.id] === 'remote'}
-                      onChange={() => setMergeChoices((current) => ({ ...current, [conflict.id]: 'remote' }))}
-                    />
-                    <span>Keep cloud{conflict.remote ? `: ${conflict.remote.name}` : ' (deleted)'}</span>
-                  </label>
-                </div>
-              </section>
-            ))}
-            {pendingMerge?.variableConflict && (
-              <section className="merge-conflict">
-                <strong>Workspace variables</strong>
-                <div className="merge-choices">
-                  <label>
-                    <input
-                      type="radio"
-                      name={`merge-${workspaceVariablesChangeId}`}
-                      checked={mergeChoices[workspaceVariablesChangeId] === 'local'}
-                      onChange={() => setMergeChoices((current) => ({ ...current, [workspaceVariablesChangeId]: 'local' }))}
-                    />
-                    <span>Keep local variable definitions and shared values</span>
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name={`merge-${workspaceVariablesChangeId}`}
-                      checked={mergeChoices[workspaceVariablesChangeId] === 'remote'}
-                      onChange={() => setMergeChoices((current) => ({ ...current, [workspaceVariablesChangeId]: 'remote' }))}
-                    />
-                    <span>Keep cloud variable definitions and shared values</span>
-                  </label>
-                </div>
-              </section>
-            )}
-          </div>
-          <Button
-            onClick={() => void applyMergeResolution()}
-            disabled={
-              !pendingMerge ||
-              pendingMerge.conflicts.some((item) => !mergeChoices[item.id]) ||
-              Boolean(pendingMerge?.variableConflict && !mergeChoices[workspaceVariablesChangeId])
-            }
-          >
-            Save merge
-          </Button>
-        </DialogContent>
-      </Dialog>
+      <MergeDialogView {...mergeDialog} />
       {syncStatus && (
         <div className="sync-toast" role="status">
           {syncStatus}
