@@ -114,5 +114,15 @@
     "keepLocalVariables": "Pertahankan definisi variabel dan nilai bersama lokal",
     "keepCloudVariables": "Pertahankan definisi variabel dan nilai bersama cloud",
     "save": "Simpan merge"
+  },
+  "push": {
+    "viewer": "Akses viewer tidak dapat mengirim perubahan.",
+    "nothing": "Tidak ada commit lokal untuk dikirim.",
+    "pushing": "Mengirim commit…",
+    "publishing": "Mempublikasikan workspace dan mengirim commit…",
+    "pushed": "Commit berhasil dikirim ke cloud.",
+    "conflictOnCloud": "Versi cloud sudah berubah. Mengambil perubahan untuk digabung…",
+    "conflictPublished": "Workspace sudah dipublikasikan, tetapi versi cloud-nya berubah. Tarik perubahan sebelum mengirim lagi.",
+    "failed": "Commit tidak dapat dikirim."
   }
 }

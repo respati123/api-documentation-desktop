@@ -115,4 +115,14 @@ export const SYNC_TEXT = {
     keepCloudVariables: 'merge.keepCloudVariables',
     save: 'merge.save',
   },
+  push: {
+    viewer: 'push.viewer',
+    nothing: 'push.nothing',
+    pushing: 'push.pushing',
+    publishing: 'push.publishing',
+    pushed: 'push.pushed',
+    conflictOnCloud: 'push.conflictOnCloud',
+    conflictPublished: 'push.conflictPublished',
+    failed: 'push.failed',
+  },
 } as const

@@ -114,5 +114,15 @@
     "keepLocalVariables": "Keep local variable definitions and shared values",
     "keepCloudVariables": "Keep cloud variable definitions and shared values",
     "save": "Save merge"
+  },
+  "push": {
+    "viewer": "Viewer access cannot push changes.",
+    "nothing": "No local commits to push.",
+    "pushing": "Pushing commits…",
+    "publishing": "Publishing workspace and pushing commits…",
+    "pushed": "Pushed commits to the cloud.",
+    "conflictOnCloud": "The cloud version advanced. Pulling changes for merge…",
+    "conflictPublished": "The workspace was published, but its cloud version changed. Pull before pushing again.",
+    "failed": "Could not push commits."
   }
 }

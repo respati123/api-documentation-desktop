@@ -30,6 +30,10 @@ import { replaceUrlParams, syncUrlParams } from '@/features/request'
 import {
   type CloudWorkspaceRecord,
   changeStatusKey,
+  cloudWorkspaceService,
+  pushWorkspaceCommits,
+  SYNC_TEXT,
+  syncService,
   useCommitDialogStateViewModel,
   useCommitDialogViewModel,
   useDiscardDialogViewModel,
@@ -44,7 +48,6 @@ import { appUpdateService } from '@/features/workspace/services/app-update.servi
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import {
-  ApiError,
   type ApiUser,
   apiCall,
   apiListAll,
@@ -53,7 +56,7 @@ import {
   type CloudCommitDetail,
   type CloudWorkspace,
 } from '@/lib/api'
-import { mergeTreeSnapshots, stripLocalFilePaths } from '@/lib/merge'
+import { mergeTreeSnapshots } from '@/lib/merge'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
@@ -1299,106 +1302,58 @@ export function useWorkspaceViewModel() {
     }
   }
 
+  // Sends local commits. The workflow decides what happens; this applies the outcome to the workspace's state.
   async function pushWorkspace() {
     if (!sessionToken || !activeWorkspace) return
-    if (activeWorkspace.role === 'viewer') {
-      setSyncStatus('Viewer access cannot push changes.')
+    const outcome = await pushWorkspaceCommits({
+      token: sessionToken,
+      role: activeWorkspace.role,
+      workspace: activeWorkspace,
+      tree,
+      variables: workspaceVariables,
+      translate: (key) => tSync(SYNC_TEXT.push[key]),
+      listCommits: (workspaceId) => workspaceStorageService.listCommits(workspaceId),
+      saveWorkspace: (workspace) => workspaceStorageService.saveWorkspace(workspace),
+      saveCommit: (workspaceId, commit) => workspaceStorageService.saveCommit(workspaceId, commit),
+      createCloud: (input) => cloudWorkspaceService.create(input),
+      push: (input) => syncService.push(input),
+    })
+    if (outcome.kind === 'refused' || outcome.kind === 'nothing') {
+      setSyncStatus(outcome.message)
       return
     }
-    const commits = await workspaceStorageService.listCommits(activeWorkspace.id)
-    let pending = commits.filter((commit) => !commit.pushed)
-    if (!pending.length) {
-      setSyncStatus('No local commits to push.')
-      return
+    if ('published' in outcome && outcome.published) {
+      const { workspace, cloud, rebased } = outcome.published
+      setLocalWorkspaces((current) => current.map((item) => (item.id === workspace.id ? workspace : item)))
+      setCloudWorkspaces((current) => [...current.filter((item) => item.id !== cloud.id), cloudSummary(cloud)])
+      const rebasedById = new Map(rebased.map((item) => [item.id, item]))
+      setLocalCommits((current) => current.map((item) => rebasedById.get(item.id) ?? item))
     }
-    let targetWorkspace = activeWorkspace
-    let targetCloudId = activeWorkspace.cloudId
-    const workspaceAlreadyOnCloud = Boolean(targetCloudId)
-    setSyncStatus(targetCloudId ? 'Pushing commits…' : 'Publishing workspace and pushing commits…')
-    try {
-      if (!targetCloudId) {
-        const baseVariables = shareableWorkspaceVariables(
-          normalizeWorkspaceVariables(activeWorkspace.baseVariables ?? activeWorkspace.variables),
-        )
-        const created = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
-          '/api/workspaces',
-          {
-            token: sessionToken,
-            method: 'POST',
-            body: {
-              name: activeWorkspace.name,
-              tree: stripLocalFilePaths(activeWorkspace.baseTree as ApiNode[]),
-              variables: baseVariables,
-            },
-          },
-        )
-        const cloudBaseTree = normalizeSharedTree(created.workspace.tree)
-        const cloudBaseVariables = normalizeSharedVariables(created.workspace.variables ?? baseVariables)
-        targetCloudId = created.workspace.id
-        targetWorkspace = {
-          ...activeWorkspace,
-          cloudId: targetCloudId,
-          role: 'owner',
-          tree,
-          baseTree: cloudBaseTree,
-          variables: workspaceVariables,
-          baseVariables: cloudBaseVariables,
-          baseCommitId: created.workspace.headCommitId,
-        }
-        await workspaceStorageService.saveWorkspace(targetWorkspace)
-        setLocalWorkspaces((current) => current.map((item) => (item.id === targetWorkspace.id ? targetWorkspace : item)))
-        setCloudWorkspaces((current) => [...current.filter((item) => item.id !== targetCloudId), created.workspace])
-
-        const pendingIds = new Set(pending.map((commit) => commit.id))
-        pending = pending.map((commit) => {
-          const localParents = commit.parentIds.filter((parentId) => pendingIds.has(parentId))
-          return { ...commit, parentIds: localParents.length ? localParents : [created.workspace.headCommitId] }
-        })
-        await Promise.all(pending.map((commit) => workspaceStorageService.saveCommit(activeWorkspace.id, commit)))
-        const rebasedById = new Map(pending.map((commit) => [commit.id, commit]))
-        setLocalCommits((current) => current.map((commit) => rebasedById.get(commit.id) ?? commit))
-      }
-
-      const sharedCommits = pending.map((commit) => ({
-        ...commit,
-        tree: stripLocalFilePaths(commit.tree as ApiNode[]),
-        variables: shareableWorkspaceVariables(normalizeWorkspaceVariables(commit.variables)),
-      }))
-      const result = await apiCall<{ headCommitId: string }>(`/api/workspaces/${targetCloudId}/sync/push`, {
-        token: sessionToken,
-        method: 'POST',
-        body: { commits: sharedCommits },
-      })
-      await Promise.all(pending.map((commit) => workspaceStorageService.saveCommit(activeWorkspace.id, { ...commit, pushed: true })))
-      const pushedIds = new Set(pending.map((commit) => commit.id))
-      const pushedById = new Map(pending.map((commit) => [commit.id, { ...commit, pushed: true }]))
-      setLocalCommits((current) => current.map((commit) => (pushedIds.has(commit.id) ? (pushedById.get(commit.id) ?? commit) : commit)))
-      const pushedTree = pending[pending.length - 1]?.tree ?? tree
-      const pushedVariables = normalizeSharedVariables(pending[pending.length - 1]?.variables ?? activeWorkspace.baseVariables)
-      const updated = {
-        ...targetWorkspace,
-        cloudId: targetCloudId,
-        tree,
-        baseTree: pushedTree,
-        variables: workspaceVariables,
-        baseVariables: pushedVariables,
-        baseCommitId: result.headCommitId,
-        localHeadId: result.headCommitId,
-      }
-      setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-      await workspaceStorageService.saveWorkspace(updated)
+    if (outcome.kind === 'pushed') {
+      const pushedById = new Map(outcome.pushed.map((item) => [item.id, item]))
+      setLocalCommits((current) => current.map((item) => pushedById.get(item.id) ?? item))
+      setLocalWorkspaces((current) => current.map((item) => (item.id === outcome.workspace.id ? outcome.workspace : item)))
       setCloudWorkspaces((current) =>
-        current.map((item) => (item.id === targetCloudId ? { ...item, headCommitId: result.headCommitId } : item)),
+        current.map((item) =>
+          item.id === outcome.workspace.cloudId ? { ...item, headCommitId: outcome.workspace.baseCommitId ?? item.headCommitId } : item,
+        ),
       )
-      setSyncStatus('Pushed commits to the cloud.')
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        if (workspaceAlreadyOnCloud) {
-          setSyncStatus('The cloud version advanced. Pulling changes for merge…')
-          await pullWorkspace()
-        } else setSyncStatus('The workspace was published, but its cloud version changed. Pull before pushing again.')
-      } else setSyncStatus(error instanceof Error ? error.message : 'Could not push commits.')
+      setSyncStatus(outcome.message)
+      return
     }
+    if (outcome.kind === 'conflict') {
+      if (outcome.workspaceAlreadyOnCloud) {
+        setSyncStatus(outcome.message)
+        await pullWorkspace()
+      } else setSyncStatus(outcome.message)
+      return
+    }
+    setSyncStatus(outcome.message)
+  }
+
+  // A cloud workspace list entry needs only the fields the sidebar reads.
+  function cloudSummary(cloud: CloudWorkspaceRecord): CloudWorkspace {
+    return { id: cloud.id, name: cloud.name, role: cloud.role, headCommitId: cloud.headCommitId }
   }
 
   async function applyMergeResolution() {
