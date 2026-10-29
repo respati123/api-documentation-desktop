@@ -124,5 +124,15 @@
     "conflictOnCloud": "Versi cloud sudah berubah. Mengambil perubahan untuk digabung…",
     "conflictPublished": "Workspace sudah dipublikasikan, tetapi versi cloud-nya berubah. Tarik perubahan sebelum mengirim lagi.",
     "failed": "Commit tidak dapat dikirim."
+  },
+  "pull": {
+    "pulling": "Mengambil perubahan dari cloud…",
+    "upToDate": "Workspace sudah yang terbaru.",
+    "blocked": "Commit perubahan lokal sebelum mengambil pembaruan cloud.",
+    "conflicts": "Periksa item workspace yang bertabrakan untuk menyelesaikan pengambilan.",
+    "failed": "Perubahan cloud tidak dapat diambil.",
+    "pulled": "Versi terbaru dari cloud sudah diambil.",
+    "merged": "Pembaruan cloud sudah digabung. Kirim commit penggabungan untuk membagikannya.",
+    "resolved": "Konflik sudah diselesaikan. Kirim commit penggabungan untuk membagikannya."
   }
 }

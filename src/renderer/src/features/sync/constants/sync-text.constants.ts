@@ -125,4 +125,14 @@ export const SYNC_TEXT = {
     conflictPublished: 'push.conflictPublished',
     failed: 'push.failed',
   },
+  pull: {
+    pulling: 'pull.pulling',
+    upToDate: 'pull.upToDate',
+    blocked: 'pull.blocked',
+    conflicts: 'pull.conflicts',
+    failed: 'pull.failed',
+    pulled: 'pull.pulled',
+    merged: 'pull.merged',
+    resolved: 'pull.resolved',
+  },
 } as const

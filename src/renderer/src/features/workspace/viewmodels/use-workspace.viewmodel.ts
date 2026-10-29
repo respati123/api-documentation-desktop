@@ -28,10 +28,14 @@ import {
 } from '@/features/collection'
 import { replaceUrlParams, syncUrlParams } from '@/features/request'
 import {
+  type Applied,
   type CloudWorkspaceRecord,
   changeStatusKey,
   cloudWorkspaceService,
+  type PendingMergeState,
+  pullWorkspaceChanges,
   pushWorkspaceCommits,
+  resolvePendingMerge,
   SYNC_TEXT,
   syncService,
   useCommitDialogStateViewModel,
@@ -43,7 +47,7 @@ import {
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type { PendingMerge, WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
+import type { WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
 import { appUpdateService } from '@/features/workspace/services/app-update.service'
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
@@ -56,13 +60,11 @@ import {
   type CloudCommitDetail,
   type CloudWorkspace,
 } from '@/lib/api'
-import { mergeTreeSnapshots } from '@/lib/merge'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
   activeVariableValues,
   emptyWorkspaceVariables,
-  mergeWorkspaceVariables,
   normalizeWorkspaceVariables,
   preserveLocalSecretValues,
   shareableWorkspaceVariables,
@@ -146,7 +148,7 @@ export function useWorkspaceViewModel() {
   const [stagedVariables, setStagedVariables] = useState<WorkspaceVariables | null>(null)
   const stagedWorkspaceIdRef = useRef('')
   const [syncStatus, setSyncStatus] = useState('')
-  const [pendingMerge, setPendingMerge] = useState<PendingMerge | null>(null)
+  const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
   const treeIndex = useMemo(() => indexTree(tree), [tree])
   function commitCollectionWidth(width: number) {
@@ -1191,117 +1193,37 @@ export function useWorkspaceViewModel() {
     setSyncStatus('Discarded uncommitted changes.')
   }
 
+  // Brings cloud changes in. The workflow decides what happens; this applies the outcome to the workspace's state.
   async function pullWorkspace() {
     if (!sessionToken || !activeWorkspace?.cloudId) return
-    setSyncStatus('Pulling cloud changes…')
-    try {
-      const result = await apiCall<{
-        workspace: CloudWorkspace & {
-          tree: ApiNode[]
-          variables?: WorkspaceVariables
-          parentIds: string[]
-          message: string
-          createdAt: string
-        }
-      }>(`/api/workspaces/${activeWorkspace.cloudId}/sync/pull`, { token: sessionToken })
-      const remoteTree = normalizeSharedTree(result.workspace.tree)
-      const remoteVariables = normalizeSharedVariables(result.workspace.variables)
-      if (result.workspace.headCommitId === activeWorkspace.baseCommitId) {
-        setSyncStatus('Workspace is up to date.')
-        return
-      }
-      const commits = await workspaceStorageService.listCommits(activeWorkspace.id)
-      const localCommit = commits.find((item) => item.id === activeWorkspace.localHeadId)
-      const expectedTree = localCommit?.tree ?? activeWorkspace.baseTree
-      const expectedVariables = normalizeSharedVariables(localCommit?.variables ?? activeWorkspace.baseVariables)
-      if (
-        JSON.stringify(expectedTree) !== JSON.stringify(tree) ||
-        JSON.stringify(expectedVariables) !== JSON.stringify(shareableWorkspaceVariables(workspaceVariables))
-      ) {
-        setSyncStatus('Commit local changes before pulling cloud updates.')
-        return
-      }
-
-      if (activeWorkspace.localHeadId === activeWorkspace.baseCommitId) {
-        const nextVariables = preserveLocalSecretValues(remoteVariables, workspaceVariables)
-        const nextEnvironmentId =
-          activeEnvironmentId && remoteVariables.environments.some((environment) => environment.id === activeEnvironmentId)
-            ? activeEnvironmentId
-            : (remoteVariables.environments[0]?.id ?? null)
-        const updated = {
-          ...activeWorkspace,
-          tree: remoteTree,
-          baseTree: remoteTree,
-          variables: nextVariables,
-          baseVariables: remoteVariables,
-          activeEnvironmentId: nextEnvironmentId,
-          baseCommitId: result.workspace.headCommitId,
-          localHeadId: result.workspace.headCommitId,
-        }
-        setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-        await workspaceStorageService.saveWorkspace(updated)
-        setTree(remoteTree)
-        setWorkspaceVariables(nextVariables)
-        setActiveEnvironmentId(nextEnvironmentId)
-        setSelectedRequestId(firstRequestId(remoteTree))
-        setSyncStatus('Pulled the latest cloud version.')
-        return
-      }
-
-      const baseVariables = normalizeSharedVariables(activeWorkspace.baseVariables)
-      const merged = mergeTreeSnapshots(activeWorkspace.baseTree as ApiNode[], tree, remoteTree, {})
-      const variableMerge = mergeWorkspaceVariables(baseVariables, workspaceVariables, remoteVariables)
-      if (merged.unresolved.length || variableMerge.conflict) {
-        setMergeChoices({})
-        setPendingMerge({
-          remoteHeadId: result.workspace.headCommitId,
-          remoteTree: remoteTree,
-          localTree: tree,
-          baseTree: activeWorkspace.baseTree as ApiNode[],
-          localHeadId: activeWorkspace.localHeadId ?? activeWorkspace.baseCommitId ?? '',
-          conflicts: merged.conflicts,
-          remoteVariables,
-          localVariables: workspaceVariables,
-          baseVariables,
-          variableConflict: variableMerge.conflict,
-        })
-        setSyncStatus('Review the conflicting workspace items to finish pulling.')
-        return
-      }
-      const mergeCommit: LocalCommit = {
-        id: crypto.randomUUID(),
-        parentIds: [activeWorkspace.localHeadId ?? activeWorkspace.baseCommitId ?? '', result.workspace.headCommitId].filter(Boolean),
-        message: 'Merge remote changes',
-        tree: merged.tree,
-        variables: shareableWorkspaceVariables(variableMerge.variables),
-        createdAt: new Date().toISOString(),
-        pushed: false,
-      }
-      await workspaceStorageService.saveCommit(activeWorkspace.id, mergeCommit)
-      const nextEnvironmentId =
-        activeEnvironmentId && variableMerge.variables.environments.some((environment) => environment.id === activeEnvironmentId)
-          ? activeEnvironmentId
-          : (variableMerge.variables.environments[0]?.id ?? null)
-      const updated = {
-        ...activeWorkspace,
-        tree: merged.tree,
-        baseTree: remoteTree,
-        variables: variableMerge.variables,
-        baseVariables: remoteVariables,
-        activeEnvironmentId: nextEnvironmentId,
-        baseCommitId: result.workspace.headCommitId,
-        localHeadId: mergeCommit.id,
-      }
-      setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-      await workspaceStorageService.saveWorkspace(updated)
-      setTree(merged.tree)
-      setWorkspaceVariables(variableMerge.variables)
-      setActiveEnvironmentId(nextEnvironmentId)
-      setSelectedRequestId(firstRequestId(merged.tree))
-      setSyncStatus('Remote updates merged. Push the merge commit to share it.')
-    } catch (error) {
-      setSyncStatus(error instanceof Error ? error.message : 'Could not pull cloud changes.')
+    setSyncStatus(tSync(SYNC_TEXT.pull.pulling))
+    const outcome = await pullWorkspaceChanges({
+      token: sessionToken,
+      workspace: activeWorkspace,
+      tree,
+      variables: workspaceVariables,
+      activeEnvironmentId,
+      translate: (key) => tSync(SYNC_TEXT.pull[key]),
+      pullCloud: (input) => syncService.pull(input),
+      listCommits: (workspaceId) => workspaceStorageService.listCommits(workspaceId),
+      saveWorkspace: (workspace) => workspaceStorageService.saveWorkspace(workspace),
+      saveCommit: (workspaceId, commit) => workspaceStorageService.saveCommit(workspaceId, commit),
+    })
+    if (outcome.kind === 'applied') applyPulledState(outcome.applied)
+    if (outcome.kind === 'conflicts') {
+      setMergeChoices({})
+      setPendingMerge(outcome.pending)
     }
+    setSyncStatus(outcome.message)
+  }
+
+  // Writes what a pull or a merge decided into the workspace's state. The storage writes already happened in the workflow.
+  function applyPulledState(applied: Applied) {
+    setLocalWorkspaces((current) => current.map((item) => (item.id === applied.workspace.id ? applied.workspace : item)))
+    setTree(applied.tree)
+    setWorkspaceVariables(applied.variables)
+    setActiveEnvironmentId(applied.activeEnvironmentId)
+    setSelectedRequestId(applied.selectedRequestId)
   }
 
   // Sends local commits. The workflow decides what happens; this applies the outcome to the workspace's state.
@@ -1360,46 +1282,19 @@ export function useWorkspaceViewModel() {
 
   async function applyMergeResolution() {
     if (!pendingMerge || !activeWorkspace) return
-    const merged = mergeTreeSnapshots(pendingMerge.baseTree, pendingMerge.localTree, pendingMerge.remoteTree, mergeChoices)
-    const variableMerge = mergeWorkspaceVariables(
-      pendingMerge.baseVariables,
-      pendingMerge.localVariables,
-      pendingMerge.remoteVariables,
-      mergeChoices[workspaceVariablesChangeId],
-    )
-    if (merged.unresolved.length || (variableMerge.conflict && !mergeChoices[workspaceVariablesChangeId])) return
-    const commit: LocalCommit = {
-      id: crypto.randomUUID(),
-      parentIds: [pendingMerge.localHeadId, pendingMerge.remoteHeadId].filter(Boolean),
-      message: 'Merge remote changes',
-      tree: merged.tree,
-      variables: shareableWorkspaceVariables(variableMerge.variables),
-      createdAt: new Date().toISOString(),
-      pushed: false,
-    }
-    await workspaceStorageService.saveCommit(activeWorkspace.id, commit)
-    const nextEnvironmentId =
-      activeEnvironmentId && variableMerge.variables.environments.some((environment) => environment.id === activeEnvironmentId)
-        ? activeEnvironmentId
-        : (variableMerge.variables.environments[0]?.id ?? null)
-    const updated = {
-      ...activeWorkspace,
-      tree: merged.tree,
-      baseTree: pendingMerge.remoteTree,
-      variables: variableMerge.variables,
-      baseVariables: pendingMerge.remoteVariables,
-      activeEnvironmentId: nextEnvironmentId,
-      baseCommitId: pendingMerge.remoteHeadId,
-      localHeadId: commit.id,
-    }
-    setLocalWorkspaces((current) => current.map((item) => (item.id === updated.id ? updated : item)))
-    await workspaceStorageService.saveWorkspace(updated)
-    setTree(merged.tree)
-    setWorkspaceVariables(variableMerge.variables)
-    setActiveEnvironmentId(nextEnvironmentId)
-    setSelectedRequestId(firstRequestId(merged.tree))
+    const outcome = await resolvePendingMerge({
+      pending: pendingMerge,
+      choices: mergeChoices,
+      workspace: activeWorkspace,
+      activeEnvironmentId,
+      translate: (key) => tSync(SYNC_TEXT.pull[key]),
+      saveWorkspace: (workspace) => workspaceStorageService.saveWorkspace(workspace),
+      saveCommit: (workspaceId, commit) => workspaceStorageService.saveCommit(workspaceId, commit),
+    })
+    if (outcome.kind === 'incomplete') return
+    applyPulledState(outcome.applied)
     setPendingMerge(null)
-    setSyncStatus('Conflicts resolved. Push the merge commit to share it.')
+    setSyncStatus(outcome.message)
   }
 
   function createFolderInTree(parentId: string, name: string) {

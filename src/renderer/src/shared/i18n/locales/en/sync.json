@@ -124,5 +124,15 @@
     "conflictOnCloud": "The cloud version advanced. Pulling changes for merge…",
     "conflictPublished": "The workspace was published, but its cloud version changed. Pull before pushing again.",
     "failed": "Could not push commits."
+  },
+  "pull": {
+    "pulling": "Pulling cloud changes…",
+    "upToDate": "Workspace is up to date.",
+    "blocked": "Commit local changes before pulling cloud updates.",
+    "conflicts": "Review the conflicting workspace items to finish pulling.",
+    "failed": "Could not pull cloud changes.",
+    "pulled": "Pulled the latest cloud version.",
+    "merged": "Remote updates merged. Push the merge commit to share it.",
+    "resolved": "Conflicts resolved. Push the merge commit to share it."
   }
 }
