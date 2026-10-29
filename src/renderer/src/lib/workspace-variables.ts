@@ -1,4 +1,4 @@
-import type { SyncRequest } from './merge'
+import type { SyncRequest } from '@/lib/merge'
 
 export type WorkspaceVariable = {
   id: string

@@ -9,7 +9,7 @@ import type {
   ResponseDefinition,
   SyncRequest,
   SyncTreeNode,
-} from './merge'
+} from '@/lib/merge'
 
 type OpenApiObject = Record<string, unknown>
 type ParsedRequest = { request: SyncRequest; tags: string[] }

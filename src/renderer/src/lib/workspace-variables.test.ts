@@ -4,7 +4,7 @@ import {
   preserveLocalSecretValues,
   shareableWorkspaceVariables,
   type WorkspaceVariables,
-} from './workspace-variables'
+} from '@/lib/workspace-variables'
 
 const local: WorkspaceVariables = {
   globals: [

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { diffText } from './text-diff'
+import { diffText } from '@/lib/text-diff'
 
 describe('diffText', () => {
   test('returns no rows when both sides are empty', () => {

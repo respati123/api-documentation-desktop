@@ -1,4 +1,4 @@
-import type { WorkspaceVariables } from './workspace-variables'
+import type { WorkspaceVariables } from '@/lib/workspace-variables'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 

@@ -1,10 +1,10 @@
-import type { SyncFolder, SyncRequest, SyncTreeNode } from './merge'
+import type { SyncFolder, SyncRequest, SyncTreeNode } from '@/lib/merge'
 import {
   emptyWorkspaceVariables,
   shareableWorkspaceVariables,
   type WorkspaceVariables,
   workspaceVariablesChangeId,
-} from './workspace-variables'
+} from '@/lib/workspace-variables'
 
 export type ChangeStatus = 'added' | 'modified' | 'deleted'
 export type WorkspaceChange = { id: string; name: string; status: ChangeStatus }
