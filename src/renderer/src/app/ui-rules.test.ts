@@ -59,7 +59,6 @@ const legacyViolations = new Set<string>([
   'features/request/components/header-editor.tsx',
   'features/request/components/params-editor.tsx',
   'features/request/components/response-editor.tsx',
-  'features/response/components/response-inspector.tsx',
   'features/sync/components/auth-dialog.tsx',
   'features/sync/components/workspace-change-rows.tsx',
   'features/workspace/views/workspace.view.tsx',

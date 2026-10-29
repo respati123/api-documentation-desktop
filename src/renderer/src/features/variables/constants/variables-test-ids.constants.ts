@@ -12,6 +12,7 @@ export const VARIABLES_TEST_IDS = {
   environmentDelete: 'variables-dialog-environment-delete-button',
   environmentPrompt: 'variables-dialog-environment-prompt',
   tabPanel: 'variables-environment-tab-container',
+  tabUnavailable: 'variables-environment-tab-unavailable',
   tabName: 'variables-environment-tab-name-input',
   tabActivate: 'variables-environment-tab-activate-button',
   tabStorageWarning: 'variables-environment-tab-storage-warning',

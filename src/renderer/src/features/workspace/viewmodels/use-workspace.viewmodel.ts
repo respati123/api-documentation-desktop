@@ -26,7 +26,7 @@ import {
   updateNode,
 } from '@/features/collection'
 import { buildCurlCommand, replaceUrlParams, syncUrlParams, toApiRequest } from '@/features/request'
-import { downloadResponse } from '@/features/response'
+import { downloadResponse, type ResponseState, useResponseViewModel } from '@/features/response'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -35,7 +35,6 @@ import type {
   DeleteConfirmTarget,
   Folder,
   PendingMerge,
-  ResponseState,
   SavedRequest,
   TreeNode,
   WorkspaceHistoryCommit,
@@ -109,7 +108,7 @@ export function useWorkspaceViewModel() {
   )
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [response, setResponse] = useState<ResponseState>({ kind: 'empty' })
-  const [responseView, setResponseView] = useState<'body' | 'headers' | 'cookies'>('body')
+  const responseInspector = useResponseViewModel({ response })
   const [sendMenuOpen, setSendMenuOpen] = useState(false)
   const [downloadAfterSend, setDownloadAfterSend] = useState(false)
   const [clientCodeDialogOpen, setClientCodeDialogOpen] = useState(false)
@@ -868,7 +867,6 @@ export function useWorkspaceViewModel() {
       return
     }
     setResponse({ kind: 'loading' })
-    setResponseView('body')
     try {
       const resolvedRequest = resolveRequestVariables(request, resolvedVariables)
       const data = await window.apiDesktop.sendRequest(toApiRequest(resolvedRequest))
@@ -1917,8 +1915,7 @@ export function useWorkspaceViewModel() {
     setDraggedId,
     response,
     setResponse,
-    responseView,
-    setResponseView,
+    responseInspector,
     sendMenuOpen,
     setSendMenuOpen,
     downloadAfterSend,

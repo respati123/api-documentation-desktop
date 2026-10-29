@@ -33,12 +33,6 @@ export type CollectionContextMenu = { x: number; y: number; parentFolderId: stri
 
 export type DeleteConfirmTarget = { id: string; kind: 'folder' | 'request'; name: string }
 
-export type ResponseState =
-  | { kind: 'empty' }
-  | { kind: 'loading' }
-  | { kind: 'error'; message: string }
-  | { kind: 'success'; data: ApiResponse }
-
 export type PendingMerge = {
   remoteHeadId: string
   remoteTree: TreeNode[]

@@ -11,7 +11,7 @@ import {
 } from '@/features/collection'
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, ResponseEditor } from '@/features/request'
-import { ResponseInspector } from '@/features/response'
+import { ResponseView } from '@/features/response'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -60,8 +60,7 @@ export function WorkspaceView({
   setDraggedId,
   response,
   setResponse,
-  responseView,
-  setResponseView,
+  responseInspector,
   sendMenuOpen,
   setSendMenuOpen,
   downloadAfterSend,
@@ -929,6 +928,7 @@ export function WorkspaceView({
           ) : (
             <section className="request-card docs-page">
               <StateMessage
+                testId="workspace-main-docs-unavailable-state"
                 title="Endpoint docs unavailable"
                 description="Choose an endpoint in the collection to open its documentation."
               />
@@ -1239,7 +1239,11 @@ export function WorkspaceView({
                   </Tabs>
                 </>
               ) : (
-                <StateMessage title="No request selected" description="Choose a request or create one in the selected folder." />
+                <StateMessage
+                  testId="workspace-main-no-request-state"
+                  title="No request selected"
+                  description="Choose a request or create one in the selected folder."
+                />
               )}
             </form>
             <Dialog open={sendDelayDialogOpen} onOpenChange={setSendDelayDialogOpen}>
@@ -1304,7 +1308,7 @@ export function WorkspaceView({
                 </div>
               </DialogContent>
             </Dialog>
-            <ResponseInspector response={response} responseView={responseView} onResponseViewChange={setResponseView} />
+            <ResponseView {...responseInspector} />
           </>
         )}
       </section>

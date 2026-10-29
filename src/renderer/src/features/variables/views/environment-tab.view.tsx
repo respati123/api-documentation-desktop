@@ -27,6 +27,7 @@ export function EnvironmentTabView({
     return (
       <section className="request-card workspace-full-panel" data-testid={VARIABLES_TEST_IDS.tabPanel}>
         <StateMessage
+          testId={VARIABLES_TEST_IDS.tabUnavailable}
           title={t(VARIABLES_TEXT.environmentTab.unavailableTitle)}
           description={t(VARIABLES_TEXT.environmentTab.unavailableDescription)}
         />
