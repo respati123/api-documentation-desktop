@@ -1,6 +1,5 @@
 import { randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
-import type { AddressInfo } from 'node:net'
 
 // Loopback redirect for browser sign-in (RFC 8252). The desktop app listens on
 // a random 127.0.0.1 port, the browser is sent back there with a one-time code,
@@ -50,7 +49,12 @@ export function startLoopbackSignIn(onCode: (code: string) => void): Promise<Loo
   return new Promise((resolve, reject) => {
     server.once('error', reject)
     server.listen(0, '127.0.0.1', () => {
-      const { port } = server.address() as AddressInfo
+      const address = server.address()
+      if (!address || typeof address === 'string') {
+        reject(new Error('Could not open a port for sign-in.'))
+        return
+      }
+      const { port } = address
       timer = setTimeout(close, signInTimeoutMs)
       resolve({ state, redirectUri: `http://127.0.0.1:${port}${callbackPath}`, close })
     })

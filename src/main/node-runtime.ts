@@ -5,6 +5,7 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
+import { z } from 'zod'
 
 // Downloads an official Node.js LTS build into the app's own folder, so the app
 // can run npx and AI client CLIs without sudo or a system-wide install.
@@ -46,7 +47,7 @@ export function nodeRuntimePaths(root: string): NodeRuntimePaths {
 
 export type NodeInstallProgress = { stage: 'checking' | 'downloading' | 'verifying' | 'extracting' | 'done'; percent?: number }
 
-type NodeIndexEntry = { version: string; lts: string | false }
+const nodeIndexSchema = z.array(z.object({ version: z.string(), lts: z.union([z.string(), z.literal(false)]) }))
 
 function platformKey(): { os: string; arch: string; archive: string } {
   const arch = process.arch === 'arm64' ? 'arm64' : 'x64'
@@ -59,7 +60,7 @@ function platformKey(): { os: string; arch: string; archive: string } {
 async function latestLtsVersion(): Promise<string> {
   const response = await fetch(`${nodeDistUrl}/index.json`)
   if (!response.ok) throw new Error(`Could not read the Node.js release list (${response.status}).`)
-  const entries = (await response.json()) as NodeIndexEntry[]
+  const entries = nodeIndexSchema.parse(await response.json())
   const match = entries.find((entry) => entry.lts && entry.version.startsWith(`v${majorVersion}.`))
   if (!match) throw new Error(`No Node.js ${majorVersion} LTS release was found.`)
   return match.version
@@ -196,7 +197,8 @@ export async function installNodeRuntime(
       yield chunk
     }
   }
-  await pipeline(Readable.from(counter(response.body as unknown as AsyncIterable<Uint8Array>)), createWriteStream(partialPath))
+  if (!response.body) throw new Error('The Node.js download had no content.')
+  await pipeline(Readable.from(counter(response.body)), createWriteStream(partialPath))
   await rename(partialPath, archivePath)
 
   onProgress({ stage: 'verifying' })

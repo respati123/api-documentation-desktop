@@ -9,7 +9,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview --noSandbox",
     "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
-    "test": "vitest run",
+    "test": "vitest run && vitest run --config vitest.main.config.ts",
     "lint": "biome check src",
     "format": "biome check --write src",
     "dist": "bun run build && electron-builder",
