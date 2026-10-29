@@ -12,7 +12,13 @@
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/renderer/src/*"
+      ]
+    }
   },
   "include": [
     "electron.vite.config.ts",
