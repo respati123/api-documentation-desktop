@@ -266,6 +266,7 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .request-view-docs { flex: 0 0 auto; color: #334155; font-size: 11px; }
 .request-name-input { width: min(360px, 62vw); height: 32px; min-height: 32px; margin-top: 3px; border-color: transparent; padding: 0 7px; font-size: 16px; font-weight: 700; box-shadow: none; }
 .request-name-input:hover, .request-name-input:focus-visible { border-color: #cbd5e1; }
+.request-name-input:focus-visible { border-color: #1d4ed8; box-shadow: 0 0 0 2px rgb(29 78 216 / .2); }
 .request-status { color: #475569; font-size: 12px; font-weight: 500; }
 .request-line { display: grid; grid-template-columns: 116px minmax(0, 1fr) auto; gap: 10px; padding: 16px 18px 12px; }
 .method-select { font-weight: 700; }
