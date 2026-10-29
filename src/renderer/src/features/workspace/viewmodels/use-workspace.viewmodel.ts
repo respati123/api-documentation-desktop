@@ -27,7 +27,7 @@ import {
   useCollectionTreeViewModel,
 } from '@/features/collection'
 import { replaceUrlParams, syncUrlParams } from '@/features/request'
-import { changeStatusKey } from '@/features/sync'
+import { type CloudWorkspaceRecord, changeStatusKey, useTeamDialogsViewModel } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -106,15 +106,7 @@ export function useWorkspaceViewModel() {
   const [authError, setAuthError] = useState('')
   const [cloudWorkspaces, setCloudWorkspaces] = useState<CloudWorkspace[]>([])
   const cloudHistoryWorkspaceIdRef = useRef('')
-  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false)
-  const [cloudWorkspaceName, setCloudWorkspaceName] = useState('')
-  const [teamDialogOpen, setTeamDialogOpen] = useState(false)
-  const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor')
-  const [inviteEmailDraft, setInviteEmailDraft] = useState('')
-  const [inviteLink, setInviteLink] = useState('')
   const [inviteTokenDraft, setInviteTokenDraft] = useState('')
-  const [inviteError, setInviteError] = useState('')
-  const [inviteNotice, setInviteNotice] = useState('')
   const [commitDialogOpen, setCommitDialogOpen] = useState(false)
   const [commitDialogView, setCommitDialogView] = useState<'changes' | 'history'>('changes')
   const [syncMenuOpen, setSyncMenuOpen] = useState(false)
@@ -787,11 +779,40 @@ export function useWorkspaceViewModel() {
     () =>
       sessionService.onInviteToken((token) => {
         setInviteTokenDraft(token)
-        if (sessionTokenRef.current) setTeamDialogOpen(true)
+        if (sessionTokenRef.current) team.openTeam()
         else setAuthOpenRequest((current) => current + 1)
       }),
     [],
   )
+  // A cloud workspace this device just created becomes the active one, with its own tabs.
+  async function adoptCreatedWorkspace(workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, createdVariables: WorkspaceVariables) {
+    await workspaceStorageService.saveWorkspace(workspace)
+    setLocalWorkspaces((current) => [...current, workspace])
+    setCloudWorkspaces((current) => [...current, { id: cloud.id, name: cloud.name, role: cloud.role, headCommitId: cloud.headCommitId }])
+    stagedWorkspaceIdRef.current = workspace.id
+    setStagedSnapshot(null)
+    setStagedVariables(null)
+    setCurrentWorkspaceId(workspace.id)
+    setWorkspaceVariables(createdVariables)
+    setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
+    resetTabs(workspace.tree as ApiNode[])
+  }
+
+  // A workspace joined through an invite is added and opened, with its shared tree.
+  async function adoptAcceptedWorkspace(workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, invitedVariables: WorkspaceVariables) {
+    await workspaceStorageService.saveWorkspace(workspace)
+    setLocalWorkspaces((current) => [...current, workspace])
+    setCloudWorkspaces((current) => [...current, { id: cloud.id, name: cloud.name, role: cloud.role, headCommitId: cloud.headCommitId }])
+    stagedWorkspaceIdRef.current = workspace.id
+    setStagedSnapshot(null)
+    setStagedVariables(null)
+    setCurrentWorkspaceId(workspace.id)
+    setTree(workspace.tree as ApiNode[])
+    setWorkspaceVariables(invitedVariables)
+    setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
+    resetTabs(workspace.tree as ApiNode[])
+  }
+
   function updateActiveRequest(patch: Partial<RequestNode>) {
     const request =
       activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : treeIndex.nodeById.get(selectedRequestId)
@@ -855,7 +876,7 @@ export function useWorkspaceViewModel() {
             setUser(result.user)
             const saved = await sessionService.save(result.token)
             if (!saved) setSyncStatus('Session will last until the app closes because secure storage is unavailable on this system.')
-            if (inviteTokenDraft) setTeamDialogOpen(true)
+            if (inviteTokenDraft) team.openTeam()
           } catch (error) {
             setAuthError(error instanceof Error ? error.message : 'Could not complete sign-in.')
           }
@@ -895,7 +916,7 @@ export function useWorkspaceViewModel() {
     setSessionToken(null)
     setUser(null)
     setCloudWorkspaces([])
-    setInviteLink('')
+    team.clearInviteLink()
     setSyncStatus('Signed out. Local workspace data remains on this device.')
   }
 
@@ -927,129 +948,6 @@ export function useWorkspaceViewModel() {
     )
     restoreTabs(next.id, nextTree, nextVariables)
     setExpandedFolders(new Set(nextTree.filter(isFolder).map((folder) => folder.id)))
-  }
-
-  async function createCloudWorkspace(event: FormEvent) {
-    event.preventDefault()
-    if (!sessionToken || !cloudWorkspaceName.trim()) return
-    setSyncStatus('Creating cloud workspace…')
-    try {
-      const sharedVariables = shareableWorkspaceVariables(workspaceVariables)
-      const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>('/api/workspaces', {
-        token: sessionToken,
-        method: 'POST',
-        body: { name: cloudWorkspaceName.trim(), tree: stripLocalFilePaths(tree), variables: sharedVariables },
-      })
-      const createdTree = normalizeSharedTree(result.workspace.tree)
-      const baseVariables = normalizeSharedVariables(result.workspace.variables ?? sharedVariables)
-      const createdVariables = preserveLocalSecretValues(baseVariables, workspaceVariables)
-      const workspace: LocalWorkspace = {
-        id: crypto.randomUUID(),
-        cloudId: result.workspace.id,
-        name: result.workspace.name,
-        tree: createdTree,
-        baseTree: createdTree,
-        variables: createdVariables,
-        baseVariables,
-        activeEnvironmentId,
-        baseCommitId: result.workspace.headCommitId,
-        localHeadId: result.workspace.headCommitId,
-        role: 'owner',
-      }
-      await workspaceStorageService.saveWorkspace(workspace)
-      setLocalWorkspaces((current) => [...current, workspace])
-      setCloudWorkspaces((current) => [...current, result.workspace])
-      setCloudWorkspaceName('')
-      setCreateWorkspaceOpen(false)
-      stagedWorkspaceIdRef.current = workspace.id
-      setStagedSnapshot(null)
-      setStagedVariables(null)
-      setCurrentWorkspaceId(workspace.id)
-      setWorkspaceVariables(createdVariables)
-      setActiveEnvironmentId(activeEnvironmentId)
-      resetTabs(workspace.tree as ApiNode[])
-      setSyncStatus('Cloud workspace created.')
-    } catch (error) {
-      setSyncStatus(error instanceof Error ? error.message : 'Could not create cloud workspace.')
-    }
-  }
-
-  async function createInvite() {
-    if (!sessionToken || !activeWorkspace?.cloudId) return
-    setInviteError('')
-    setInviteNotice('')
-    const email = inviteEmailDraft.trim().toLowerCase()
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setInviteError('Enter a valid email address for the teammate.')
-      return
-    }
-    try {
-      const result = await apiCall<{ token: string; emailSent: boolean }>(`/api/workspaces/${activeWorkspace.cloudId}/invites`, {
-        token: sessionToken,
-        method: 'POST',
-        body: { email, role: inviteRole },
-      })
-      setInviteLink(`api-docs://invite?token=${encodeURIComponent(result.token)}`)
-      setInviteNotice(
-        result.emailSent
-          ? `Invitation sent to ${email}. It expires in 7 days.`
-          : 'Invitation link created, but email could not be sent. Copy the link to share it manually.',
-      )
-    } catch (error) {
-      setInviteError(error instanceof Error ? error.message : 'Could not create invite.')
-    }
-  }
-
-  async function acceptInvite(event: FormEvent) {
-    event.preventDefault()
-    if (!sessionToken) {
-      setInviteError('Sign in before accepting an invite.')
-      return
-    }
-    const token = inviteTokenDraft.includes('token=') ? new URL(inviteTokenDraft).searchParams.get('token') : inviteTokenDraft.trim()
-    if (!token) {
-      setInviteError('Paste a valid invite link or token.')
-      return
-    }
-    setInviteError('')
-    setInviteNotice('')
-    try {
-      const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
-        '/api/invites/accept',
-        { token: sessionToken, method: 'POST', body: { token } },
-      )
-      const invitedTree = normalizeSharedTree(result.workspace.tree)
-      const invitedVariables = normalizeSharedVariables(result.workspace.variables)
-      const workspace: LocalWorkspace = {
-        id: crypto.randomUUID(),
-        cloudId: result.workspace.id,
-        name: result.workspace.name,
-        tree: invitedTree,
-        baseTree: invitedTree,
-        variables: invitedVariables,
-        baseVariables: invitedVariables,
-        activeEnvironmentId: invitedVariables.environments[0]?.id ?? null,
-        baseCommitId: result.workspace.headCommitId,
-        localHeadId: result.workspace.headCommitId,
-        role: result.workspace.role,
-      }
-      await workspaceStorageService.saveWorkspace(workspace)
-      setLocalWorkspaces((current) => [...current, workspace])
-      setCloudWorkspaces((current) => [...current, result.workspace])
-      setInviteTokenDraft('')
-      stagedWorkspaceIdRef.current = workspace.id
-      setStagedSnapshot(null)
-      setStagedVariables(null)
-      setCurrentWorkspaceId(workspace.id)
-      setTree(workspace.tree as ApiNode[])
-      setWorkspaceVariables(invitedVariables)
-      setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
-      resetTabs(workspace.tree as ApiNode[])
-      setInviteLink('')
-      setInviteNotice('Invite accepted. Workspace added.')
-    } catch (error) {
-      setInviteError(error instanceof Error ? error.message : 'Could not accept invite.')
-    }
   }
 
   function persistActiveWorkspace(patch: Partial<LocalWorkspace>) {
@@ -1700,6 +1598,19 @@ export function useWorkspaceViewModel() {
 
   const { t: tSync } = useTranslation('sync')
   const statusText = (status: WorkspaceChange['status']) => tSync(changeStatusKey(status))
+  const team = useTeamDialogsViewModel({
+    sessionToken,
+    activeWorkspace,
+    tree,
+    variables: workspaceVariables,
+    activeEnvironmentId,
+    inviteToken: inviteTokenDraft,
+    onInviteTokenDraftChange: setInviteTokenDraft,
+    onInviteTokenUsed: () => setInviteTokenDraft(''),
+    onStatus: setSyncStatus,
+    onCreated: adoptCreatedWorkspace,
+    onAccepted: adoptAcceptedWorkspace,
+  })
   const collection = useCollectionTreeViewModel({
     tree,
     isReadOnly: Boolean(isReadOnly),
@@ -1723,6 +1634,7 @@ export function useWorkspaceViewModel() {
 
   return {
     collection,
+    team,
     importTree,
     statusText,
     requestWorkbench,
@@ -1758,23 +1670,8 @@ export function useWorkspaceViewModel() {
     user,
     authOpenRequest,
     authError,
-    createWorkspaceOpen,
-    setCreateWorkspaceOpen,
-    cloudWorkspaceName,
-    setCloudWorkspaceName,
-    teamDialogOpen,
-    setTeamDialogOpen,
-    inviteRole,
-    setInviteRole,
-    inviteEmailDraft,
-    setInviteEmailDraft,
-    inviteLink,
     inviteTokenDraft,
     setInviteTokenDraft,
-    inviteError,
-    setInviteError,
-    inviteNotice,
-    setInviteNotice,
     commitDialogOpen,
     setCommitDialogOpen,
     commitDialogView,
@@ -1843,9 +1740,6 @@ export function useWorkspaceViewModel() {
     setUpdateStatus,
     signOut,
     activateWorkspace,
-    createCloudWorkspace,
-    createInvite,
-    acceptInvite,
     updateWorkspaceVariables,
     updateActiveEnvironment,
     openRequestTab,

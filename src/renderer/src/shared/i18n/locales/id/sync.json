@@ -12,5 +12,40 @@
     "untracked": "Belum dilacak",
     "deleted": "Dihapus",
     "modified": "Diubah"
+  },
+  "createWorkspace": {
+    "title": "Buat workspace cloud",
+    "description": "Publikasikan workspace lokal ini agar tim kamu bisa bergabung.",
+    "nameLabel": "Nama workspace",
+    "namePlaceholder": "mis. Platform API",
+    "submit": "Buat workspace",
+    "creating": "Membuat workspace cloud…",
+    "created": "Workspace cloud dibuat.",
+    "failed": "Workspace cloud tidak dapat dibuat."
+  },
+  "team": {
+    "title": "Tim workspace",
+    "descriptionOwner": "Undang anggota tim ke {{name}} lewat email.",
+    "descriptionJoin": "Tempel tautan undangan untuk bergabung ke workspace.",
+    "singleUse": "Undangan hanya bisa dipakai sekali, kedaluwarsa dalam 7 hari, dan harus diterima dari email akun yang diundang.",
+    "emailLabel": "Email anggota tim",
+    "emailPlaceholder": "anggota@contoh.com",
+    "roleLabel": "Peran undangan",
+    "roleEditor": "Editor",
+    "roleViewer": "Viewer",
+    "send": "Kirim undangan",
+    "linkLabel": "Tautan undangan",
+    "copy": "Salin",
+    "acceptLabel": "Terima undangan",
+    "tokenPlaceholder": "Tempel tautan atau token undangan",
+    "join": "Gabung workspace",
+    "invalidEmail": "Masukkan alamat email anggota tim yang valid.",
+    "inviteFailed": "Undangan tidak dapat dibuat.",
+    "signInFirst": "Masuk dulu sebelum menerima undangan.",
+    "invalidToken": "Tempel tautan atau token undangan yang valid.",
+    "acceptFailed": "Undangan tidak dapat diterima.",
+    "sentTo": "Undangan dikirim ke {{email}}. Berlaku 7 hari.",
+    "emailFailed": "Tautan undangan dibuat, tetapi email tidak dapat dikirim. Salin tautannya untuk dibagikan manual.",
+    "accepted": "Undangan diterima. Workspace ditambahkan."
   }
 }

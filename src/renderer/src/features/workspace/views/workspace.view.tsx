@@ -14,7 +14,7 @@ import {
 
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
-import { AuthDialog, ChangeRow, changeStatusCode, HistoryChangeRow } from '@/features/sync'
+import { AuthDialog, ChangeRow, CreateWorkspaceDialogView, changeStatusCode, HistoryChangeRow, TeamDialogView } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 
@@ -42,6 +42,7 @@ export function WorkspaceView({
   variableQuickEdit,
   requestWorkbench,
   collection,
+  team,
   importTree,
   statusText,
   variablesDialog,
@@ -54,23 +55,6 @@ export function WorkspaceView({
   user,
   authOpenRequest,
   authError,
-  createWorkspaceOpen,
-  setCreateWorkspaceOpen,
-  cloudWorkspaceName,
-  setCloudWorkspaceName,
-  teamDialogOpen,
-  setTeamDialogOpen,
-  inviteRole,
-  setInviteRole,
-  inviteEmailDraft,
-  setInviteEmailDraft,
-  inviteLink,
-  inviteTokenDraft,
-  setInviteTokenDraft,
-  inviteError,
-  setInviteError,
-  inviteNotice,
-  setInviteNotice,
   commitDialogOpen,
   setCommitDialogOpen,
   commitDialogView,
@@ -134,9 +118,6 @@ export function WorkspaceView({
   setUpdateStatus,
   signOut,
   activateWorkspace,
-  createCloudWorkspace,
-  createInvite,
-  acceptInvite,
   updateActiveEnvironment,
   openRequestTab,
   openCurrentDocs,
@@ -177,7 +158,7 @@ export function WorkspaceView({
                     role="menuitem"
                     onClick={() => {
                       setAccountMenuOpen(false)
-                      setCreateWorkspaceOpen(true)
+                      team.openCreateWorkspace()
                     }}
                   >
                     New cloud workspace
@@ -187,9 +168,7 @@ export function WorkspaceView({
                     role="menuitem"
                     onClick={() => {
                       setAccountMenuOpen(false)
-                      setInviteError('')
-                      setInviteNotice('')
-                      setTeamDialogOpen(true)
+                      team.openTeam()
                     }}
                   >
                     {activeWorkspace?.cloudId && activeWorkspace.role === 'owner' ? 'Team' : 'Join workspace'}
@@ -671,104 +650,8 @@ export function WorkspaceView({
         )}
       </section>
       {collection.menu && <CollectionMenuView {...collection.menu} />}
-      <Dialog open={createWorkspaceOpen} onOpenChange={setCreateWorkspaceOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create cloud workspace</DialogTitle>
-            <DialogDescription>Publish the current local workspace so your team can join it.</DialogDescription>
-          </DialogHeader>
-          <form className="dialog-form" onSubmit={createCloudWorkspace}>
-            <label htmlFor="cloud-workspace-name">Workspace name</label>
-            <Input
-              id="cloud-workspace-name"
-              autoFocus
-              required
-              maxLength={100}
-              value={cloudWorkspaceName}
-              onChange={(event) => setCloudWorkspaceName(event.target.value)}
-              placeholder="e.g. Platform API"
-            />
-            <Button type="submit" disabled={!sessionToken || !cloudWorkspaceName.trim()}>
-              Create workspace
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={teamDialogOpen} onOpenChange={setTeamDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Workspace team</DialogTitle>
-            <DialogDescription>
-              {activeWorkspace?.role === 'owner'
-                ? `Invite a teammate to ${activeWorkspace.name} by email.`
-                : 'Paste an invite link to join a workspace.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="dialog-form">
-            {activeWorkspace?.role === 'owner' && (
-              <>
-                <p className="invite-help">
-                  The invitation is single-use, expires in 7 days, and must be accepted by the invited account email.
-                </p>
-                <label htmlFor="invite-email">Teammate email</label>
-                <Input
-                  id="invite-email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={inviteEmailDraft}
-                  onChange={(event) => setInviteEmailDraft(event.target.value)}
-                  placeholder="teammate@example.com"
-                />
-                <label htmlFor="invite-role">Invite role</label>
-                <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as 'editor' | 'viewer')}>
-                  <SelectTrigger id="invite-role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button type="button" onClick={() => void createInvite()}>
-                  Send invitation
-                </Button>
-              </>
-            )}
-            {inviteLink && (
-              <div className="invite-link-row">
-                <Input aria-label="Invite link" readOnly value={inviteLink} />
-                <Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(inviteLink)}>
-                  Copy
-                </Button>
-              </div>
-            )}
-            <form className="invite-accept-form" onSubmit={acceptInvite}>
-              <label htmlFor="invite-token">Accept an invite</label>
-              <Input
-                id="invite-token"
-                value={inviteTokenDraft}
-                onChange={(event) => setInviteTokenDraft(event.target.value)}
-                placeholder="Paste invite link or token"
-              />
-              <Button type="submit" variant="outline" disabled={!inviteTokenDraft.trim()}>
-                Join workspace
-              </Button>
-            </form>
-            {inviteError && (
-              <p className="dialog-error" role="status">
-                {inviteError}
-              </p>
-            )}
-            {inviteNotice && (
-              <p className="dialog-success" role="status">
-                {inviteNotice}
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateWorkspaceDialogView createWorkspace={team.createWorkspace} />
+      <TeamDialogView team={team.team} />
 
       <Dialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
         <DialogContent>

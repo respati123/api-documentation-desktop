@@ -12,5 +12,40 @@
     "untracked": "Untracked",
     "deleted": "Deleted",
     "modified": "Modified"
+  },
+  "createWorkspace": {
+    "title": "Create cloud workspace",
+    "description": "Publish the current local workspace so your team can join it.",
+    "nameLabel": "Workspace name",
+    "namePlaceholder": "e.g. Platform API",
+    "submit": "Create workspace",
+    "creating": "Creating cloud workspace…",
+    "created": "Cloud workspace created.",
+    "failed": "Could not create cloud workspace."
+  },
+  "team": {
+    "title": "Workspace team",
+    "descriptionOwner": "Invite a teammate to {{name}} by email.",
+    "descriptionJoin": "Paste an invite link to join a workspace.",
+    "singleUse": "The invitation is single-use, expires in 7 days, and must be accepted by the invited account email.",
+    "emailLabel": "Teammate email",
+    "emailPlaceholder": "teammate@example.com",
+    "roleLabel": "Invite role",
+    "roleEditor": "Editor",
+    "roleViewer": "Viewer",
+    "send": "Send invitation",
+    "linkLabel": "Invite link",
+    "copy": "Copy",
+    "acceptLabel": "Accept an invite",
+    "tokenPlaceholder": "Paste invite link or token",
+    "join": "Join workspace",
+    "invalidEmail": "Enter a valid email address for the teammate.",
+    "inviteFailed": "Could not create invite.",
+    "signInFirst": "Sign in before accepting an invite.",
+    "invalidToken": "Paste a valid invite link or token.",
+    "acceptFailed": "Could not accept invite.",
+    "sentTo": "Invitation sent to {{email}}. It expires in 7 days.",
+    "emailFailed": "Invitation link created, but email could not be sent. Copy the link to share it manually.",
+    "accepted": "Invite accepted. Workspace added."
   }
 }

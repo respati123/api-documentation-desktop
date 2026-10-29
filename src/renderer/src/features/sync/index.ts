@@ -1,3 +1,7 @@
 export * from '@/features/sync/lib/change-status'
+export * from '@/features/sync/lib/invite'
+export * from '@/features/sync/models/cloud-workspace.model'
 export * from '@/features/sync/pages/auth-dialog.page'
+export * from '@/features/sync/viewmodels/use-team-dialogs.viewmodel'
 export * from '@/features/sync/views/change-rows.view'
+export * from '@/features/sync/views/team-dialogs.view'
