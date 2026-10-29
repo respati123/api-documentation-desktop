@@ -38,6 +38,8 @@ import {
   resolvePendingMerge,
   SYNC_TEXT,
   syncService,
+  useCloudCommitDetailsViewModel,
+  useCloudHistoryViewModel,
   useCommitDialogStateViewModel,
   useCommitDialogViewModel,
   useDiscardDialogViewModel,
@@ -51,15 +53,7 @@ import type { WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from 
 import { appUpdateService } from '@/features/workspace/services/app-update.service'
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
-import {
-  type ApiUser,
-  apiCall,
-  apiListAll,
-  apiWebSocketUrl,
-  type CloudCommit,
-  type CloudCommitDetail,
-  type CloudWorkspace,
-} from '@/lib/api'
+import { type ApiUser, apiCall, apiListAll, apiWebSocketUrl, type CloudWorkspace } from '@/lib/api'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
@@ -118,7 +112,6 @@ export function useWorkspaceViewModel() {
   const [authOpenRequest, setAuthOpenRequest] = useState(0)
   const [authError, setAuthError] = useState('')
   const [cloudWorkspaces, setCloudWorkspaces] = useState<CloudWorkspace[]>([])
-  const cloudHistoryWorkspaceIdRef = useRef('')
   const [inviteTokenDraft, setInviteTokenDraft] = useState('')
   const commitState = useCommitDialogStateViewModel()
   const {
@@ -138,12 +131,6 @@ export function useWorkspaceViewModel() {
   const [syncMenuOpen, setSyncMenuOpen] = useState(false)
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
   const [localCommits, setLocalCommits] = useState<LocalCommit[]>([])
-  const [cloudCommits, setCloudCommits] = useState<CloudCommit[]>([])
-  const [cloudCommitDetails, setCloudCommitDetails] = useState<Record<string, CloudCommitDetail>>({})
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [historyDetailLoading, setHistoryDetailLoading] = useState(false)
-  const [historyError, setHistoryError] = useState('')
-  const [historyDetailError, setHistoryDetailError] = useState('')
   const [stagedSnapshot, setStagedSnapshot] = useState<ApiNode[] | null>(null)
   const [stagedVariables, setStagedVariables] = useState<WorkspaceVariables | null>(null)
   const stagedWorkspaceIdRef = useRef('')
@@ -549,40 +536,12 @@ export function useWorkspaceViewModel() {
       socket?.close(1000, 'Session ended')
     }
   }, [sessionToken])
-  useEffect(() => {
-    if (!commitDialogOpen || commitDialogView !== 'history') return
-    if (!sessionToken || !activeWorkspace?.cloudId) {
-      if (cloudHistoryWorkspaceIdRef.current) {
-        setCloudCommits([])
-        setCloudCommitDetails({})
-      }
-      cloudHistoryWorkspaceIdRef.current = ''
-      setHistoryLoading(false)
-      setHistoryError('')
-      return
-    }
-    let active = true
-    if (cloudHistoryWorkspaceIdRef.current !== activeWorkspace.cloudId) {
-      cloudHistoryWorkspaceIdRef.current = activeWorkspace.cloudId
-      setCloudCommits([])
-      setCloudCommitDetails({})
-    }
-    setHistoryLoading(true)
-    setHistoryError('')
-    void apiListAll<CloudCommit>(`/api/workspaces/${activeWorkspace.cloudId}/sync/history`, 'commits', { token: sessionToken })
-      .then((commits) => {
-        if (active) setCloudCommits(commits)
-      })
-      .catch((error) => {
-        if (active) setHistoryError(error instanceof Error ? error.message : 'Could not load cloud history.')
-      })
-      .finally(() => {
-        if (active) setHistoryLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [commitDialogOpen, commitDialogView, sessionToken, activeWorkspace?.cloudId])
+  const cloudHistoryOpen = commitDialogOpen && commitDialogView === 'history'
+  const {
+    commits: cloudCommits,
+    loading: historyLoading,
+    error: historyError,
+  } = useCloudHistoryViewModel({ token: sessionToken, cloudId: activeWorkspace?.cloudId ?? null, enabled: cloudHistoryOpen })
   const lastLocalCommit = localCommits.find((commit) => commit.id === activeWorkspace?.localHeadId)
   const committedTree = (lastLocalCommit?.tree ?? activeWorkspace?.baseTree ?? tree) as ApiNode[]
   const committedVariablesSource = lastLocalCommit?.variables ?? activeWorkspace?.baseVariables ?? activeWorkspace?.variables
@@ -656,9 +615,20 @@ export function useWorkspaceViewModel() {
   const selectedHistoryCommit = historyCommitById.get(selectedHistoryCommitId)
   const historyParentId = selectedHistoryCommit?.parentIds.find((id) => historyCommitById.has(id))
   const historyParentCommit = historyParentId ? historyCommitById.get(historyParentId) : undefined
+  const historyDetailIds =
+    cloudHistoryOpen && selectedHistoryCommit
+      ? [selectedHistoryCommit.id, ...(historyParentId ? [historyParentId] : [])].filter(
+          (id) => !Array.isArray(historyCommitById.get(id)?.tree),
+        )
+      : []
+  const {
+    detailsById: cloudCommitDetails,
+    loading: historyDetailLoading,
+    error: historyDetailError,
+  } = useCloudCommitDetailsViewModel({ token: sessionToken, cloudId: activeWorkspace?.cloudId ?? null, commitIds: historyDetailIds })
   const selectedHistoryTreeValue =
-    selectedHistoryCommit?.tree ?? (selectedHistoryCommit ? cloudCommitDetails[selectedHistoryCommit.id]?.tree : undefined)
-  const historyParentTreeValue = historyParentCommit?.tree ?? (historyParentId ? cloudCommitDetails[historyParentId]?.tree : undefined)
+    selectedHistoryCommit?.tree ?? (selectedHistoryCommit ? cloudCommitDetails.get(selectedHistoryCommit.id)?.tree : undefined)
+  const historyParentTreeValue = historyParentCommit?.tree ?? (historyParentId ? cloudCommitDetails.get(historyParentId)?.tree : undefined)
   const historySnapshotsReady = Boolean(
     selectedHistoryCommit &&
       Array.isArray(selectedHistoryTreeValue) &&
@@ -675,8 +645,8 @@ export function useWorkspaceViewModel() {
     () =>
       historyParentCommit?.variables
         ? normalizeWorkspaceVariables(historyParentCommit.variables)
-        : historyParentId && cloudCommitDetails[historyParentId]?.variables
-          ? normalizeWorkspaceVariables(cloudCommitDetails[historyParentId].variables)
+        : historyParentId && cloudCommitDetails.get(historyParentId)?.variables
+          ? normalizeWorkspaceVariables(cloudCommitDetails.get(historyParentId)?.variables)
           : selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
             ? normalizeWorkspaceVariables(activeWorkspace?.baseVariables ?? emptyWorkspaceVariables())
             : emptyWorkspaceVariables(),
@@ -685,7 +655,8 @@ export function useWorkspaceViewModel() {
   const historyAfterVariables = useMemo(
     () =>
       normalizeWorkspaceVariables(
-        selectedHistoryCommit?.variables ?? (selectedHistoryCommit ? cloudCommitDetails[selectedHistoryCommit.id]?.variables : undefined),
+        selectedHistoryCommit?.variables ??
+          (selectedHistoryCommit ? cloudCommitDetails.get(selectedHistoryCommit.id)?.variables : undefined),
       ),
     [selectedHistoryCommit, cloudCommitDetails],
   )
@@ -711,66 +682,6 @@ export function useWorkspaceViewModel() {
         : [],
     [selectedHistoryCommit, selectedHistoryChange, historyBeforeTree, historyAfterTree, historyAfterVariables, historyBeforeVariables],
   )
-  useEffect(() => {
-    if (!commitDialogOpen || commitDialogView !== 'history' || !selectedHistoryCommit) {
-      setHistoryDetailLoading(false)
-      return
-    }
-    const requiredIds = [selectedHistoryCommit.id, ...(historyParentId ? [historyParentId] : [])]
-    const missingIds = requiredIds.filter(
-      (id) => !Array.isArray(historyCommitById.get(id)?.tree) && !Array.isArray(cloudCommitDetails[id]?.tree),
-    )
-    if (!missingIds.length) {
-      setHistoryDetailLoading(false)
-      setHistoryDetailError('')
-      return
-    }
-    if (!sessionToken || !activeWorkspace?.cloudId) {
-      setHistoryDetailLoading(false)
-      setHistoryDetailError('Sign in to load this cloud commit.')
-      return
-    }
-    let active = true
-    setHistoryDetailLoading(true)
-    setHistoryDetailError('')
-    void Promise.all(
-      missingIds.map(async (id) => {
-        const result = await apiCall<{ commit: CloudCommitDetail }>(`/api/workspaces/${activeWorkspace.cloudId}/sync/history/${id}`, {
-          token: sessionToken,
-        })
-        return result.commit
-      }),
-    )
-      .then((details) => {
-        if (!active) return
-        setCloudCommitDetails((current) => {
-          const retained = Object.fromEntries(Object.entries(current).filter(([id]) => requiredIds.includes(id))) as Record<
-            string,
-            CloudCommitDetail
-          >
-          for (const detail of details) retained[detail.id] = detail
-          return retained
-        })
-      })
-      .catch((error) => {
-        if (active) setHistoryDetailError(error instanceof Error ? error.message : 'Could not load the selected commit.')
-      })
-      .finally(() => {
-        if (active) setHistoryDetailLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [
-    commitDialogOpen,
-    commitDialogView,
-    selectedHistoryCommit,
-    historyParentId,
-    historyCommitById,
-    cloudCommitDetails,
-    sessionToken,
-    activeWorkspace?.cloudId,
-  ])
   const resolvedVariables = useMemo(
     () => activeVariableValues(workspaceVariables, activeEnvironmentId),
     [workspaceVariables, activeEnvironmentId],
@@ -1513,8 +1424,6 @@ export function useWorkspaceViewModel() {
       },
       onSelectHistoryCommit: (commitId) => {
         setSelectedHistoryCommitId(commitId)
-        setSelectedHistoryChangeId('')
-        setHistoryDetailError('')
       },
       onSelectHistoryChange: setSelectedHistoryChangeId,
       onOpenHistory: () => {
@@ -1639,7 +1548,6 @@ export function useWorkspaceViewModel() {
     historyDetailLoading,
     historyError,
     historyDetailError,
-    setHistoryDetailError,
     setStagedSnapshot,
     setStagedVariables,
     syncStatus,

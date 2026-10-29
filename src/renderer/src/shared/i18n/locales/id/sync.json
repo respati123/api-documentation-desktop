@@ -95,7 +95,10 @@
     "selectItem": "Pilih item yang berubah untuk melihat diff-nya.",
     "loadingCloudHistory": "Memuat riwayat commit cloud…",
     "selectCommit": "Pilih commit untuk melihat item yang berubah.",
-    "firstCommit": "Riwayat commit akan muncul di sini setelah commit pertama."
+    "firstCommit": "Riwayat commit akan muncul di sini setelah commit pertama.",
+    "loadFailed": "Riwayat cloud tidak dapat dimuat.",
+    "detailFailed": "Commit yang dipilih tidak dapat dimuat.",
+    "signInDetail": "Masuk untuk memuat commit cloud ini."
   },
   "discard": {
     "title": "Buang perubahan lokal?",

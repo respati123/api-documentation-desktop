@@ -96,6 +96,9 @@ export const SYNC_TEXT = {
     loadingCloudHistory: 'history.loadingCloudHistory',
     selectCommit: 'history.selectCommit',
     firstCommit: 'history.firstCommit',
+    loadFailed: 'history.loadFailed',
+    detailFailed: 'history.detailFailed',
+    signInDetail: 'history.signInDetail',
   },
   discard: {
     title: 'discard.title',

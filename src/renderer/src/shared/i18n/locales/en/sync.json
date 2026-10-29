@@ -95,7 +95,10 @@
     "selectItem": "Select a changed item to view its diff.",
     "loadingCloudHistory": "Loading cloud commit history…",
     "selectCommit": "Select a commit to view its changed items.",
-    "firstCommit": "Commit history will appear here after your first commit."
+    "firstCommit": "Commit history will appear here after your first commit.",
+    "loadFailed": "Could not load cloud history.",
+    "detailFailed": "Could not load the selected commit.",
+    "signInDetail": "Sign in to load this cloud commit."
   },
   "discard": {
     "title": "Discard local changes?",
