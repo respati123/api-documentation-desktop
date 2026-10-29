@@ -46,10 +46,13 @@ import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariables
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
-import { appUpdateService } from '@/features/workspace/services/app-update.service'
+import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
+import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
+import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
+import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
 import { type ApiUser, apiCall, apiListAll, apiWebSocketUrl, type CloudWorkspace } from '@/lib/api'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
@@ -774,11 +777,7 @@ export function useWorkspaceViewModel() {
       document.removeEventListener('keydown', onKeyDown)
     }
   }, [accountMenuOpen])
-  const [updateStatus, setUpdateStatus] = useState<
-    | { state: 'available' | 'downloading' | 'downloaded'; version: string; percent?: number }
-    | { state: 'error'; version: string; message: string }
-    | null
-  >(null)
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)
   useEffect(() => appUpdateService.onStatus(setUpdateStatus), [])
 
   async function signOut() {
@@ -1425,7 +1424,52 @@ export function useWorkspaceViewModel() {
     },
   })
 
+  const chrome = useWorkspaceChromeViewModel({
+    user,
+    isCloudOwner: Boolean(activeWorkspace?.cloudId && activeWorkspace.role === 'owner'),
+    updateStatus,
+    accountMenuOpen,
+    setAccountMenuOpen,
+    onNewCloudWorkspace: team.openCreateWorkspace,
+    onTeam: team.openTeam,
+    onSignOut: signOut,
+    onDownloadUpdate: appUpdateService.download,
+    onDismissUpdate: () => setUpdateStatus(null),
+  })
+  const sidebar = useWorkspaceSidebarViewModel({
+    localWorkspaces,
+    currentWorkspaceId,
+    activeWorkspace: activeWorkspace ?? null,
+    isReadOnly: Boolean(isReadOnly),
+    collectionWidth,
+    onActivateWorkspace: activateWorkspace,
+    onOpenOpenApi: () => setOpenApiDialogOpen(true),
+  })
+  const tabbar = useWorkspaceTabbarViewModel({
+    tabs: workspaceTabs,
+    environments: workspaceVariables.environments,
+    nodeById: treeIndex.nodeById,
+    changeById,
+    activeTabKey: activeWorkspaceTabKey,
+    activeTab: activeWorkspaceTab,
+    activeEnvironmentId,
+    hasRequests: Boolean(firstRequestId(tree)),
+    hasWorkspace: Boolean(activeWorkspace),
+    activeFolderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : null,
+    activeDocsRequest,
+    hasRequestWorkbench: Boolean(requestWorkbench),
+    onSelectTab: selectWorkspaceTab,
+    onCloseTab: closeWorkspaceTab,
+    onReadDocs: openCurrentDocs,
+    onOpenVariables: () => setVariablesDialogOpen(true),
+    onEnvironmentChange: (environmentId) => (environmentId === null ? updateActiveEnvironment(null) : openEnvironmentTab(environmentId)),
+    onOpenRequest: openRequestTab,
+    onOpenOpenApi: () => setOpenApiDialogOpen(true),
+  })
   return {
+    chrome,
+    sidebar,
+    tabbar,
     syncFooter,
     collection,
     team,

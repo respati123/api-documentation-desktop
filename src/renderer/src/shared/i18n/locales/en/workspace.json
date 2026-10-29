@@ -1,0 +1,58 @@
+{
+  "topbar": {
+    "wordmark": "API Documentation",
+    "account": "Account",
+    "newCloudWorkspace": "New cloud workspace",
+    "team": "Team",
+    "joinWorkspace": "Join workspace",
+    "signOut": "Sign out",
+    "updateTo": "Update to v{{version}}"
+  },
+  "update": {
+    "failed": "Update failed",
+    "updatingTo": "Updating to v{{version}}",
+    "downloadComplete": "Download complete. Restarting to finish the update…",
+    "downloading": "Downloading the update. The app will restart when it is ready.",
+    "close": "Close"
+  },
+  "sidebar": {
+    "label": "Workspace",
+    "kicker": "Workspace",
+    "heading": "Collections",
+    "openApi": "OpenAPI",
+    "foldersAndRequests": "Workspace folders and requests",
+    "selectWorkspace": "Select workspace",
+    "choose": "Choose workspace",
+    "actions": "Workspace actions",
+    "cloudLabel": "Cloud",
+    "cloudRole": "Cloud · {{role}}",
+    "localVault": "Local vault",
+    "resize": "Resize collections panel",
+    "pixels": "{{value}} pixels",
+    "myWorkspace": "My workspace",
+    "fallbackName": "Workspace"
+  },
+  "tabs": {
+    "list": "Open workspace tabs",
+    "empty": "Open a request from the collection.",
+    "close": "Close {{title}} tab",
+    "changed": "Has uncommitted changes",
+    "docsBadge": "DOCS",
+    "docsTitle": "{{name}} · Docs",
+    "request": "Request",
+    "environment": "Environment",
+    "readDocs": "Read docs",
+    "environmentLabel": "Environment",
+    "noEnvironment": "No environment",
+    "activeEnvironment": "Active environment",
+    "variables": "Variables"
+  },
+  "main": {
+    "requestWorkspace": "Request workspace",
+    "docsUnavailable": "Endpoint docs unavailable",
+    "docsUnavailableDescription": "Choose an endpoint in the collection to open its documentation.",
+    "noRequest": "No request selected",
+    "noRequestDescription": "Choose a request or create one in the selected folder.",
+    "folderFallback": "Workspace"
+  }
+}

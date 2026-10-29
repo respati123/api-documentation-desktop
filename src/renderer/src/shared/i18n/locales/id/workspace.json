@@ -1,0 +1,58 @@
+{
+  "topbar": {
+    "wordmark": "Dokumentasi API",
+    "account": "Akun",
+    "newCloudWorkspace": "Workspace cloud baru",
+    "team": "Tim",
+    "joinWorkspace": "Gabung workspace",
+    "signOut": "Keluar",
+    "updateTo": "Perbarui ke v{{version}}"
+  },
+  "update": {
+    "failed": "Pembaruan gagal",
+    "updatingTo": "Memperbarui ke v{{version}}",
+    "downloadComplete": "Unduhan selesai. Memulai ulang untuk menyelesaikan pembaruan…",
+    "downloading": "Mengunduh pembaruan. Aplikasi akan dimulai ulang saat siap.",
+    "close": "Tutup"
+  },
+  "sidebar": {
+    "label": "Workspace",
+    "kicker": "Workspace",
+    "heading": "Koleksi",
+    "openApi": "OpenAPI",
+    "foldersAndRequests": "Folder dan request workspace",
+    "selectWorkspace": "Pilih workspace",
+    "choose": "Pilih workspace",
+    "actions": "Aksi workspace",
+    "cloudLabel": "Cloud",
+    "cloudRole": "Cloud · {{role}}",
+    "localVault": "Penyimpanan lokal",
+    "resize": "Ubah lebar panel koleksi",
+    "pixels": "{{value}} piksel",
+    "myWorkspace": "Workspace saya",
+    "fallbackName": "Workspace"
+  },
+  "tabs": {
+    "list": "Tab workspace terbuka",
+    "empty": "Buka request dari koleksi.",
+    "close": "Tutup tab {{title}}",
+    "changed": "Ada perubahan yang belum di-commit",
+    "docsBadge": "DOCS",
+    "docsTitle": "{{name}} · Docs",
+    "request": "Request",
+    "environment": "Environment",
+    "readDocs": "Baca docs",
+    "environmentLabel": "Environment",
+    "noEnvironment": "Tanpa environment",
+    "activeEnvironment": "Environment aktif",
+    "variables": "Variabel"
+  },
+  "main": {
+    "requestWorkspace": "Workspace request",
+    "docsUnavailable": "Docs endpoint tidak tersedia",
+    "docsUnavailableDescription": "Pilih endpoint di koleksi untuk membuka dokumentasinya.",
+    "noRequest": "Belum ada request yang dipilih",
+    "noRequestDescription": "Pilih request atau buat request baru di folder yang dipilih.",
+    "folderFallback": "Workspace"
+  }
+}
