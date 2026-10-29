@@ -55,6 +55,15 @@ export function useWorkspacePersistenceViewModel(input: PersistenceInput) {
     }, 350)
   }, [tree, workspaceVariables, activeEnvironmentId, localWorkspaces, currentWorkspaceId, storageLoaded])
 
+  // Cancels the queued save and returns the workspace it held, so the caller can write it at once.
+  function takePendingSave(): LocalWorkspace | null {
+    if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
+    const pending = pendingWorkspaceSaveRef.current
+    pendingWorkspaceSaveRef.current = null
+    workspaceSaveTimerRef.current = undefined
+    return pending
+  }
+
   useEffect(
     () => () => {
       if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
@@ -103,4 +112,5 @@ export function useWorkspacePersistenceViewModel(input: PersistenceInput) {
     if (stagedVariables) localStorage.setItem(key, JSON.stringify(shareableWorkspaceVariables(stagedVariables)))
     else localStorage.removeItem(key)
   }, [stagedVariables, currentWorkspaceId])
+  return { takePendingSave }
 }
