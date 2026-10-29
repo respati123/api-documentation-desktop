@@ -1,10 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
-import { firstRequestId, indexTree, initialTree, isFolder, isRequest, updateNode, useCollectionTreeViewModel } from '@/features/collection'
-import { replaceUrlParams, syncUrlParams } from '@/features/request'
+import { firstRequestId, indexTree, initialTree, isFolder, useCollectionTreeViewModel } from '@/features/collection'
 import {
-  type CloudWorkspaceRecord,
   changeStatusKey,
   type PendingMergeState,
   useCommitDialogStateViewModel,
@@ -12,14 +10,12 @@ import {
   useDiscardDialogViewModel,
   useMergeDialogViewModel,
   useSyncFooterViewModel,
-  useTeamDialogsViewModel,
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readTree } from '@/features/workspace/lib/storage'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
-import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
 import { useWorkspaceChangesViewModel } from '@/features/workspace/viewmodels/use-workspace-changes.viewmodel'
@@ -27,11 +23,13 @@ import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use
 import { useCommitHistoryViewModel } from '@/features/workspace/viewmodels/use-workspace-history.viewmodel'
 import { useWorkspaceNavigationViewModel } from '@/features/workspace/viewmodels/use-workspace-navigation.viewmodel'
 import { useWorkspacePersistenceViewModel } from '@/features/workspace/viewmodels/use-workspace-persistence.viewmodel'
+import { useWorkspaceRequestViewModel } from '@/features/workspace/viewmodels/use-workspace-request.viewmodel'
 import { useWorkspaceSessionViewModel } from '@/features/workspace/viewmodels/use-workspace-session.viewmodel'
 import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
 import { useWorkspaceStorageViewModel } from '@/features/workspace/viewmodels/use-workspace-storage.viewmodel'
 import { useWorkspaceSyncActionsViewModel } from '@/features/workspace/viewmodels/use-workspace-sync-actions.viewmodel'
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
+import { useWorkspaceTeamViewModel } from '@/features/workspace/viewmodels/use-workspace-team.viewmodel'
 import { useWorkspaceTreeActionsViewModel } from '@/features/workspace/viewmodels/use-workspace-tree-actions.viewmodel'
 import type { CloudWorkspace } from '@/lib/api'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
@@ -42,7 +40,7 @@ import {
   workspaceVariablesChangeId,
 } from '@/lib/workspace-variables'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
-import type { ApiNode, RequestNode } from '@/shared/models/api-node.model'
+import type { ApiNode } from '@/shared/models/api-node.model'
 
 export function useWorkspaceViewModel() {
   const {
@@ -186,11 +184,6 @@ export function useWorkspaceViewModel() {
       } else if (fallback?.kind === 'environment') setActiveEnvironmentId(fallback.id)
     }
   }, [treeIndex, workspaceVariables, workspaceTabs, activeWorkspaceTabKey])
-  const activeRequest = treeIndex.nodeById.get(selectedRequestId)
-  const activeRequestRef = useRef<RequestNode | undefined>(undefined)
-  useLayoutEffect(() => {
-    activeRequestRef.current = activeRequest && isRequest(activeRequest) ? activeRequest : undefined
-  }, [activeRequest])
   const activeFolder = treeIndex.nodeById.get(selectedFolderId)
   const activeWorkspaceTab = workspaceTabs.find((tab) => workspaceTabKey(tab) === activeWorkspaceTabKey)
   const activeDocsRequest = activeWorkspaceTab?.kind === 'docs' ? treeIndex.nodeById.get(activeWorkspaceTab.id) : undefined
@@ -275,52 +268,6 @@ export function useWorkspaceViewModel() {
     return suggestions
   }, [workspaceVariables, activeEnvironmentId])
 
-  // A cloud workspace this device just created becomes the active one, with its own tabs.
-  async function adoptCreatedWorkspace(workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, createdVariables: WorkspaceVariables) {
-    await workspaceStorageService.saveWorkspace(workspace)
-    setLocalWorkspaces((current) => [...current, workspace])
-    setCloudWorkspaces((current) => [...current, { id: cloud.id, name: cloud.name, role: cloud.role, headCommitId: cloud.headCommitId }])
-    stagedWorkspaceIdRef.current = workspace.id
-    setStagedSnapshot(null)
-    setStagedVariables(null)
-    setCurrentWorkspaceId(workspace.id)
-    setWorkspaceVariables(createdVariables)
-    setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
-    resetTabs(workspace.tree as ApiNode[])
-  }
-
-  // A workspace joined through an invite is added and opened, with its shared tree.
-  async function adoptAcceptedWorkspace(workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, invitedVariables: WorkspaceVariables) {
-    await workspaceStorageService.saveWorkspace(workspace)
-    setLocalWorkspaces((current) => [...current, workspace])
-    setCloudWorkspaces((current) => [...current, { id: cloud.id, name: cloud.name, role: cloud.role, headCommitId: cloud.headCommitId }])
-    stagedWorkspaceIdRef.current = workspace.id
-    setStagedSnapshot(null)
-    setStagedVariables(null)
-    setCurrentWorkspaceId(workspace.id)
-    setTree(workspace.tree as ApiNode[])
-    setWorkspaceVariables(invitedVariables)
-    setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
-    resetTabs(workspace.tree as ApiNode[])
-  }
-
-  function updateActiveRequest(patch: Partial<RequestNode>) {
-    const request =
-      activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : treeIndex.nodeById.get(selectedRequestId)
-    if (!request || !isRequest(request)) return
-    let synchronizedPatch = patch
-    if ('url' in patch && !('params' in patch) && typeof patch.url === 'string') {
-      synchronizedPatch = { ...patch, params: syncUrlParams(patch.url, request.params ?? []) }
-    } else if ('params' in patch && !('url' in patch)) {
-      const params = patch.params ?? []
-      synchronizedPatch = { ...patch, url: replaceUrlParams(request.url, params) }
-    }
-    activeRequestRef.current = { ...request, ...synchronizedPatch }
-    setTree((current) => {
-      return updateNode(current, selectedRequestId, synchronizedPatch)
-    })
-  }
-
   const aiConnect = useAiConnectViewModel()
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)
   useEffect(() => appUpdateService.onStatus(setUpdateStatus), [])
@@ -346,7 +293,7 @@ export function useWorkspaceViewModel() {
     setSelectedRequestId,
     setSelectedFolderId,
     setExpandedFolders,
-    activeRequest,
+    activeRequest: treeIndex.nodeById.get(selectedRequestId),
     setStagedSnapshot,
     setStagedVariables,
     stagedWorkspaceIdRef,
@@ -396,6 +343,21 @@ export function useWorkspaceViewModel() {
     readOnly: Boolean(isReadOnly),
     onClose: () => setQuickEditTarget(null),
     onSave: saveQuickVariable,
+  })
+
+  const { activeRequest, updateActiveRequest, requestWorkbench } = useWorkspaceRequestViewModel({
+    selectedRequestId,
+    activeFolder,
+    treeIndex,
+    setTree,
+    activeWorkspace,
+    currentWorkspaceId,
+    isReadOnly,
+    activeWorkspaceTab,
+    variableSuggestions,
+    resolvedVariables,
+    openDocsTab,
+    openVariableEditor,
   })
 
   const syncActions = useWorkspaceSyncActionsViewModel({
@@ -449,28 +411,6 @@ export function useWorkspaceViewModel() {
   })
   const { createFolderInTree, importTree, renameFolderInTree, selectFolder, toggleFolderExpanded, createRequest, deleteItem, moveItem } =
     treeActions
-
-  // The active request as the user last edited it. Each editor reads this at send or copy time.
-  const readActiveRequest = (): RequestNode => {
-    const latest = activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : activeRequest
-    return latest && isRequest(latest) ? latest : (activeRequest as RequestNode)
-  }
-  const builderRequest = activeWorkspaceTab?.kind === 'request' && activeRequest && isRequest(activeRequest) ? activeRequest : null
-  const requestWorkbench = builderRequest
-    ? {
-        request: builderRequest,
-        resetKey: `${currentWorkspaceId}:${builderRequest.id}`,
-        readLatestRequest: readActiveRequest,
-        readOnly: Boolean(isReadOnly),
-        folderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : '',
-        statusText: activeWorkspace?.cloudId ? (activeWorkspace.role ?? '') : 'Saved locally',
-        suggestions: variableSuggestions,
-        resolvedVariables,
-        onChange: updateActiveRequest,
-        onOpenDocs: () => openDocsTab(builderRequest.id),
-        onVariableClick: openVariableEditor,
-      }
-    : null
 
   const { t: tSync } = useTranslation('sync')
   const statusText = (status: WorkspaceChange['status']) => tSync(changeStatusKey(status))
@@ -550,18 +490,25 @@ export function useWorkspaceViewModel() {
     onOpenChange: setDiscardConfirmOpen,
     onConfirm: discardLocalChanges,
   })
-  const team = useTeamDialogsViewModel({
+  const team = useWorkspaceTeamViewModel({
     sessionToken,
     activeWorkspace,
     tree,
-    variables: workspaceVariables,
+    workspaceVariables,
     activeEnvironmentId,
-    inviteToken: inviteTokenDraft,
-    onInviteTokenDraftChange: setInviteTokenDraft,
-    onInviteTokenUsed: () => setInviteTokenDraft(''),
-    onStatus: setSyncStatus,
-    onCreated: adoptCreatedWorkspace,
-    onAccepted: adoptAcceptedWorkspace,
+    inviteTokenDraft,
+    setInviteTokenDraft,
+    setSyncStatus,
+    setLocalWorkspaces,
+    setCloudWorkspaces,
+    setCurrentWorkspaceId,
+    setStagedSnapshot,
+    setStagedVariables,
+    stagedWorkspaceIdRef,
+    setTree,
+    setWorkspaceVariables,
+    setActiveEnvironmentId,
+    resetTabs,
   })
   const collection = useCollectionTreeViewModel({
     tree,
