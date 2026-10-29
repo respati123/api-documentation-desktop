@@ -9,20 +9,6 @@ export function isFolder(node: ApiNode): node is FolderNode {
   return node.kind === 'folder'
 }
 
-export function requestHeaderCount(request: RequestNode): number {
-  const names = new Set(
-    (request.headers ?? []).filter((header) => header.enabled && header.name.trim()).map((header) => header.name.trim().toLowerCase()),
-  )
-  for (const name of ['accept', 'host', 'user-agent']) names.add(name)
-  const bodyMode = request.bodyMode ?? (request.body.trim() ? 'json' : 'none')
-  if (bodyMode !== 'none') names.add('content-type')
-  const auth = request.auth ?? { type: 'none' as const }
-  if (auth.type === 'bearer' && auth.token) names.add('authorization')
-  if (auth.type === 'basic' && (auth.username || auth.password)) names.add('authorization')
-  if (auth.type === 'api-key' && auth.location === 'header' && auth.name.trim() && auth.value) names.add(auth.name.trim().toLowerCase())
-  return names.size
-}
-
 export function redactDiffNode(node: ApiNode): ApiNode {
   if (isFolder(node)) return { ...node, children: node.children.map(redactDiffNode) }
   const shared = stripLocalFilePaths([node])[0] as RequestNode

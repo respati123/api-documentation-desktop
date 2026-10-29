@@ -54,11 +54,6 @@ export function findViolations(path: string): string[] {
 const legacyViolations = new Set<string>([
   'features/docs/components/api-reference.tsx',
   'features/docs/components/openapi-dialog.tsx',
-  'features/request/components/auth-editor.tsx',
-  'features/request/components/body-editor.tsx',
-  'features/request/components/header-editor.tsx',
-  'features/request/components/params-editor.tsx',
-  'features/request/components/response-editor.tsx',
   'features/sync/components/auth-dialog.tsx',
   'features/sync/components/workspace-change-rows.tsx',
   'features/workspace/views/workspace.view.tsx',

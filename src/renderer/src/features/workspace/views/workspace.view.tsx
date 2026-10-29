@@ -10,23 +10,18 @@ import {
   WorkspaceStorageIcon,
 } from '@/features/collection'
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
-import { AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, ResponseEditor } from '@/features/request'
-import { ResponseView } from '@/features/response'
+import { RequestWorkbenchPage } from '@/features/request'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
-import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
 import { StateMessage } from '@/shared/components/state-message'
 import { Button } from '@/shared/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import { Input } from '@/shared/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
-import { Textarea } from '@/shared/components/ui/textarea'
-import { VariableUrlField } from '@/shared/components/variable-field'
 import type { ApiNode } from '@/shared/models/api-node.model'
 import { cn } from '@/shared/utils/cn'
 
@@ -43,6 +38,7 @@ export function WorkspaceView({
   openApiDialogOpen,
   setOpenApiDialogOpen,
   variableQuickEdit,
+  requestWorkbench,
   variablesDialog,
   environmentTab,
   localWorkspaces,
@@ -59,28 +55,6 @@ export function WorkspaceView({
   setExpandedFolders,
   draggedId,
   setDraggedId,
-  response,
-  setResponse,
-  responseInspector,
-  sendMenuOpen,
-  setSendMenuOpen,
-  downloadAfterSend,
-  setDownloadAfterSend,
-  sendDelayDialogOpen,
-  setSendDelayDialogOpen,
-  sendDelaySeconds,
-  setSendDelaySeconds,
-  sendNotice,
-  repeatDialogOpen,
-  setRepeatDialogOpen,
-  repeatIntervalSeconds,
-  setRepeatIntervalSeconds,
-  repeatRunning,
-  clientCodeDialogOpen,
-  setClientCodeDialogOpen,
-  clientCode,
-  clientCodeStatus,
-  sendOptionsButtonRef,
   newFolderName,
   setNewFolderName,
   folderDialogOpen,
@@ -145,11 +119,9 @@ export function WorkspaceView({
   moveCollectionResize,
   finishCollectionResize,
   handleCollectionResizeKeyDown,
-  activeRequest,
   activeFolder,
   activeWorkspaceTab,
   activeDocsRequest,
-  requestTabIndicators,
   activeWorkspace,
   isReadOnly,
   workspaceChanges,
@@ -169,9 +141,6 @@ export function WorkspaceView({
   historyChanges,
   selectedHistoryChange,
   historyDiffRows,
-  variableSuggestions,
-  updateActiveRequest,
-  executeRequest,
   beginBrowserSignIn,
   clearAuthError,
   accountMenuOpen,
@@ -192,7 +161,6 @@ export function WorkspaceView({
   openEnvironmentTab,
   selectWorkspaceTab,
   closeWorkspaceTab,
-  openVariableEditor,
   stageChanges,
   stageChange,
   saveCommit,
@@ -213,13 +181,6 @@ export function WorkspaceView({
   cancelFolderRename,
   toggleFolder,
   handleDrop,
-  sendRequest,
-  openClientCode,
-  copyClientCode,
-  scheduleRequest,
-  cancelScheduledRequest,
-  stopRepeating,
-  startRepeating,
 }: WorkspaceViewProps) {
   function renderTree(nodes: ApiNode[], depth = 0): React.ReactNode {
     return nodes.map((node) =>
@@ -519,7 +480,6 @@ export function WorkspaceView({
             setActiveWorkspaceTabKey(workspaceTabKey(tab))
             setSelectedRequestId(importedRequestId)
             setSelectedFolderId(findParentFolder(imported, importedRequestId))
-            setResponse({ kind: 'empty' })
           }
           const folders = new Set<string>()
           const collectFolders = (nodes: ApiNode[]) =>
@@ -937,379 +897,17 @@ export function WorkspaceView({
           )
         ) : (
           <>
-            <form className="request-card" onSubmit={sendRequest}>
-              {activeWorkspaceTab?.kind === 'request' && activeRequest && isRequest(activeRequest) ? (
-                <>
-                  <div className="request-card-heading">
-                    <div>
-                      <p className="section-kicker">
-                        {activeFolder && isFolder(activeFolder) ? activeFolder.name : 'Workspace'} / Request builder
-                      </p>
-                      <DebouncedInput
-                        key={`${currentWorkspaceId}:${activeRequest.id}:name`}
-                        aria-label="Request name"
-                        className="request-name-input"
-                        value={activeRequest.name}
-                        readOnly={isReadOnly}
-                        onValueChange={(value) => updateActiveRequest({ name: value })}
-                      />
-                    </div>
-                    <div className="request-heading-actions">
-                      <span className="request-status">{activeWorkspace?.cloudId ? activeWorkspace.role : 'Saved locally'}</span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="request-view-docs"
-                        onClick={() => openDocsTab(activeRequest.id)}
-                      >
-                        View docs
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="request-line">
-                    <Select
-                      value={activeRequest.method}
-                      onValueChange={(value) => updateActiveRequest({ method: value })}
-                      disabled={isReadOnly}
-                    >
-                      <SelectTrigger aria-label="HTTP method" className="method-select">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((item) => (
-                          <SelectItem key={item} value={item}>
-                            {item}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <VariableUrlField
-                      key={`${currentWorkspaceId}:${activeRequest.id}:url`}
-                      aria-label="Request URL"
-                      className="url-input"
-                      value={activeRequest.url}
-                      suggestions={variableSuggestions}
-                      onVariableClick={openVariableEditor}
-                      readOnly={isReadOnly}
-                      onValueChange={(value) => updateActiveRequest({ url: value })}
-                      spellCheck={false}
-                      placeholder="https://api.example.com/resource"
-                    />
-                    <div className="send-control">
-                      <Button type="submit" className="send-primary" disabled={response.kind === 'loading'}>
-                        {response.kind === 'loading' ? 'Sending…' : 'Send'}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="default"
-                        size="sm"
-                        className="send-options-trigger"
-                        ref={sendOptionsButtonRef}
-                        aria-label="Send options"
-                        aria-haspopup="menu"
-                        aria-expanded={sendMenuOpen}
-                        onClick={() => setSendMenuOpen((open) => !open)}
-                      >
-                        ⌄
-                      </Button>
-                      {sendMenuOpen && (
-                        <>
-                          <button
-                            type="button"
-                            className="send-menu-dismiss"
-                            aria-label="Close send options"
-                            onClick={() => setSendMenuOpen(false)}
-                          />
-                          <div
-                            className="send-options-menu"
-                            role="menu"
-                            aria-label="Send request options"
-                            onKeyDown={(event) => {
-                              const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]'))
-                              const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement)
-                              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                                event.preventDefault()
-                                const direction = event.key === 'ArrowDown' ? 1 : -1
-                                items[(activeIndex + direction + items.length) % items.length]?.focus()
-                              } else if (event.key === 'Escape') {
-                                event.preventDefault()
-                                setSendMenuOpen(false)
-                                sendOptionsButtonRef.current?.focus()
-                              }
-                            }}
-                          >
-                            <div className="send-menu-section">Basic</div>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              autoFocus
-                              onClick={() => {
-                                setSendMenuOpen(false)
-                                void executeRequest()
-                              }}
-                            >
-                              <span>Send Now</span>
-                              <kbd>Ctrl + Enter</kbd>
-                            </button>
-                            <button type="button" role="menuitem" onClick={openClientCode}>
-                              <span>Generate Client Code</span>
-                            </button>
-                            <div className="send-menu-section send-menu-section-advanced">Advanced</div>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                setSendMenuOpen(false)
-                                setSendDelayDialogOpen(true)
-                              }}
-                            >
-                              <span>Send After Delay</span>
-                            </button>
-                            {repeatRunning ? (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setSendMenuOpen(false)
-                                  stopRepeating()
-                                }}
-                              >
-                                <span>Stop Repeating</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setSendMenuOpen(false)
-                                  setRepeatDialogOpen(true)
-                                }}
-                              >
-                                <span>Repeat on Interval</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              role="menuitemcheckbox"
-                              className="send-menu-toggle"
-                              aria-checked={downloadAfterSend}
-                              onClick={() => setDownloadAfterSend((enabled) => !enabled)}
-                            >
-                              <span className="send-menu-check" aria-hidden="true">
-                                {downloadAfterSend ? '✓' : ''}
-                              </span>
-                              <span>Download After Send</span>
-                            </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="send-menu-last"
-                              onClick={() => {
-                                setSendMenuOpen(false)
-                                void executeRequest(true)
-                              }}
-                            >
-                              <span>Send And Download</span>
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {(sendNotice || repeatRunning) && (
-                    <div className="send-schedule-notice" role="status">
-                      <span>
-                        {sendNotice || `Repeating every ${repeatIntervalSeconds} second${Number(repeatIntervalSeconds) === 1 ? '' : 's'}.`}
-                      </span>
-                      <Button type="button" variant="ghost" size="sm" onClick={sendNotice ? cancelScheduledRequest : stopRepeating}>
-                        {sendNotice ? 'Cancel' : 'Stop'}
-                      </Button>
-                    </div>
-                  )}
-                  <Tabs defaultValue="params" className="request-tabs">
-                    <TabsList aria-label="Request configuration">
-                      <TabsTrigger value="params">
-                        Params
-                        {requestTabIndicators?.activeParams ? (
-                          <span className="request-tab-count" aria-hidden="true">
-                            {requestTabIndicators.activeParams}
-                          </span>
-                        ) : null}
-                        {requestTabIndicators?.activeParams ? (
-                          <span className="sr-only">{requestTabIndicators.activeParams} active parameters</span>
-                        ) : null}
-                      </TabsTrigger>
-                      <TabsTrigger value="body">
-                        Body
-                        {requestTabIndicators?.hasBody && (
-                          <>
-                            <span className="request-tab-dot" aria-hidden="true" />
-                            <span className="sr-only">Body configured</span>
-                          </>
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger value="auth">
-                        Auth
-                        {requestTabIndicators?.hasAuth && (
-                          <>
-                            <span className="request-tab-dot" aria-hidden="true" />
-                            <span className="sr-only">Authorization configured</span>
-                          </>
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger value="headers">
-                        Headers
-                        {requestTabIndicators?.headers ? (
-                          <span className="request-tab-count" aria-hidden="true">
-                            {requestTabIndicators.headers}
-                          </span>
-                        ) : null}
-                        {requestTabIndicators?.headers ? (
-                          <span className="sr-only">{requestTabIndicators.headers} active headers</span>
-                        ) : null}
-                      </TabsTrigger>
-                      <TabsTrigger value="responses">
-                        Responses
-                        {activeRequest.responses?.length ? (
-                          <span className="request-tab-count">{activeRequest.responses.length}</span>
-                        ) : null}
-                      </TabsTrigger>
-                      <TabsTrigger value="docs">Docs</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="params" className="editor-pane">
-                      <ParamsEditor
-                        key={`${currentWorkspaceId}:${activeRequest.id}`}
-                        request={activeRequest}
-                        readOnly={isReadOnly}
-                        suggestions={variableSuggestions}
-                        onVariableClick={openVariableEditor}
-                        onChange={updateActiveRequest}
-                      />
-                    </TabsContent>
-                    <TabsContent value="body" className="editor-pane">
-                      <BodyEditor
-                        key={`${currentWorkspaceId}:${activeRequest.id}`}
-                        request={activeRequest}
-                        readOnly={isReadOnly}
-                        suggestions={variableSuggestions}
-                        onVariableClick={openVariableEditor}
-                        onChange={updateActiveRequest}
-                      />
-                    </TabsContent>
-                    <TabsContent value="auth" className="editor-pane">
-                      <AuthEditor
-                        key={`${currentWorkspaceId}:${activeRequest.id}`}
-                        request={activeRequest}
-                        readOnly={isReadOnly}
-                        suggestions={variableSuggestions}
-                        onVariableClick={openVariableEditor}
-                        onChange={updateActiveRequest}
-                      />
-                    </TabsContent>
-                    <TabsContent value="headers" className="editor-pane">
-                      <HeaderEditor
-                        key={`${currentWorkspaceId}:${activeRequest.id}`}
-                        request={activeRequest}
-                        readOnly={isReadOnly}
-                        suggestions={variableSuggestions}
-                        onVariableClick={openVariableEditor}
-                        onChange={updateActiveRequest}
-                      />
-                    </TabsContent>
-                    <TabsContent value="responses" className="editor-pane">
-                      <ResponseEditor
-                        key={`${currentWorkspaceId}:${activeRequest.id}`}
-                        responses={activeRequest.responses ?? []}
-                        readOnly={isReadOnly}
-                        onChange={(responses) => updateActiveRequest({ responses })}
-                      />
-                    </TabsContent>
-                    <TabsContent value="docs" className="editor-pane">
-                      <DebouncedTextarea
-                        key={`${currentWorkspaceId}:${activeRequest.id}:docs`}
-                        aria-label="Request documentation"
-                        className="request-docs-field"
-                        maxLength={100000}
-                        placeholder="Describe this endpoint, its inputs, and expected response."
-                        value={activeRequest.documentation ?? ''}
-                        readOnly={isReadOnly}
-                        onValueChange={(value) => updateActiveRequest({ documentation: value })}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </>
-              ) : (
+            {requestWorkbench ? (
+              <RequestWorkbenchPage {...requestWorkbench} />
+            ) : (
+              <section className="request-card">
                 <StateMessage
                   testId="workspace-main-no-request-state"
                   title="No request selected"
                   description="Choose a request or create one in the selected folder."
                 />
-              )}
-            </form>
-            <Dialog open={sendDelayDialogOpen} onOpenChange={setSendDelayDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Send after delay</DialogTitle>
-                  <DialogDescription>Run this request once after the selected delay.</DialogDescription>
-                </DialogHeader>
-                <form className="dialog-form send-timer-form" onSubmit={scheduleRequest}>
-                  <label htmlFor="send-delay-seconds">Delay in seconds</label>
-                  <Input
-                    id="send-delay-seconds"
-                    type="number"
-                    min="1"
-                    max="3600"
-                    value={sendDelaySeconds}
-                    onChange={(event) => setSendDelaySeconds(event.target.value)}
-                  />
-                  <Button type="submit">Schedule request</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={repeatDialogOpen} onOpenChange={setRepeatDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Repeat request</DialogTitle>
-                  <DialogDescription>Send the current request repeatedly until you stop it.</DialogDescription>
-                </DialogHeader>
-                <form className="dialog-form send-timer-form" onSubmit={startRepeating}>
-                  <label htmlFor="repeat-interval-seconds">Interval in seconds</label>
-                  <Input
-                    id="repeat-interval-seconds"
-                    type="number"
-                    min="1"
-                    max="3600"
-                    value={repeatIntervalSeconds}
-                    onChange={(event) => setRepeatIntervalSeconds(event.target.value)}
-                  />
-                  <Button type="submit">Start repeating</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={clientCodeDialogOpen} onOpenChange={setClientCodeDialogOpen}>
-              <DialogContent className="client-code-dialog">
-                <DialogHeader>
-                  <DialogTitle>Generate Client Code</DialogTitle>
-                  <DialogDescription>cURL command for the current request.</DialogDescription>
-                </DialogHeader>
-                <Textarea
-                  aria-label="Generated cURL command"
-                  className="client-code-textarea code-field"
-                  readOnly
-                  value={clientCode}
-                  spellCheck={false}
-                />
-                <p className="client-code-note">The command includes the authorization values configured for this request.</p>
-                <div className="client-code-actions">
-                  <span role="status">{clientCodeStatus}</span>
-                  <Button type="button" onClick={() => void copyClientCode()}>
-                    Copy code
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <ResponseView {...responseInspector} />
+              </section>
+            )}
           </>
         )}
       </section>

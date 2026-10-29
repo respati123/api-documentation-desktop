@@ -22,11 +22,9 @@ import {
   readCollectionWidth,
   removeNode,
   renameFolder,
-  requestHeaderCount,
   updateNode,
 } from '@/features/collection'
-import { buildCurlCommand, replaceUrlParams, syncUrlParams, toApiRequest } from '@/features/request'
-import { downloadResponse, type ResponseState, useResponseViewModel } from '@/features/response'
+import { replaceUrlParams, syncUrlParams } from '@/features/request'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -38,7 +36,6 @@ import type {
   WorkspaceTab,
   WorkspaceUpdateEvent,
 } from '@/features/workspace/models/workspace.model'
-import { useSendTimersViewModel } from '@/features/workspace/viewmodels/use-send-timers.viewmodel'
 import {
   ApiError,
   type ApiUser,
@@ -58,7 +55,6 @@ import {
   mergeWorkspaceVariables,
   normalizeWorkspaceVariables,
   preserveLocalSecretValues,
-  resolveRequestVariables,
   shareableWorkspaceVariables,
   type WorkspaceEnvironment,
   type WorkspaceVariables,
@@ -105,14 +101,6 @@ export function useWorkspaceViewModel() {
       ),
   )
   const [draggedId, setDraggedId] = useState<string | null>(null)
-  const [response, setResponse] = useState<ResponseState>({ kind: 'empty' })
-  const responseInspector = useResponseViewModel({ response })
-  const [sendMenuOpen, setSendMenuOpen] = useState(false)
-  const [downloadAfterSend, setDownloadAfterSend] = useState(false)
-  const [clientCodeDialogOpen, setClientCodeDialogOpen] = useState(false)
-  const [clientCode, setClientCode] = useState('')
-  const [clientCodeStatus, setClientCodeStatus] = useState('')
-  const sendOptionsButtonRef = useRef<HTMLButtonElement>(null)
   const [newFolderName, setNewFolderName] = useState('')
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
   const [newFolderParentId, setNewFolderParentId] = useState('')
@@ -463,15 +451,6 @@ export function useWorkspaceViewModel() {
     activeWorkspaceTab?.kind === 'environment'
       ? workspaceVariables.environments.find((environment) => environment.id === activeWorkspaceTab.id)
       : undefined
-  const requestTabIndicators =
-    activeRequest && isRequest(activeRequest)
-      ? {
-          activeParams: (activeRequest.params ?? []).filter((param) => param.enabled && param.name.trim()).length,
-          hasBody: (activeRequest.bodyMode ?? (activeRequest.body.trim() ? 'json' : 'none')) !== 'none',
-          hasAuth: (activeRequest.auth ?? { type: 'none' }).type !== 'none',
-          headers: requestHeaderCount(activeRequest),
-        }
-      : null
   const activeWorkspace = localWorkspaces.find((item) => item.id === currentWorkspaceId)
   const isReadOnly = activeWorkspace?.role === 'viewer'
   useEffect(() => {
@@ -823,17 +802,6 @@ export function useWorkspaceViewModel() {
       }),
     [],
   )
-  const handleSendShortcut = useEffectEvent((event: KeyboardEvent) => {
-    if (event.ctrlKey && event.key === 'Enter') {
-      event.preventDefault()
-      setSendMenuOpen(false)
-      if (activeWorkspaceTab?.kind === 'request' && response.kind !== 'loading') void executeRequest()
-    }
-  })
-  useEffect(() => {
-    window.addEventListener('keydown', handleSendShortcut)
-    return () => window.removeEventListener('keydown', handleSendShortcut)
-  }, [])
   function updateActiveRequest(patch: Partial<RequestNode>) {
     const request =
       activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : treeIndex.nodeById.get(selectedRequestId)
@@ -850,49 +818,6 @@ export function useWorkspaceViewModel() {
       return updateNode(current, selectedRequestId, synchronizedPatch)
     })
   }
-
-  async function executeRequest(download = false, requestOverride?: RequestNode) {
-    const request =
-      requestOverride ??
-      (activeRequestRef.current?.id === selectedRequestId
-        ? activeRequestRef.current
-        : activeRequest && isRequest(activeRequest)
-          ? activeRequest
-          : undefined)
-    if (!request) return
-    if (!request.url.trim()) {
-      setResponse({ kind: 'error', message: 'Enter a request URL before sending.' })
-      return
-    }
-    setResponse({ kind: 'loading' })
-    try {
-      const resolvedRequest = resolveRequestVariables(request, resolvedVariables)
-      const data = await window.apiDesktop.sendRequest(toApiRequest(resolvedRequest))
-      setResponse({ kind: 'success', data })
-      if (download || downloadAfterSend) downloadResponse(data, request.name)
-    } catch (error) {
-      setResponse({ kind: 'error', message: error instanceof Error ? error.message : 'The request could not be completed.' })
-    }
-  }
-  const {
-    sendDelayDialogOpen,
-    setSendDelayDialogOpen,
-    sendDelaySeconds,
-    setSendDelaySeconds,
-    sendNotice,
-    repeatDialogOpen,
-    setRepeatDialogOpen,
-    repeatIntervalSeconds,
-    setRepeatIntervalSeconds,
-    repeatRunning,
-    scheduleRequest,
-    cancelScheduledRequest,
-    stopRepeating,
-    startRepeating,
-  } = useSendTimersViewModel({
-    readRequest: () => (activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : activeRequest),
-    executeRequest,
-  })
 
   const variablesDialog = useVariablesDialogViewModel({
     open: variablesDialogOpen,
@@ -1012,7 +937,6 @@ export function useWorkspaceViewModel() {
     )
     restoreTabs(next.id, nextTree, nextVariables)
     setExpandedFolders(new Set(nextTree.filter(isFolder).map((folder) => folder.id)))
-    setResponse({ kind: 'empty' })
   }
 
   async function createCloudWorkspace(event: FormEvent) {
@@ -1172,7 +1096,6 @@ export function useWorkspaceViewModel() {
     setActiveWorkspaceTabKey(workspaceTabKey(tab))
     setSelectedRequestId(requestId)
     setSelectedFolderId(treeIndex.parentFolderById.get(requestId) ?? '')
-    setResponse({ kind: 'empty' })
   }
 
   function openDocsTab(requestId: string) {
@@ -1203,7 +1126,6 @@ export function useWorkspaceViewModel() {
     if (tab.kind === 'request' || tab.kind === 'docs') {
       setSelectedRequestId(tab.id)
       setSelectedFolderId(treeIndex.parentFolderById.get(tab.id) ?? '')
-      if (tab.kind === 'request') setResponse({ kind: 'empty' })
     } else updateActiveEnvironment(tab.id)
   }
 
@@ -1219,7 +1141,6 @@ export function useWorkspaceViewModel() {
     if (next?.kind === 'request') {
       setSelectedRequestId(next.id)
       setSelectedFolderId(treeIndex.parentFolderById.get(next.id) ?? '')
-      setResponse({ kind: 'empty' })
     } else if (next?.kind === 'docs') {
       setSelectedRequestId(next.id)
       setSelectedFolderId(treeIndex.parentFolderById.get(next.id) ?? '')
@@ -1674,7 +1595,6 @@ export function useWorkspaceViewModel() {
     setSelectedRequestId(request.id)
     setSelectedFolderId(folderId)
     setExpandedFolders((current) => new Set(current).add(folderId))
-    setResponse({ kind: 'empty' })
   }
 
   function openCreateFolder(parentId: string) {
@@ -1793,7 +1713,6 @@ export function useWorkspaceViewModel() {
       setSelectedFolderId(fallbackRequestId ? findParentFolder(nextTree, fallbackRequestId) : (nextTree.find(isFolder)?.id ?? ''))
       if (nextActiveTab?.kind === 'environment') setActiveEnvironmentId(nextActiveTab.id)
     }
-    if (activeTabRemoved || removedIds.has(selectedRequestId)) setResponse({ kind: 'empty' })
     setDeleteConfirmTarget(null)
   }
 
@@ -1848,36 +1767,30 @@ export function useWorkspaceViewModel() {
     setDraggedId(null)
   }
 
-  function sendRequest(event: FormEvent) {
-    event.preventDefault()
-    setSendMenuOpen(false)
-    void executeRequest()
+  // The active request as the user last edited it. Each editor reads this at send or copy time.
+  const readActiveRequest = (): RequestNode => {
+    const latest = activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : activeRequest
+    return latest && isRequest(latest) ? latest : (activeRequest as RequestNode)
   }
-
-  function openClientCode() {
-    const request = activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : activeRequest
-    if (!request || !isRequest(request)) return
-    try {
-      setClientCode(buildCurlCommand(resolveRequestVariables(request, resolvedVariables)))
-      setClientCodeStatus('')
-    } catch (error) {
-      setClientCode(buildCurlCommand(request))
-      setClientCodeStatus(error instanceof Error ? error.message : 'Some variables could not be resolved.')
-    }
-    setSendMenuOpen(false)
-    setClientCodeDialogOpen(true)
-  }
-
-  async function copyClientCode() {
-    try {
-      await navigator.clipboard.writeText(clientCode)
-      setClientCodeStatus('Copied to clipboard.')
-    } catch {
-      setClientCodeStatus('Clipboard access is unavailable. Select the command to copy it.')
-    }
-  }
+  const builderRequest = activeWorkspaceTab?.kind === 'request' && activeRequest && isRequest(activeRequest) ? activeRequest : null
+  const requestWorkbench = builderRequest
+    ? {
+        request: builderRequest,
+        resetKey: `${currentWorkspaceId}:${builderRequest.id}`,
+        readLatestRequest: readActiveRequest,
+        readOnly: Boolean(isReadOnly),
+        folderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : '',
+        statusText: activeWorkspace?.cloudId ? (activeWorkspace.role ?? '') : 'Saved locally',
+        suggestions: variableSuggestions,
+        resolvedVariables,
+        onChange: updateActiveRequest,
+        onOpenDocs: () => openDocsTab(builderRequest.id),
+        onVariableClick: openVariableEditor,
+      }
+    : null
 
   return {
+    requestWorkbench,
     collectionWidth,
     appShellRef,
     tree,
@@ -1908,28 +1821,6 @@ export function useWorkspaceViewModel() {
     setExpandedFolders,
     draggedId,
     setDraggedId,
-    response,
-    setResponse,
-    responseInspector,
-    sendMenuOpen,
-    setSendMenuOpen,
-    downloadAfterSend,
-    setDownloadAfterSend,
-    sendDelayDialogOpen,
-    setSendDelayDialogOpen,
-    sendDelaySeconds,
-    setSendDelaySeconds,
-    sendNotice,
-    repeatDialogOpen,
-    setRepeatDialogOpen,
-    repeatIntervalSeconds,
-    setRepeatIntervalSeconds,
-    repeatRunning,
-    clientCodeDialogOpen,
-    setClientCodeDialogOpen,
-    clientCode,
-    clientCodeStatus,
-    sendOptionsButtonRef,
     newFolderName,
     setNewFolderName,
     folderDialogOpen,
@@ -1999,7 +1890,6 @@ export function useWorkspaceViewModel() {
     activeWorkspaceTab,
     activeDocsRequest,
     activeEnvironmentTab,
-    requestTabIndicators,
     activeWorkspace,
     isReadOnly,
     workspaceChanges,
@@ -2022,7 +1912,6 @@ export function useWorkspaceViewModel() {
     resolvedVariables,
     variableSuggestions,
     updateActiveRequest,
-    executeRequest,
     beginBrowserSignIn,
     clearAuthError,
     accountMenuOpen,
@@ -2067,12 +1956,5 @@ export function useWorkspaceViewModel() {
     cancelFolderRename,
     toggleFolder,
     handleDrop,
-    sendRequest,
-    openClientCode,
-    copyClientCode,
-    scheduleRequest,
-    cancelScheduledRequest,
-    stopRepeating,
-    startRepeating,
   }
 }

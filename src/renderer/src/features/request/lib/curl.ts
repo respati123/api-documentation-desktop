@@ -1,4 +1,4 @@
-import { bodyContentType } from '@/features/request/components/body-editor'
+import { bodyContentType } from '@/features/request/lib/body-content-type'
 import type { RequestNode } from '@/shared/models/api-node.model'
 
 export function shellQuote(value: string): string {
