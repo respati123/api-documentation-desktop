@@ -2,6 +2,7 @@ import type { CSSProperties, ReactElement } from 'react'
 import { CollectionFolderIcon } from '@/features/collection/components/workspace-icons'
 import type { FolderRow, RequestRow, TreeChange, TreeRow } from '@/features/collection/models/collection-tree.model'
 import type { useCollectionTreeViewModel } from '@/features/collection/viewmodels/use-collection-tree.viewmodel'
+import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { cn } from '@/shared/utils/cn'
 
@@ -61,9 +62,11 @@ function FolderLine({
           <span className="tree-count">{row.requestCount}</span>
         </div>
       ) : (
-        <button
+        <Button
           type="button"
-          className={cn('tree-row', 'folder-row', row.selected && 'tree-row-selected', row.dragging && 'tree-row-dragging')}
+          variant="ghost"
+          data-testid="collection-tree-folder-row"
+          className={cn('tree-row', TREE_ROW, 'folder-row', row.selected && 'tree-row-selected', row.dragging && 'tree-row-dragging')}
           aria-expanded={row.expanded}
           aria-haspopup="menu"
           draggable
@@ -81,18 +84,20 @@ function FolderLine({
           <CollectionFolderIcon open={row.expanded} />
           <span className="tree-label">{row.name}</span>
           <span className="tree-count">{row.requestCount}</span>
-        </button>
+        </Button>
       )}
-      <button
+      <Button
         type="button"
-        className="tree-menu-trigger"
+        variant="ghost"
+        data-testid="collection-tree-folder-menu"
+        className={cn(TREE_TRIGGER, 'tree-menu-trigger')}
         aria-label={labels.actionsFor(row.name)}
         aria-haspopup="menu"
         disabled={readOnly}
         onClick={(event) => handlers.openFolderDropdown(event, row.id)}
       >
         ⌄
-      </button>
+      </Button>
       <ChangeBadge change={row.change} />
     </div>
   )
@@ -111,9 +116,11 @@ function RequestLine({
 }): ReactElement {
   return (
     <div className="tree-request-line" style={{ '--tree-depth': row.depth } as CSSProperties}>
-      <button
+      <Button
         type="button"
-        className={cn('tree-row', 'request-row', row.selected && 'tree-row-selected', row.dragging && 'tree-row-dragging')}
+        variant="ghost"
+        data-testid="collection-tree-request-row"
+        className={cn('tree-row', TREE_ROW, 'request-row', row.selected && 'tree-row-selected', row.dragging && 'tree-row-dragging')}
         draggable
         onDragStart={(event) => handlers.dragStart(row.id, event)}
         onDragEnd={handlers.dragEnd}
@@ -128,17 +135,19 @@ function RequestLine({
           <strong title={row.name}>{row.name}</strong>
         </span>
         <ChangeBadge change={row.change} />
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className="tree-menu-trigger request-menu-trigger"
+        variant="ghost"
+        data-testid="collection-tree-request-menu"
+        className={cn(TREE_TRIGGER, 'tree-menu-trigger request-menu-trigger')}
         aria-label={labels.actionsFor(row.name)}
         aria-haspopup="menu"
         disabled={readOnly}
         onClick={(event) => handlers.openRequestDropdown(event, row.id)}
       >
         ⌄
-      </button>
+      </Button>
     </div>
   )
 }
@@ -181,6 +190,10 @@ function TreeRows({
     </>
   )
 }
+
+// Tree rows and triggers keep their own styling. The shadcn base sizing, weight, and focus ring are reset here.
+const TREE_ROW = 'h-auto justify-start font-normal focus-visible:ring-0'
+const TREE_TRIGGER = 'h-auto min-h-0 px-0 font-normal focus-visible:ring-0 disabled:opacity-100'
 
 export function CollectionTreeView({ rows, isEmpty, labels, rename, readOnly, handlers }: CollectionTreeViewProps): ReactElement {
   return isEmpty ? (
