@@ -1,5 +1,6 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { CloudWorkspace } from '@/features/sync'
 import {
   type Applied,
   type CloudWorkspaceRecord,
@@ -12,7 +13,6 @@ import {
   syncService,
 } from '@/features/sync'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
-import type { CloudWorkspace } from '@/lib/api'
 import { buildStagedSnapshot, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
   preserveLocalSecretValues,
@@ -116,7 +116,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       setSyncStatus('Stage at least one change before committing.')
       return
     }
-    const stagedTree = stagedSnapshot ?? (previousTree as ApiNode[])
+    const stagedTree = stagedSnapshot ?? previousTree
     const stagedVariableSnapshot = stagedVariables ?? committedVariables
     if (
       JSON.stringify(previousTree) === JSON.stringify(stagedTree) &&

@@ -1,14 +1,19 @@
 import {
+  type CloudWorkspace,
   type CloudWorkspaceRecord,
+  cloudWorkspaceSummarySchema,
   type InviteResponse,
   inviteResponseSchema,
   workspaceResponseSchema,
 } from '@/features/sync/models/cloud-workspace.model'
-import { apiCall } from '@/lib/api'
+import { apiCall, apiListAll } from '@/lib/api'
 import type { ApiNode } from '@/shared/models/api-node.model'
 
 // The cloud calls for creating, sharing, and joining workspaces. Each response is parsed before it is used.
 export const cloudWorkspaceService = {
+  // The workspaces this account can open. The list is kept current by the realtime hook.
+  list: (token: string): Promise<CloudWorkspace[]> => apiListAll('/api/workspaces', 'workspaces', { token }, cloudWorkspaceSummarySchema),
+
   create: async (input: { token: string; name: string; tree: ApiNode[]; variables: unknown }): Promise<CloudWorkspaceRecord> => {
     const data = await apiCall('/api/workspaces', {
       token: input.token,

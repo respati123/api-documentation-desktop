@@ -52,7 +52,7 @@ export function useCloudCommitDetailsViewModel(input: { token: string | null; cl
   if (input.commitIds.length && !session) error = t(SYNC_TEXT.history.signInDetail)
   else if (failed) error = messageOf(failed.error, t(SYNC_TEXT.history.detailFailed))
   return {
-    detailsById: detailsById as ReadonlyMap<string, CloudCommitDetailRecord>,
+    detailsById,
     loading: queries.some((query) => query.isFetching),
     error,
   }

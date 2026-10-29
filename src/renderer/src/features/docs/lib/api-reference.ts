@@ -1,4 +1,5 @@
 import type { BodyMode, RequestNode } from '@/shared/models/api-node.model'
+import { isRecord } from '@/shared/utils/record'
 
 // Field names that look like credentials are masked everywhere the docs show an example value.
 export const maskedValue = '••••••'
@@ -22,8 +23,8 @@ export function schemaForDisplay(source: string, components: Record<string, unkn
   }
   const expand = (value: unknown, seen: Set<string>): unknown => {
     if (Array.isArray(value)) return value.map((item) => expand(item, seen))
-    if (!value || typeof value !== 'object') return value
-    const object = value as Record<string, unknown>
+    if (!isRecord(value)) return value
+    const object = value
     const reference = typeof object.$ref === 'string' ? object.$ref : ''
     if (!reference.startsWith('#/components/schemas/'))
       return Object.fromEntries(Object.entries(object).map(([key, item]) => [key, expand(item, seen)]))
@@ -33,7 +34,7 @@ export function schemaForDisplay(source: string, components: Record<string, unkn
       .split('/')
       .map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'))
     let target: unknown = components?.[component]
-    for (const segment of path) target = target && typeof target === 'object' ? (target as Record<string, unknown>)[segment] : undefined
+    for (const segment of path) target = isRecord(target) ? target[segment] : undefined
     if (target === undefined) return object
     const expanded = expand(target, new Set(seen).add(reference))
     const siblings = Object.fromEntries(

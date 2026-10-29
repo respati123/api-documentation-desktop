@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
 import { firstRequestId, indexTree, initialTree, isFolder, useCollectionTreeViewModel } from '@/features/collection'
+import type { CloudWorkspace } from '@/features/sync'
 import {
   changeStatusKey,
   type PendingMergeState,
@@ -31,7 +32,6 @@ import { useWorkspaceSyncActionsViewModel } from '@/features/workspace/viewmodel
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
 import { useWorkspaceTeamViewModel } from '@/features/workspace/viewmodels/use-workspace-team.viewmodel'
 import { useWorkspaceTreeActionsViewModel } from '@/features/workspace/viewmodels/use-workspace-tree-actions.viewmodel'
-import type { CloudWorkspace } from '@/lib/api'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
 import {
   activeVariableValues,
@@ -127,7 +127,7 @@ export function useWorkspaceViewModel() {
   const [syncStatus, setSyncStatus] = useState('')
   const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
-  const treeIndex = useMemo(() => indexTree(tree), [tree])
+  const treeIndex = indexTree(tree)
   useWorkspaceStorageViewModel({
     sessionToken,
     user,
@@ -246,11 +246,8 @@ export function useWorkspaceViewModel() {
     selectedHistoryChange,
     historyDiffRows,
   } = history
-  const resolvedVariables = useMemo(
-    () => activeVariableValues(workspaceVariables, activeEnvironmentId),
-    [workspaceVariables, activeEnvironmentId],
-  )
-  const variableSuggestions = useMemo<VariableSuggestion[]>(() => {
+  const resolvedVariables = activeVariableValues(workspaceVariables, activeEnvironmentId)
+  const variableSuggestions: VariableSuggestion[] = (() => {
     const environment = workspaceVariables.environments.find((item) => item.id === activeEnvironmentId)
     const seen = new Set<string>()
     const suggestions: VariableSuggestion[] = []
@@ -266,7 +263,7 @@ export function useWorkspaceViewModel() {
       })
     }
     return suggestions
-  }, [workspaceVariables, activeEnvironmentId])
+  })()
 
   const aiConnect = useAiConnectViewModel()
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)

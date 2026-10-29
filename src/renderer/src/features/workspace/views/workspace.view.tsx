@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import { AiConnectView } from '@/features/ai-connect'
 import { CollectionMenuView, DeleteItemDialogView } from '@/features/collection'
 import { OpenApiDialog } from '@/features/docs'
@@ -15,13 +15,14 @@ import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-
 import { WorkspaceMainView } from '@/features/workspace/views/workspace-main.view'
 import { WorkspaceSidebarView } from '@/features/workspace/views/workspace-sidebar.view'
 import { WorkspaceTopbarView, WorkspaceUpdateDialogView } from '@/features/workspace/views/workspace-topbar.view'
+import { styleWithVariables } from '@/shared/components/css-variables'
 
 export type WorkspaceViewProps = ReturnType<typeof useWorkspaceViewModel>
 
 // The workspace screen: it arranges the topbar, sidebar, and main pane, and renders the dialogs that sit above them.
 export function WorkspaceView(props: WorkspaceViewProps): ReactElement {
   return (
-    <main ref={props.appShellRef} className="app-shell" style={{ '--sidebar-width': `${props.collectionWidth}px` } as CSSProperties}>
+    <main ref={props.appShellRef} className="app-shell" style={styleWithVariables({ '--sidebar-width': `${props.collectionWidth}px` })}>
       <WorkspaceTopbarView
         chrome={props.chrome}
         accountMenuRef={props.accountMenuRef}

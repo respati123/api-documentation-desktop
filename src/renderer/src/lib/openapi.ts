@@ -10,6 +10,7 @@ import type {
   ResponseContent,
   ResponseDefinition,
 } from '@/shared/models/api-node.model'
+import { isRecord } from '@/shared/utils/record'
 
 type OpenApiObject = Record<string, unknown>
 type ParsedRequest = { request: RequestNode; tags: string[] }
@@ -17,7 +18,7 @@ type ParsedRequest = { request: RequestNode; tags: string[] }
 const methods = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'] as const
 
 function record(value: unknown): OpenApiObject | null {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as OpenApiObject) : null
+  return isRecord(value) ? value : null
 }
 
 function asString(value: unknown, fallback = ''): string {
@@ -230,8 +231,8 @@ function referencedResponseSchemas(spec: OpenApiObject, responses: ResponseDefin
       }
     }
   while (pending.length) {
-    const name = pending.pop() as string
-    if (Object.hasOwn(included, name) || !Object.hasOwn(available, name)) continue
+    const name = pending.pop()
+    if (name === undefined || Object.hasOwn(included, name) || !Object.hasOwn(available, name)) continue
     const schema = available[name]
     included[name] = schema
     findReferences(schema)
@@ -267,8 +268,9 @@ function componentSchemaRegistry(requests: RequestNode[]): ComponentSchemaRegist
     const source = request.openApiSchemas
     if (!source || !Object.keys(source).length) continue
     const sourceKey = JSON.stringify(source)
-    if (sourceMappings.has(sourceKey)) {
-      mappings.set(request.id, sourceMappings.get(sourceKey) as Map<string, string>)
+    const existing = sourceMappings.get(sourceKey)
+    if (existing) {
+      mappings.set(request.id, existing)
       continue
     }
     const mapping = new Map<string, string>()
@@ -279,7 +281,8 @@ function componentSchemaRegistry(requests: RequestNode[]): ComponentSchemaRegist
       mapping.set(name, candidate)
     }
     for (const [name, schema] of Object.entries(source)) {
-      const target = mapping.get(name) as string
+      const target = mapping.get(name)
+      if (target === undefined) continue
       schemas[target] = rewriteSchemaReferences(schema, mapping)
     }
     sourceMappings.set(sourceKey, mapping)

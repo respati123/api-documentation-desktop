@@ -1,5 +1,9 @@
 import { z } from 'zod'
+import { normalizeTree } from '@/features/collection'
 import { normalizeWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
+
+// Stored trees go through the same migration as the legacy tree, so every node the app reads has the current shape.
+const storedTree = z.unknown().transform((value) => normalizeTree(value))
 
 // Variables are read through normalizeWorkspaceVariables, which accepts older saved shapes.
 // A strict schema here would fail to load a workspace saved before a field existed.
@@ -14,13 +18,13 @@ const nullableString = z
   .nullish()
   .transform((value): string | null => value ?? null)
 
-// Shapes of what the main process stores. The tree stays unknown here because lib/merge normalizes it.
-export const localWorkspaceSchema: z.ZodType<LocalWorkspace> = z.object({
+// Shapes of what the main process stores.
+export const localWorkspaceSchema: z.ZodType<LocalWorkspace, unknown> = z.object({
   id: z.string(),
   cloudId: nullableString,
   name: z.string(),
-  tree: z.array(z.unknown()),
-  baseTree: z.array(z.unknown()),
+  tree: storedTree,
+  baseTree: storedTree,
   variables: storedVariables,
   baseVariables: storedVariables,
   activeEnvironmentId: nullableString.optional(),
@@ -29,11 +33,11 @@ export const localWorkspaceSchema: z.ZodType<LocalWorkspace> = z.object({
   role: z.enum(['owner', 'editor', 'viewer']).nullable().optional(),
 })
 
-export const localCommitSchema: z.ZodType<LocalCommit> = z.object({
+export const localCommitSchema: z.ZodType<LocalCommit, unknown> = z.object({
   id: z.string(),
   parentIds: z.array(z.string()),
   message: z.string(),
-  tree: z.array(z.unknown()),
+  tree: storedTree,
   variables: storedVariables,
   createdAt: z.string(),
   pushed: z.boolean(),

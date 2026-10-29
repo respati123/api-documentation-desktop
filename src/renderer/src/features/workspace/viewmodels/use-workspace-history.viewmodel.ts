@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { findNode, nodeDiffText, normalizeTree } from '@/features/collection'
 import { useCloudCommitDetailsViewModel, useCloudHistoryViewModel } from '@/features/sync'
 import type { WorkspaceHistoryCommit } from '@/features/workspace/models/workspace.model'
@@ -10,7 +9,6 @@ import {
   workspaceVariablesChangeId,
   workspaceVariablesDiffText,
 } from '@/lib/workspace-variables'
-import type { ApiNode } from '@/shared/models/api-node.model'
 
 export type HistoryInput = {
   sessionToken: string | null
@@ -39,7 +37,7 @@ export function useCommitHistoryViewModel(input: HistoryInput) {
     loading: historyLoading,
     error: historyError,
   } = useCloudHistoryViewModel({ token: sessionToken, cloudId: activeWorkspace?.cloudId ?? null, enabled: cloudHistoryOpen })
-  const historyCommits = useMemo<WorkspaceHistoryCommit[]>(() => {
+  const historyCommits: WorkspaceHistoryCommit[] = (() => {
     const combined = new Map<string, WorkspaceHistoryCommit>()
     for (const commit of cloudCommits)
       combined.set(commit.id, {
@@ -56,9 +54,9 @@ export function useCommitHistoryViewModel(input: HistoryInput) {
       })
     }
     return [...combined.values()].sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))
-  }, [cloudCommits, localCommits])
-  const historyCommitById = useMemo(() => new Map(historyCommits.map((commit) => [commit.id, commit])), [historyCommits])
-  const localCommitIds = useMemo(() => new Set(localCommits.map((commit) => commit.id)), [localCommits])
+  })()
+  const historyCommitById = new Map(historyCommits.map((commit) => [commit.id, commit]))
+  const localCommitIds = new Set(localCommits.map((commit) => commit.id))
   const selectedHistoryCommit = historyCommitById.get(selectedHistoryCommitId)
   const historyParentId = selectedHistoryCommit?.parentIds.find((id) => historyCommitById.has(id))
   const historyParentCommit = historyParentId ? historyCommitById.get(historyParentId) : undefined
@@ -81,54 +79,39 @@ export function useCommitHistoryViewModel(input: HistoryInput) {
       Array.isArray(selectedHistoryTreeValue) &&
       (!historyParentId || Array.isArray(historyParentTreeValue) || historyDetailError),
   )
-  const historyAfterTree = useMemo(() => normalizeTree(selectedHistoryTreeValue), [selectedHistoryTreeValue])
-  const historyBeforeTree = useMemo(() => {
+  const historyAfterTree = normalizeTree(selectedHistoryTreeValue)
+  const historyBeforeTree = (() => {
     if (Array.isArray(historyParentTreeValue)) return normalizeTree(historyParentTreeValue)
     return selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
-      ? ((activeWorkspace?.baseTree as ApiNode[]) ?? [])
+      ? (activeWorkspace?.baseTree ?? [])
       : []
-  }, [historyParentTreeValue, selectedHistoryCommit, activeWorkspace?.baseTree])
-  const historyBeforeVariables = useMemo(
-    () =>
-      historyParentCommit?.variables
-        ? normalizeWorkspaceVariables(historyParentCommit.variables)
-        : historyParentId && cloudCommitDetails.get(historyParentId)?.variables
-          ? normalizeWorkspaceVariables(cloudCommitDetails.get(historyParentId)?.variables)
-          : selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
-            ? normalizeWorkspaceVariables(activeWorkspace?.baseVariables ?? emptyWorkspaceVariables())
-            : emptyWorkspaceVariables(),
-    [historyParentCommit, historyParentId, cloudCommitDetails, selectedHistoryCommit, activeWorkspace?.baseVariables],
+  })()
+  const historyBeforeVariables = historyParentCommit?.variables
+    ? normalizeWorkspaceVariables(historyParentCommit.variables)
+    : historyParentId && cloudCommitDetails.get(historyParentId)?.variables
+      ? normalizeWorkspaceVariables(cloudCommitDetails.get(historyParentId)?.variables)
+      : selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
+        ? normalizeWorkspaceVariables(activeWorkspace?.baseVariables ?? emptyWorkspaceVariables())
+        : emptyWorkspaceVariables()
+  const historyAfterVariables = normalizeWorkspaceVariables(
+    selectedHistoryCommit?.variables ?? (selectedHistoryCommit ? cloudCommitDetails.get(selectedHistoryCommit.id)?.variables : undefined),
   )
-  const historyAfterVariables = useMemo(
-    () =>
-      normalizeWorkspaceVariables(
-        selectedHistoryCommit?.variables ??
-          (selectedHistoryCommit ? cloudCommitDetails.get(selectedHistoryCommit.id)?.variables : undefined),
-      ),
-    [selectedHistoryCommit, cloudCommitDetails],
-  )
-  const historyChanges = useMemo(
-    () =>
-      selectedHistoryCommit && historySnapshotsReady
-        ? getWorkspaceChanges(historyBeforeTree, historyAfterTree, historyBeforeVariables, historyAfterVariables)
-        : [],
-    [selectedHistoryCommit, historySnapshotsReady, historyBeforeTree, historyAfterTree, historyBeforeVariables, historyAfterVariables],
-  )
+  const historyChanges =
+    selectedHistoryCommit && historySnapshotsReady
+      ? getWorkspaceChanges(historyBeforeTree, historyAfterTree, historyBeforeVariables, historyAfterVariables)
+      : []
   const selectedHistoryChange = historyChanges.find((change) => change.id === selectedHistoryChangeId)
-  const historyDiffRows = useMemo(
-    () =>
-      selectedHistoryCommit && selectedHistoryChange
-        ? diffText(
-            selectedHistoryChange.id === workspaceVariablesChangeId
-              ? workspaceVariablesDiffText(historyBeforeVariables)
-              : nodeDiffText(findNode(historyBeforeTree, selectedHistoryChange.id)),
-            selectedHistoryChange.id === workspaceVariablesChangeId
-              ? workspaceVariablesDiffText(historyAfterVariables)
-              : nodeDiffText(findNode(historyAfterTree, selectedHistoryChange.id)),
-          )
-        : [],
-    [selectedHistoryCommit, selectedHistoryChange, historyBeforeTree, historyAfterTree, historyAfterVariables, historyBeforeVariables],
-  )
+  const historyDiffRows =
+    selectedHistoryCommit && selectedHistoryChange
+      ? diffText(
+          selectedHistoryChange.id === workspaceVariablesChangeId
+            ? workspaceVariablesDiffText(historyBeforeVariables)
+            : nodeDiffText(findNode(historyBeforeTree, selectedHistoryChange.id)),
+          selectedHistoryChange.id === workspaceVariablesChangeId
+            ? workspaceVariablesDiffText(historyAfterVariables)
+            : nodeDiffText(findNode(historyAfterTree, selectedHistoryChange.id)),
+        )
+      : []
 
   return {
     cloudHistoryOpen,

@@ -46,7 +46,7 @@ export function useWorkspacePersistenceViewModel(input: PersistenceInput) {
     const pending = pendingWorkspaceSaveRef.current
     if (workspaceSaveTimerRef.current !== undefined) window.clearTimeout(workspaceSaveTimerRef.current)
     if (pending && pending.id !== currentWorkspaceId) void workspaceStorageService.saveWorkspace(pending)
-    pendingWorkspaceSaveRef.current = { ...current, tree: tree as unknown[], variables: workspaceVariables, activeEnvironmentId }
+    pendingWorkspaceSaveRef.current = { ...current, tree: tree, variables: workspaceVariables, activeEnvironmentId }
     workspaceSaveTimerRef.current = window.setTimeout(() => {
       const latest = pendingWorkspaceSaveRef.current
       pendingWorkspaceSaveRef.current = null
@@ -89,7 +89,7 @@ export function useWorkspacePersistenceViewModel(input: PersistenceInput) {
     void workspaceStorageService
       .listCommits(currentWorkspaceId)
       .then((commits) => {
-        if (active) setLocalCommits(commits as LocalCommit[])
+        if (active) setLocalCommits(commits)
       })
       .catch(() => {
         if (active) setLocalCommits([])

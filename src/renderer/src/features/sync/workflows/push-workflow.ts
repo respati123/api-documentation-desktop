@@ -49,7 +49,7 @@ export async function pushWorkspaceCommits(deps: PushDeps): Promise<PushOutcome>
       const cloud = await deps.createCloud({
         token: deps.token,
         name: deps.workspace.name,
-        tree: stripLocalFilePaths(deps.workspace.baseTree as ApiNode[]),
+        tree: stripLocalFilePaths(deps.workspace.baseTree),
         variables: baseVariables,
       })
       cloudId = cloud.id

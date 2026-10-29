@@ -11,11 +11,14 @@ import {
   type RequestNode,
   type ResponseContent,
   type ResponseDefinition,
+  requestNodeSchema,
 } from '@/shared/models/api-node.model'
+import { isRecord } from '@/shared/utils/record'
 
+// Turns one stored node, in any saved version, into a node the app can use. Anything that still does not match the model is dropped.
 export function migrateNode(value: unknown): ApiNode | null {
-  if (!value || typeof value !== 'object') return null
-  const item = value as Record<string, unknown>
+  if (!isRecord(value)) return null
+  const item = value
   if (item.kind === 'request' && typeof item.id === 'string') {
     const body = typeof item.body === 'string' ? item.body : ''
     const url = typeof item.url === 'string' ? item.url : ''
@@ -32,8 +35,10 @@ export function migrateNode(value: unknown): ApiNode | null {
         : !hasUrlQuery(url) && params.length
           ? replaceUrlParams(url, params)
           : url
-    return {
+    const parsed = requestNodeSchema.safeParse({
       ...item,
+      name: typeof item.name === 'string' ? item.name : 'Untitled request',
+      method: typeof item.method === 'string' ? item.method : 'GET',
       url: synchronizedUrl,
       params,
       auth: isRequestAuth(item.auth) ? item.auth : { type: 'none' },
@@ -46,10 +51,9 @@ export function migrateNode(value: unknown): ApiNode | null {
       pathParams: Array.isArray(item.pathParams) ? item.pathParams.filter(isParamField) : [],
       documentation: typeof item.documentation === 'string' ? item.documentation : '',
       responses: normalizeResponseDefinitions(item.responses),
-      ...(item.openApiSchemas && typeof item.openApiSchemas === 'object' && !Array.isArray(item.openApiSchemas)
-        ? { openApiSchemas: item.openApiSchemas as Record<string, unknown> }
-        : {}),
-    } as unknown as RequestNode
+      openApiSchemas: isRecord(item.openApiSchemas) ? item.openApiSchemas : undefined,
+    })
+    return parsed.success ? parsed.data : null
   }
   if (item.kind === 'folder' && typeof item.id === 'string' && Array.isArray(item.children)) {
     return {
@@ -61,26 +65,23 @@ export function migrateNode(value: unknown): ApiNode | null {
   }
   // Keep collections and requests created by the previous version.
   if (typeof item.id === 'string' && Array.isArray(item.requests)) {
-    const children = item.requests
-      .map((request) => {
-        if (!request || typeof request !== 'object') return null
-        const saved = request as Record<string, unknown>
-        if (typeof saved.id !== 'string') return null
-        const url = String(saved.url || '')
-        const migratedUrl = splitUrlParams(url)
-        return {
-          id: saved.id,
-          kind: 'request' as const,
-          name: String(saved.name || 'Untitled request'),
-          method: String(saved.method || 'GET'),
-          url: migratedUrl.url,
-          body: String(saved.body || ''),
-          headers: [{ id: crypto.randomUUID(), name: 'Accept', value: '*/*', enabled: true }],
-          params: migratedUrl.params,
-          auth: { type: 'none' as const },
-        }
+    const children = item.requests.flatMap((request): RequestNode[] => {
+      if (!isRecord(request) || typeof request.id !== 'string') return []
+      const url = String(request.url || '')
+      const migratedUrl = splitUrlParams(url)
+      const parsed = requestNodeSchema.safeParse({
+        id: request.id,
+        kind: 'request',
+        name: String(request.name || 'Untitled request'),
+        method: String(request.method || 'GET'),
+        url: migratedUrl.url,
+        body: String(request.body || ''),
+        headers: [{ id: crypto.randomUUID(), name: 'Accept', value: '*/*', enabled: true }],
+        params: migratedUrl.params,
+        auth: { type: 'none' },
       })
-      .filter((node) => node !== null) as unknown as RequestNode[]
+      return parsed.success ? [parsed.data] : []
+    })
     return { id: item.id, kind: 'folder', name: String(item.name || 'Untitled folder'), children }
   }
   return null
@@ -99,8 +100,8 @@ export function normalizeSharedVariables(value: unknown): WorkspaceVariables {
 }
 
 export function isBodyField(value: unknown): value is BodyField {
-  if (!value || typeof value !== 'object') return false
-  const field = value as Record<string, unknown>
+  if (!isRecord(value)) return false
+  const field = value
   return (
     typeof field.id === 'string' &&
     typeof field.name === 'string' &&
@@ -115,13 +116,13 @@ export function isBodyField(value: unknown): value is BodyField {
 export function normalizeResponseDefinitions(value: unknown): ResponseDefinition[] {
   if (!Array.isArray(value)) return []
   return value.flatMap((item): ResponseDefinition[] => {
-    if (!item || typeof item !== 'object') return []
-    const response = item as Record<string, unknown>
+    if (!isRecord(item)) return []
+    const response = item
     if (typeof response.statusCode !== 'string') return []
     const content: ResponseContent[] = Array.isArray(response.content)
       ? response.content.flatMap((entry): ResponseContent[] => {
-          if (!entry || typeof entry !== 'object') return []
-          const media = entry as Record<string, unknown>
+          if (!isRecord(entry)) return []
+          const media = entry
           if (typeof media.mediaType !== 'string') return []
           return [
             {
@@ -145,8 +146,8 @@ export function normalizeResponseDefinitions(value: unknown): ResponseDefinition
 }
 
 export function isHeaderField(value: unknown): value is HeaderField {
-  if (!value || typeof value !== 'object') return false
-  const field = value as Record<string, unknown>
+  if (!isRecord(value)) return false
+  const field = value
   return (
     typeof field.id === 'string' &&
     typeof field.name === 'string' &&
@@ -157,8 +158,8 @@ export function isHeaderField(value: unknown): value is HeaderField {
 }
 
 export function isParamField(value: unknown): value is ParamField {
-  if (!value || typeof value !== 'object') return false
-  const field = value as Record<string, unknown>
+  if (!isRecord(value)) return false
+  const field = value
   return (
     typeof field.id === 'string' &&
     typeof field.name === 'string' &&
@@ -169,8 +170,8 @@ export function isParamField(value: unknown): value is ParamField {
 }
 
 export function isRequestAuth(value: unknown): value is RequestAuth {
-  if (!value || typeof value !== 'object') return false
-  const auth = value as Record<string, unknown>
+  if (!isRecord(value)) return false
+  const auth = value
   if (auth.type === 'none') return true
   if (auth.type === 'bearer') return typeof auth.token === 'string'
   if (auth.type === 'basic') return typeof auth.username === 'string' && typeof auth.password === 'string'

@@ -1,6 +1,7 @@
 import { type Dispatch, type SetStateAction, useEffect, useEffectEvent } from 'react'
-import type { WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
-import { apiCall, apiListAll, apiWebSocketUrl, type CloudWorkspace } from '@/lib/api'
+import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
+import { workspaceUpdateEventSchema } from '@/features/workspace/models/workspace.model'
+import { apiWebSocketUrl } from '@/lib/api'
 
 export type CloudRealtimeInput = {
   sessionToken: string | null
@@ -11,7 +12,7 @@ export type CloudRealtimeInput = {
 
 // The cloud workspace list. Callers keep their last known list when a request fails.
 async function fetchCloudWorkspaces(token: string): Promise<CloudWorkspace[]> {
-  return apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token })
+  return cloudWorkspaceService.list(token)
 }
 
 // Keeps cloud head commits fresh: a 30-second poll while cloud workspaces exist, and a refresh on every reconnect of the sync event socket.
@@ -66,7 +67,7 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
 
     const connect = async () => {
       try {
-        const { ticket } = await apiCall<{ ticket: string }>('/api/sync/events-ticket', { token: sessionToken, method: 'POST' })
+        const ticket = await syncService.eventsTicket(sessionToken)
         if (!active) return
         const endpoint = new URL(apiWebSocketUrl('/api/sync/events'))
         endpoint.searchParams.set('ticket', ticket)
@@ -82,17 +83,15 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
         )
         connection.addEventListener('message', (messageEvent) => {
           try {
-            const update = JSON.parse(String(messageEvent.data)) as WorkspaceUpdateEvent
-            if (update.type !== 'workspace.updated' || typeof update.workspaceId !== 'string' || typeof update.headCommitId !== 'string')
-              return
+            const update = workspaceUpdateEventSchema.parse(JSON.parse(String(messageEvent.data)))
             setCloudWorkspaces((current) =>
               current.map((workspace) =>
                 workspace.id === update.workspaceId ? { ...workspace, headCommitId: update.headCommitId } : workspace,
               ),
             )
-            const count = update.commitCount === 1 ? '1 commit' : `${update.commitCount} commits`
-            const actor = typeof update.actorEmail === 'string' ? update.actorEmail : 'A teammate'
-            const message = typeof update.message === 'string' ? `: “${update.message}”` : ''
+            const count = update.commitCount === 1 ? '1 commit' : `${update.commitCount ?? 0} commits`
+            const actor = update.actorEmail ?? 'A teammate'
+            const message = update.message === undefined ? '' : `: “${update.message}”`
             reportStatus(`${actor} pushed ${count}${message}. Pull to get updates.`)
           } catch {
             // Ignore malformed messages and keep the sync connection available.

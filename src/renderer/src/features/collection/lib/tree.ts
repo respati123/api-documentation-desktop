@@ -11,7 +11,8 @@ export function isFolder(node: ApiNode): node is FolderNode {
 
 export function redactDiffNode(node: ApiNode): ApiNode {
   if (isFolder(node)) return { ...node, children: node.children.map(redactDiffNode) }
-  const shared = stripLocalFilePaths([node])[0] as RequestNode
+  const shared = stripLocalFilePaths([node])[0]
+  if (!shared || isFolder(shared)) return node
   const headers = shared.headers?.map((header) => ({
     ...header,
     value:

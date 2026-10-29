@@ -1,7 +1,16 @@
+import { z } from 'zod'
 import { firstRequestId } from '@/features/collection'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
 import type { ApiNode } from '@/shared/models/api-node.model'
+
+// A saved tab, as the app wrote it. Anything that does not match is dropped when the tabs are read.
+const savedTabSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('request'), id: z.string() }),
+  z.object({ kind: z.literal('docs'), id: z.string() }),
+  z.object({ kind: z.literal('environment'), id: z.string() }),
+])
+const savedTabsSchema = z.object({ tabs: z.unknown(), activeKey: z.unknown() })
 
 export function workspaceTabKey(tab: WorkspaceTab): string {
   return `${tab.kind}:${tab.id}`
@@ -24,14 +33,11 @@ export function readWorkspaceTabs(
   const firstId = firstRequestId(tree)
   const fallback: WorkspaceTab[] = firstId ? [{ kind: 'request', id: firstId }] : []
   try {
-    const stored = JSON.parse(localStorage.getItem(`api-docs-open-tabs-${workspaceId}`) ?? 'null') as {
-      tabs?: unknown
-      activeKey?: unknown
-    } | null
-    const savedTabs = Array.isArray(stored?.tabs) ? (stored.tabs as WorkspaceTab[]) : []
+    const parsed = savedTabsSchema.safeParse(JSON.parse(localStorage.getItem(`api-docs-open-tabs-${workspaceId}`) ?? 'null'))
+    const stored = parsed.success ? parsed.data : null
+    const savedTabs = Array.isArray(stored?.tabs) ? stored.tabs.flatMap((item) => savedTabSchema.safeParse(item).data ?? []) : []
     const seen = new Set<string>()
-    const tabs = savedTabs.filter((tab): tab is WorkspaceTab => {
-      if (!tab || !['request', 'docs', 'environment'].includes(tab.kind) || typeof tab.id !== 'string') return false
+    const tabs = savedTabs.filter((tab) => {
       if (tab.kind === 'environment' ? !environmentIds.has(tab.id) : !requestIds.has(tab.id)) return false
       const key = workspaceTabKey(tab)
       if (seen.has(key)) return false

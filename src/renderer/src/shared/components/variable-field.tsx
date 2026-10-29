@@ -5,11 +5,9 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type TextareaHTMLAttributes,
-  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -21,6 +19,7 @@ import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { COMMON_TEXT } from '@/shared/constants/common-text.constants'
 import { cn } from '@/shared/utils/cn'
+import { isVariableToken } from '@/shared/utils/dom'
 
 export type VariableSuggestion = { name: string; scope: string; value?: string; secret?: boolean }
 
@@ -52,43 +51,43 @@ export function useDebouncedEditorValue(
   const maxWaitTimerRef = useRef<number | undefined>(undefined)
   callbackRef.current = onValueChange
 
-  const clearTimers = useCallback(() => {
-    if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
-    if (maxWaitTimerRef.current !== undefined) window.clearTimeout(maxWaitTimerRef.current)
-    debounceTimerRef.current = undefined
-    maxWaitTimerRef.current = undefined
-  }, [])
-  const flush = useCallback(() => {
+  const clearTimers = () => clearDraftTimers(debounceTimerRef, maxWaitTimerRef)
+  const flush = () => {
     if (!pendingRef.current) return
     pendingRef.current = false
     clearTimers()
     parentValueRef.current = draftRef.current
     callbackRef.current(draftRef.current)
-  }, [clearTimers])
-  const update = useCallback(
-    (nextValue: string) => {
-      draftRef.current = nextValue
-      setDraft(nextValue)
-      pendingRef.current = true
-      if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
-      debounceTimerRef.current = window.setTimeout(flush, delay)
-      if (maxWaitTimerRef.current === undefined) maxWaitTimerRef.current = window.setTimeout(flush, maxWait)
-    },
-    [delay, flush, maxWait],
-  )
+  }
+  const update = (nextValue: string) => {
+    draftRef.current = nextValue
+    setDraft(nextValue)
+    pendingRef.current = true
+    if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
+    debounceTimerRef.current = window.setTimeout(flush, delay)
+    if (maxWaitTimerRef.current === undefined) maxWaitTimerRef.current = window.setTimeout(flush, maxWait)
+  }
 
   useEffect(() => {
     if (value === parentValueRef.current) return
     parentValueRef.current = value
     if (value === draftRef.current) return
     pendingRef.current = false
-    clearTimers()
+    clearDraftTimers(debounceTimerRef, maxWaitTimerRef)
     draftRef.current = value
     setDraft(value)
-  }, [value, clearTimers])
-  useEffect(() => () => clearTimers(), [clearTimers])
+  }, [value])
+  useEffect(() => () => clearDraftTimers(debounceTimerRef, maxWaitTimerRef), [])
 
   return [draft, update, flush]
+}
+
+// Cancels the pending debounce and max-wait timers of a draft field.
+function clearDraftTimers(debounceTimerRef: { current: number | undefined }, maxWaitTimerRef: { current: number | undefined }) {
+  if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
+  if (maxWaitTimerRef.current !== undefined) window.clearTimeout(maxWaitTimerRef.current)
+  debounceTimerRef.current = undefined
+  maxWaitTimerRef.current = undefined
 }
 
 function getMatch(value: string, cursor: number): Match | null {
@@ -162,11 +161,11 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
   const [match, setMatch] = useState<Match | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [position, setPosition] = useState<MenuPosition | null>(null)
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     if (!match) return []
     const query = match.prefix.toLowerCase()
     return suggestions.filter((item) => item.name.toLowerCase().startsWith(query)).slice(0, 8)
-  }, [match, suggestions])
+  })()
 
   function syncMatch(element: HTMLInputElement | HTMLTextAreaElement) {
     elementRef.current = element
@@ -440,11 +439,7 @@ type VariableUrlFieldProps = CommonProps & {
 
 function getEditableValue(editor: HTMLDivElement): string {
   return Array.from(editor.childNodes)
-    .map((node) =>
-      node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).dataset.variableToken === 'true'
-        ? ((node as HTMLElement).dataset.tokenValue ?? node.textContent ?? '')
-        : (node.textContent ?? ''),
-    )
+    .map((node) => (isVariableToken(node) ? (node.dataset.tokenValue ?? node.textContent ?? '') : (node.textContent ?? '')))
     .join('')
 }
 
@@ -458,13 +453,11 @@ function hasPlainVariable(editor: HTMLDivElement): boolean {
 }
 
 function hasRenderedVariable(editor: HTMLDivElement): boolean {
-  return Array.from(editor.children).some((node) => (node as HTMLElement).dataset.variableToken === 'true')
+  return Array.from(editor.children).some(isVariableToken)
 }
 
 function getEditorNodeLength(node: Node): number {
-  return node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).dataset.variableToken === 'true'
-    ? ((node as HTMLElement).dataset.tokenValue?.length ?? node.textContent?.length ?? 0)
-    : (node.textContent?.length ?? 0)
+  return isVariableToken(node) ? (node.dataset.tokenValue?.length ?? node.textContent?.length ?? 0) : (node.textContent?.length ?? 0)
 }
 
 function getEditableCaretOffset(editor: HTMLDivElement): number {
@@ -503,7 +496,7 @@ function setEditableCaretOffset(editor: HTMLDivElement, requestedOffset: number)
         selection.addRange(range)
         return
       }
-    } else if ((child as HTMLElement).dataset.variableToken === 'true') {
+    } else if (isVariableToken(child)) {
       if (offset <= consumed) {
         const range = document.createRange()
         range.setStartBefore(child)
@@ -544,9 +537,7 @@ function adjacentVariableToken(editor: HTMLDivElement, selection: Selection, dir
       childIndex = Array.prototype.indexOf.call(editor.childNodes, anchor) + 1
   }
   const candidate = editor.childNodes[childIndex]
-  return candidate?.nodeType === Node.ELEMENT_NODE && (candidate as HTMLElement).dataset.variableToken === 'true'
-    ? (candidate as HTMLElement)
-    : null
+  return isVariableToken(candidate) ? candidate : null
 }
 
 function renderEditableVariables(editor: HTMLDivElement, value: string, suggestions: VariableSuggestion[]) {
@@ -593,10 +584,10 @@ export function VariableUrlField({
   const [match, setMatch] = useState<Match | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [position, setPosition] = useState<MenuPosition | null>(null)
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     if (!match) return []
     return suggestions.filter((item) => item.name.toLowerCase().startsWith(match.prefix.toLowerCase())).slice(0, 8)
-  }, [match, suggestions])
+  })()
 
   function updateSuggestions(editor: HTMLDivElement) {
     const nextValue = getEditableValue(editor)
@@ -749,7 +740,8 @@ export function VariableUrlField({
           setMatch(null)
         }}
         onClick={(event) => {
-          const token = (event.target as HTMLElement).closest<HTMLElement>('[data-variable-token="true"]')
+          if (!(event.target instanceof Element)) return
+          const token = event.target.closest<HTMLElement>('[data-variable-token="true"]')
           if (!token) return
           const name = (token.dataset.tokenValue ?? '').match(/^\{\{\s*([^{}]+?)\s*\}\}$/)?.[1]?.trim()
           if (name) onVariableClick(name, getEditableValue(event.currentTarget))

@@ -28,7 +28,13 @@ export function CollectionMenuView({
   return (
     <>
       <div className="context-menu-dismiss" aria-hidden="true" onMouseDown={onDismiss} />
-      <div className="tree-context-menu" role="menu" aria-label={label} style={{ left: x, top: y } as CSSProperties} onKeyDown={onKey}>
+      <div
+        className="tree-context-menu"
+        role="menu"
+        aria-label={label}
+        style={{ left: x, top: y } satisfies CSSProperties}
+        onKeyDown={onKey}
+      >
         <Button
           type="button"
           variant="ghost"

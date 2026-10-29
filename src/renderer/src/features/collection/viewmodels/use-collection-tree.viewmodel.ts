@@ -227,8 +227,9 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
       return
     }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
-    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
-    const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement)
+    const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+    const active = document.activeElement
+    const activeIndex = items.findIndex((item) => item === active)
     event.preventDefault()
     const direction = event.key === 'ArrowDown' ? 1 : -1
     items[(activeIndex + direction + items.length) % items.length]?.focus()

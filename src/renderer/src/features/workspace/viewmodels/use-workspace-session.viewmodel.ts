@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
+import { cloudAuthService } from '@/features/workspace/services/cloud-auth.service'
 import { sessionService } from '@/features/workspace/services/session.service'
-import { type ApiUser, apiCall } from '@/lib/api'
 
 export type SessionInput = {
   onStatus: (message: string) => void
@@ -42,10 +43,7 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
       sessionService.onAuthCode((code) => {
         void (async () => {
           try {
-            const result = await apiCall<{ token: string; user: ApiUser }>('/api/desktop-login/exchange', {
-              method: 'POST',
-              body: { code },
-            })
+            const result = await cloudAuthService.exchangeCode(code)
             setSessionToken(result.token)
             setUser(result.user)
             const saved = await sessionService.save(result.token)
@@ -67,10 +65,10 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
       .then(async (token) => {
         if (!token || !active) return
         try {
-          const result = await apiCall<{ user: ApiUser }>('/api/me', { token })
+          const me = await cloudAuthService.me(token)
           if (!active) return
           setSessionToken(token)
-          setUser(result.user)
+          setUser(me)
         } catch {
           await sessionService.clear()
         }
@@ -84,7 +82,8 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
   useEffect(() => {
     if (!accountMenuOpen) return
     const onPointerDown = (event: MouseEvent) => {
-      if (!accountMenuRef.current?.contains(event.target as Node)) setAccountMenuOpen(false)
+      const target = event.target
+      if (!(target instanceof Node) || !accountMenuRef.current?.contains(target)) setAccountMenuOpen(false)
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setAccountMenuOpen(false)
@@ -97,16 +96,16 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
     }
   }, [accountMenuOpen])
 
-  const beginBrowserSignIn = useCallback(async () => {
+  const beginBrowserSignIn = async () => {
     setAuthError('')
     const cloudUrl = (import.meta.env.VITE_CLOUD_URL || 'http://localhost:5174').replace(/\/+$/, '')
     await sessionService.beginBrowserSignIn(cloudUrl)
-  }, [])
+  }
 
-  const clearAuthError = useCallback(() => setAuthError(''), [])
+  const clearAuthError = () => setAuthError('')
 
   async function signOut() {
-    if (sessionToken) await apiCall('/api/auth/logout', { token: sessionToken, method: 'POST' }).catch(() => undefined)
+    if (sessionToken) await cloudAuthService.logout(sessionToken).catch(() => undefined)
     await sessionService.clear()
     setSessionToken(null)
     setUser(null)

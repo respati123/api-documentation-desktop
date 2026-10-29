@@ -1,8 +1,9 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent } from 'react'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
+import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
+import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
-import { type ApiUser, apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
 import { emptyWorkspaceVariables, normalizeWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
 import type { ApiNode } from '@/shared/models/api-node.model'
 
@@ -158,7 +159,8 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(() => {
     if (!sessionToken || !user || !storageLoaded) return
     let active = true
-    void apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken })
+    void cloudWorkspaceService
+      .list(sessionToken)
       .then(async (workspaces) => {
         const records: LocalWorkspace[] = []
         for (const cloud of workspaces) {
@@ -167,12 +169,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
           if (existing) {
             records.push({ ...existing, name: cloud.name, role: cloud.role })
           } else {
-            const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
-              `/api/workspaces/${cloud.id}/sync/pull`,
-              { token: sessionToken },
-            )
-            const remoteTree = normalizeSharedTree(result.workspace.tree)
-            const remoteVariables = normalizeSharedVariables(result.workspace.variables)
+            const result = await syncService.pull({ token: sessionToken, cloudId: cloud.id })
+            const remoteTree = normalizeSharedTree(result.tree)
+            const remoteVariables = normalizeSharedVariables(result.variables)
             records.push({
               id: crypto.randomUUID(),
               cloudId: cloud.id,
@@ -182,8 +181,8 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
               variables: remoteVariables,
               baseVariables: remoteVariables,
               activeEnvironmentId: remoteVariables.environments[0]?.id ?? null,
-              baseCommitId: result.workspace.headCommitId,
-              localHeadId: result.workspace.headCommitId,
+              baseCommitId: result.headCommitId,
+              localHeadId: result.headCommitId,
               role: cloud.role,
             })
           }

@@ -59,16 +59,16 @@ export function useWorkspaceRequestViewModel(input: RequestInput) {
   }
 
   // The active request as the user last edited it. Each editor reads this at send or copy time.
-  const readActiveRequest = (): RequestNode => {
+  const readLatestRequest = (fallback: RequestNode): RequestNode => {
     const latest = activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : activeRequest
-    return latest && isRequest(latest) ? latest : (activeRequest as RequestNode)
+    return latest && isRequest(latest) ? latest : fallback
   }
   const builderRequest = activeWorkspaceTab?.kind === 'request' && activeRequest && isRequest(activeRequest) ? activeRequest : null
   const requestWorkbench = builderRequest
     ? {
         request: builderRequest,
         resetKey: `${currentWorkspaceId}:${builderRequest.id}`,
-        readLatestRequest: readActiveRequest,
+        readLatestRequest: () => readLatestRequest(builderRequest),
         readOnly: Boolean(isReadOnly),
         folderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : '',
         statusText: activeWorkspace?.cloudId ? (activeWorkspace.role ?? '') : 'Saved locally',

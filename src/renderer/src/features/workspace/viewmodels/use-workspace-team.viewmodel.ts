@@ -1,8 +1,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { CloudWorkspaceRecord } from '@/features/sync'
+import type { CloudWorkspace, CloudWorkspaceRecord } from '@/features/sync'
 import { useTeamDialogsViewModel } from '@/features/sync'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
-import type { CloudWorkspace } from '@/lib/api'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
 import type { ApiNode } from '@/shared/models/api-node.model'
 
@@ -60,7 +59,7 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
     setCurrentWorkspaceId(workspace.id)
     setWorkspaceVariables(createdVariables)
     setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
-    resetTabs(workspace.tree as ApiNode[])
+    resetTabs(workspace.tree)
   }
 
   // A workspace joined through an invite is added and opened, with its shared tree.
@@ -72,10 +71,10 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
     setStagedSnapshot(null)
     setStagedVariables(null)
     setCurrentWorkspaceId(workspace.id)
-    setTree(workspace.tree as ApiNode[])
+    setTree(workspace.tree)
     setWorkspaceVariables(invitedVariables)
     setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
-    resetTabs(workspace.tree as ApiNode[])
+    resetTabs(workspace.tree)
   }
 
   return useTeamDialogsViewModel({

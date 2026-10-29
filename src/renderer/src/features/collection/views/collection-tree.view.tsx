@@ -1,7 +1,8 @@
-import type { CSSProperties, ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import { CollectionFolderIcon } from '@/features/collection/components/workspace-icons'
 import type { FolderRow, RequestRow, TreeChange, TreeRow } from '@/features/collection/models/collection-tree.model'
 import type { useCollectionTreeViewModel } from '@/features/collection/viewmodels/use-collection-tree.viewmodel'
+import { styleWithVariables } from '@/shared/components/css-variables'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { cn } from '@/shared/utils/cn'
@@ -116,7 +117,7 @@ function RequestLine({
   handlers: Handlers
 }): ReactElement {
   return (
-    <div className="tree-request-line" style={{ '--tree-depth': row.depth } as CSSProperties}>
+    <div className="tree-request-line" style={styleWithVariables({ '--tree-depth': row.depth })}>
       <Button
         type="button"
         variant="ghost"
@@ -170,14 +171,14 @@ function TreeRows({
     <>
       {rows.map((row) =>
         row.kind === 'folder' ? (
-          <div key={row.id} className="tree-node" style={{ '--tree-depth': row.depth } as CSSProperties}>
+          <div key={row.id} className="tree-node" style={styleWithVariables({ '--tree-depth': row.depth })}>
             <FolderLine row={row} labels={labels} rename={rename} readOnly={readOnly} handlers={handlers} />
             {row.expanded && (
               <div className="tree-children">
                 {row.children.length ? (
                   <TreeRows rows={row.children} labels={labels} rename={rename} readOnly={readOnly} handlers={handlers} />
                 ) : (
-                  <div className="tree-empty" style={{ '--tree-depth': row.depth + 1 } as CSSProperties}>
+                  <div className="tree-empty" style={styleWithVariables({ '--tree-depth': row.depth + 1 })}>
                     {labels.emptyFolder}
                   </div>
                 )}

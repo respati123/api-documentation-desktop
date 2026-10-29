@@ -9,7 +9,7 @@ export function sharedCommitOf(
 ): LocalCommit {
   return {
     ...commit,
-    tree: strip(commit.tree as ApiNode[]),
+    tree: strip(commit.tree),
     variables: shareVariables(commit.variables),
   }
 }

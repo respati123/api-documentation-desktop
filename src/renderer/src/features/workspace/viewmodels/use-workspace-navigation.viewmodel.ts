@@ -78,7 +78,7 @@ export function useWorkspaceNavigationViewModel(input: NavigationInput) {
     if (pending) void workspaceStorageService.saveWorkspace(pending)
     setLocalWorkspaces((current) =>
       current.map((item) =>
-        item.id === currentWorkspaceId ? { ...item, tree: tree as unknown[], variables: workspaceVariables, activeEnvironmentId } : item,
+        item.id === currentWorkspaceId ? { ...item, tree: tree, variables: workspaceVariables, activeEnvironmentId } : item,
       ),
     )
     stagedWorkspaceIdRef.current = next.id
@@ -103,7 +103,7 @@ export function useWorkspaceNavigationViewModel(input: NavigationInput) {
     const updated = {
       ...activeWorkspace,
       ...patch,
-      tree: Object.hasOwn(patch, 'tree') ? (patch.tree as unknown[]) : (tree as unknown[]),
+      tree: patch.tree ?? tree,
       variables: Object.hasOwn(patch, 'variables') ? patch.variables : workspaceVariables,
       activeEnvironmentId: Object.hasOwn(patch, 'activeEnvironmentId') ? patch.activeEnvironmentId : activeEnvironmentId,
     }

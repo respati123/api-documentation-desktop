@@ -15,3 +15,12 @@ export const workspaceResponseSchema = z.object({ workspace: cloudWorkspaceSchem
 
 export const inviteResponseSchema = z.object({ token: z.string(), emailSent: z.boolean() })
 export type InviteResponse = z.infer<typeof inviteResponseSchema>
+
+// One entry of the cloud workspace list. The list shows only these fields.
+export const cloudWorkspaceSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: z.enum(['owner', 'editor', 'viewer']),
+  headCommitId: z.string(),
+})
+export type CloudWorkspace = z.infer<typeof cloudWorkspaceSummarySchema>
