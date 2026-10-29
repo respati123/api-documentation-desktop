@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SavedRequest } from '@/features/workspace'
 import { type BodyField, type BodyMode, bodyModes } from '@/lib/merge'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { LabeledField } from '@/shared/components/labeled-field'
 import { Button } from '@/shared/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'

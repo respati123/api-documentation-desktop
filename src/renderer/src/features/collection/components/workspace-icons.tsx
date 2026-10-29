@@ -1,5 +1,5 @@
 import { Cloud, Folder as FolderIcon, FolderOpen, HardDrive } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 
 export function WorkspaceStorageIcon({ kind, className }: { kind: 'cloud' | 'local'; className?: string }) {
   const Icon = kind === 'cloud' ? Cloud : HardDrive

@@ -14,7 +14,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 

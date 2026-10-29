@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SavedRequest } from '@/features/workspace'
 import type { ParamField } from '@/lib/merge'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { DebouncedInput } from '@/shared/components/debounced-field'
 import { KeyValueTable } from '@/shared/components/key-value-table'
 import { Button } from '@/shared/components/ui/button'

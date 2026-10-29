@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { VariableRows } from '@/features/variables/components/variable-rows'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import type { WorkspaceEnvironment, WorkspaceVariable, WorkspaceVariables } from '@/lib/workspace-variables'
 import { AppDialog } from '@/shared/components/app-dialog'
 import { SectionHeading } from '@/shared/components/section-heading'

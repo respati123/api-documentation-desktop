@@ -17,7 +17,7 @@ import { VariableQuickEditView, VariableRows, VariablesDialog } from '@/features
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { TreeNode, WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
 import { StateMessage } from '@/shared/components/state-message'
