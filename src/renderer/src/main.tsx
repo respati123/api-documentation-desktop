@@ -2,8 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import '@/shared/i18n'
+import './index.css'
 import './styles.css'
-import './graphite.css'
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing #root element.')
