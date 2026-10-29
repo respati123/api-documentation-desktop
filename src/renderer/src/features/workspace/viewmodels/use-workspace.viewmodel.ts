@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
@@ -47,15 +47,15 @@ import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/wo
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { WorkspaceHistoryCommit, WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
-import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
 import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
 import { useWorkspacePersistenceViewModel } from '@/features/workspace/viewmodels/use-workspace-persistence.viewmodel'
+import { useWorkspaceSessionViewModel } from '@/features/workspace/viewmodels/use-workspace-session.viewmodel'
 import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
-import { type ApiUser, apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
+import { apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
@@ -111,13 +111,30 @@ export function useWorkspaceViewModel() {
           .map((folder) => folder.id),
       ),
   )
-  const [sessionToken, setSessionToken] = useState<string | null>(null)
-  const sessionTokenRef = useRef<string | null>(null)
-  const [user, setUser] = useState<ApiUser | null>(null)
-  const [authOpenRequest, setAuthOpenRequest] = useState(0)
-  const [authError, setAuthError] = useState('')
+  const session = useWorkspaceSessionViewModel({
+    onStatus: (message) => setSyncStatus(message),
+    onOpenTeam: () => team.openTeam(),
+    onSignedOut: () => {
+      setCloudWorkspaces([])
+      team.clearInviteLink()
+    },
+  })
+  const {
+    sessionToken,
+    user,
+    authOpenRequest,
+    authError,
+    setAuthError,
+    inviteTokenDraft,
+    setInviteTokenDraft,
+    accountMenuOpen,
+    setAccountMenuOpen,
+    accountMenuRef,
+    beginBrowserSignIn,
+    clearAuthError,
+    signOut,
+  } = session
   const [cloudWorkspaces, setCloudWorkspaces] = useState<CloudWorkspace[]>([])
-  const [inviteTokenDraft, setInviteTokenDraft] = useState('')
   const commitState = useCommitDialogStateViewModel()
   const {
     commitDialogOpen,
@@ -198,24 +215,10 @@ export function useWorkspaceViewModel() {
         setStorageLoaded(true)
       })
       .catch((error) => setAuthError(error instanceof Error ? error.message : 'Could not load local workspace.'))
-    void sessionService
-      .load()
-      .then(async (token) => {
-        if (!token || !active) return
-        try {
-          const result = await apiCall<{ user: ApiUser }>('/api/me', { token })
-          if (!active) return
-          setSessionToken(token)
-          setUser(result.user)
-        } catch {
-          await sessionService.clear()
-        }
-      })
-      .catch(() => undefined)
     return () => {
       active = false
     }
-  }, [])
+  }, [setAuthError])
 
   useEffect(
     () =>
@@ -507,21 +510,6 @@ export function useWorkspaceViewModel() {
     return suggestions
   }, [workspaceVariables, activeEnvironmentId])
 
-  useEffect(() => {
-    sessionTokenRef.current = sessionToken
-  }, [sessionToken])
-
-  // Opens the team dialog from an effect. It reads the team hook as it is now, so the effects need not depend on it.
-  const openTeamDialog = useEffectEvent(() => team.openTeam())
-  useEffect(
-    () =>
-      sessionService.onInviteToken((token) => {
-        setInviteTokenDraft(token)
-        if (sessionTokenRef.current) openTeamDialog()
-        else setAuthOpenRequest((current) => current + 1)
-      }),
-    [],
-  )
   // A cloud workspace this device just created becomes the active one, with its own tabs.
   async function adoptCreatedWorkspace(workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, createdVariables: WorkspaceVariables) {
     await workspaceStorageService.saveWorkspace(workspace)
@@ -596,63 +584,9 @@ export function useWorkspaceViewModel() {
     onSave: saveQuickVariable,
   })
 
-  const beginBrowserSignIn = useCallback(async () => {
-    setAuthError('')
-    const cloudUrl = (import.meta.env.VITE_CLOUD_URL || 'http://localhost:5174').replace(/\/+$/, '')
-    await sessionService.beginBrowserSignIn(cloudUrl)
-  }, [])
-  useEffect(
-    () =>
-      sessionService.onAuthCode((code) => {
-        void (async () => {
-          try {
-            const result = await apiCall<{ token: string; user: ApiUser }>('/api/desktop-login/exchange', {
-              method: 'POST',
-              body: { code },
-            })
-            setSessionToken(result.token)
-            setUser(result.user)
-            const saved = await sessionService.save(result.token)
-            if (!saved) setSyncStatus('Session will last until the app closes because secure storage is unavailable on this system.')
-            if (inviteTokenDraft) openTeamDialog()
-          } catch (error) {
-            setAuthError(error instanceof Error ? error.message : 'Could not complete sign-in.')
-          }
-        })()
-      }),
-    [inviteTokenDraft],
-  )
-  const clearAuthError = useCallback(() => setAuthError(''), [])
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
-  const accountMenuRef = useRef<HTMLDivElement>(null)
   const aiConnect = useAiConnectViewModel()
-  useEffect(() => {
-    if (!accountMenuOpen) return
-    const onPointerDown = (event: MouseEvent) => {
-      if (!accountMenuRef.current?.contains(event.target as Node)) setAccountMenuOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setAccountMenuOpen(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [accountMenuOpen])
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)
   useEffect(() => appUpdateService.onStatus(setUpdateStatus), [])
-
-  async function signOut() {
-    if (sessionToken) await apiCall('/api/auth/logout', { token: sessionToken, method: 'POST' }).catch(() => undefined)
-    await sessionService.clear()
-    setSessionToken(null)
-    setUser(null)
-    setCloudWorkspaces([])
-    team.clearInviteLink()
-    setSyncStatus('Signed out. Local workspace data remains on this device.')
-  }
 
   function activateWorkspace(workspaceId: string) {
     const next = localWorkspaces.find((item) => item.id === workspaceId)
