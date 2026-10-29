@@ -1,20 +1,23 @@
 import { AiConnectView } from '@/features/ai-connect'
 import {
-  CollectionFolderIcon,
+  CollectionMenuView,
+  CollectionTreeView,
+  CreateFolderDialogView,
   collectionWidthLimit,
-  findParentFolder,
+  DeleteItemDialogView,
   firstRequestId,
   isFolder,
   isRequest,
   minCollectionWidth,
   WorkspaceStorageIcon,
 } from '@/features/collection'
+
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
+
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
 import { StateMessage } from '@/shared/components/state-message'
@@ -22,7 +25,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import { Input } from '@/shared/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
-import type { ApiNode } from '@/shared/models/api-node.model'
+
 import { cn } from '@/shared/utils/cn'
 
 export type WorkspaceViewProps = ReturnType<typeof useWorkspaceViewModel>
@@ -31,7 +34,6 @@ export function WorkspaceView({
   collectionWidth,
   appShellRef,
   tree,
-  setTree,
   workspaceVariables,
   activeEnvironmentId,
   setVariablesDialogOpen,
@@ -39,35 +41,14 @@ export function WorkspaceView({
   setOpenApiDialogOpen,
   variableQuickEdit,
   requestWorkbench,
+  collection,
+  importTree,
   variablesDialog,
   environmentTab,
   localWorkspaces,
   currentWorkspaceId,
-  selectedRequestId,
-  setSelectedRequestId,
   workspaceTabs,
-  setWorkspaceTabs,
   activeWorkspaceTabKey,
-  setActiveWorkspaceTabKey,
-  selectedFolderId,
-  setSelectedFolderId,
-  expandedFolders,
-  setExpandedFolders,
-  draggedId,
-  setDraggedId,
-  newFolderName,
-  setNewFolderName,
-  folderDialogOpen,
-  setFolderDialogOpen,
-  newFolderParentId,
-  contextMenu,
-  setContextMenu,
-  deleteConfirmTarget,
-  setDeleteConfirmTarget,
-  renamingFolderId,
-  folderNameDraft,
-  setFolderNameDraft,
-  cancelRenameOnBlur,
   sessionToken,
   user,
   authOpenRequest,
@@ -157,7 +138,6 @@ export function WorkspaceView({
   acceptInvite,
   updateActiveEnvironment,
   openRequestTab,
-  openDocsTab,
   openCurrentDocs,
   openEnvironmentTab,
   selectWorkspaceTab,
@@ -169,182 +149,7 @@ export function WorkspaceView({
   pullWorkspace,
   pushWorkspace,
   applyMergeResolution,
-  createFolder,
-  openCreateFolder,
-  openContextMenu,
-  openDropdownMenu,
-  openContextMenuFromKeyboard,
-  createRequestFromMenu,
-  renameFolderFromMenu,
-  openDeleteConfirmFromMenu,
-  confirmDeleteCollectionItem,
-  commitFolderRename,
-  cancelFolderRename,
-  toggleFolder,
-  handleDrop,
 }: WorkspaceViewProps) {
-  function renderTree(nodes: ApiNode[], depth = 0): React.ReactNode {
-    return nodes.map((node) =>
-      isFolder(node) ? (
-        <div key={node.id} className="tree-node" style={{ '--tree-depth': depth } as React.CSSProperties}>
-          <div className="tree-folder-line">
-            {renamingFolderId === node.id ? (
-              <div className="tree-row folder-row folder-row-editing">
-                <span className="tree-disclosure" aria-hidden="true">
-                  {expandedFolders.has(node.id) ? '⌄' : '›'}
-                </span>
-                <CollectionFolderIcon open={expandedFolders.has(node.id)} />
-                <Input
-                  autoFocus
-                  aria-label="Folder name"
-                  className="folder-name-editor"
-                  maxLength={100}
-                  value={folderNameDraft}
-                  onChange={(event) => setFolderNameDraft(event.target.value)}
-                  onBlur={() => {
-                    if (cancelRenameOnBlur.current) {
-                      cancelRenameOnBlur.current = false
-                      return
-                    }
-                    commitFolderRename(node.id)
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault()
-                      commitFolderRename(node.id)
-                    }
-                    if (event.key === 'Escape') {
-                      event.preventDefault()
-                      cancelFolderRename()
-                    }
-                  }}
-                />
-                <span className="tree-count">{treeIndex.requestCountByFolderId.get(node.id) ?? 0}</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className={cn(
-                  'tree-row',
-                  'folder-row',
-                  selectedFolderId === node.id && 'tree-row-selected',
-                  draggedId === node.id && 'tree-row-dragging',
-                )}
-                aria-expanded={expandedFolders.has(node.id)}
-                aria-haspopup="menu"
-                draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData('text/plain', node.id)
-                  event.dataTransfer.effectAllowed = 'move'
-                  setDraggedId(node.id)
-                }}
-                onDragEnd={() => setDraggedId(null)}
-                onDragOver={(event) => {
-                  event.preventDefault()
-                  event.dataTransfer.dropEffect = 'move'
-                }}
-                onDrop={(event) => handleDrop(event, node.id)}
-                onClick={() => toggleFolder(node.id)}
-                onContextMenu={(event) => openContextMenu(event, node.id, node.id)}
-                onKeyDown={(event) => openContextMenuFromKeyboard(event, node.id, node.id)}
-              >
-                <span className="tree-disclosure" aria-hidden="true">
-                  {expandedFolders.has(node.id) ? '⌄' : '›'}
-                </span>
-                <CollectionFolderIcon open={expandedFolders.has(node.id)} />
-                <span className="tree-label">{node.name}</span>
-                <span className="tree-count">{treeIndex.requestCountByFolderId.get(node.id) ?? 0}</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className="tree-menu-trigger"
-              aria-label={`Actions for ${node.name}`}
-              aria-haspopup="menu"
-              disabled={isReadOnly}
-              onClick={(event) => openDropdownMenu(event, node.id, node.id)}
-            >
-              ⌄
-            </button>
-            {changeById.has(node.id) && (
-              <span
-                role="img"
-                className={`change-badge change-${changeById.get(node.id)?.status}`}
-                aria-label={`${changeStatusText(changeById.get(node.id)?.status)}: ${node.name}`}
-              >
-                {changeStatusCode(changeById.get(node.id)?.status)}
-              </span>
-            )}
-          </div>
-          {expandedFolders.has(node.id) && (
-            <div className="tree-children">
-              {node.children.length ? (
-                renderTree(node.children, depth + 1)
-              ) : (
-                <div className="tree-empty" style={{ '--tree-depth': depth + 1 } as React.CSSProperties}>
-                  Empty folder
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div key={node.id} className="tree-request-line" style={{ '--tree-depth': depth } as React.CSSProperties}>
-          <button
-            type="button"
-            className={cn(
-              'tree-row',
-              'request-row',
-              (activeWorkspaceTab?.kind === 'request' || activeWorkspaceTab?.kind === 'docs') &&
-                selectedRequestId === node.id &&
-                'tree-row-selected',
-              draggedId === node.id && 'tree-row-dragging',
-            )}
-            draggable
-            onDragStart={(event) => {
-              event.dataTransfer.setData('text/plain', node.id)
-              event.dataTransfer.effectAllowed = 'move'
-              setDraggedId(node.id)
-            }}
-            onDragEnd={() => setDraggedId(null)}
-            onDragOver={(event) => {
-              event.preventDefault()
-              event.dataTransfer.dropEffect = 'move'
-            }}
-            onDrop={(event) => handleDrop(event, node.id)}
-            onClick={() => (activeWorkspaceTab?.kind === 'docs' ? openDocsTab(node.id) : openRequestTab(node.id))}
-            onContextMenu={(event) => openContextMenu(event, treeIndex.parentFolderById.get(node.id) ?? '', node.id)}
-            onKeyDown={(event) => openContextMenuFromKeyboard(event, treeIndex.parentFolderById.get(node.id) ?? '', node.id)}
-          >
-            <span className={`method method-${node.method.toLowerCase()}`}>{node.method}</span>
-            <span className="tree-label request-copy">
-              <strong title={node.name}>{node.name}</strong>
-            </span>
-            {changeById.has(node.id) && (
-              <span
-                role="img"
-                className={`change-badge change-${changeById.get(node.id)?.status}`}
-                aria-label={`${changeStatusText(changeById.get(node.id)?.status)}: ${node.name}`}
-              >
-                {changeStatusCode(changeById.get(node.id)?.status)}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            className="tree-menu-trigger request-menu-trigger"
-            aria-label={`Actions for ${node.name}`}
-            aria-haspopup="menu"
-            disabled={isReadOnly}
-            onClick={(event) => openDropdownMenu(event, treeIndex.parentFolderById.get(node.id) ?? '', node.id)}
-          >
-            ⌄
-          </button>
-        </div>
-      ),
-    )
-  }
-
   return (
     <main ref={appShellRef} className="app-shell" style={{ '--sidebar-width': `${collectionWidth}px` } as React.CSSProperties}>
       <header className="topbar">
@@ -474,27 +279,7 @@ export function WorkspaceView({
         tree={tree}
         workspaceName={activeWorkspace?.name ?? 'My workspace'}
         readOnly={Boolean(isReadOnly)}
-        onImport={(imported) => {
-          setTree((current) => [...current, ...imported])
-          const importedRequestId = firstRequestId(imported)
-          if (importedRequestId) {
-            const tab: WorkspaceTab = { kind: 'request', id: importedRequestId }
-            setWorkspaceTabs((current) => [...current.filter((item) => workspaceTabKey(item) !== workspaceTabKey(tab)), tab])
-            setActiveWorkspaceTabKey(workspaceTabKey(tab))
-            setSelectedRequestId(importedRequestId)
-            setSelectedFolderId(findParentFolder(imported, importedRequestId))
-          }
-          const folders = new Set<string>()
-          const collectFolders = (nodes: ApiNode[]) =>
-            nodes.forEach((node) => {
-              if (node.kind === 'folder') {
-                folders.add(node.id)
-                collectFolders(node.children)
-              }
-            })
-          collectFolders(imported)
-          setExpandedFolders((current) => new Set([...current, ...folders]))
-        }}
+        onImport={importTree}
       />
 
       <aside className="sidebar" aria-label="Workspace">
@@ -506,53 +291,24 @@ export function WorkspaceView({
           <Button type="button" variant="outline" size="sm" className="openapi-trigger" onClick={() => setOpenApiDialogOpen(true)}>
             OpenAPI
           </Button>
-          <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create folder</DialogTitle>
-                <DialogDescription>
-                  Create a folder inside{' '}
-                  {newFolderParentId ? (treeIndex.nodeById.get(newFolderParentId)?.name ?? 'the selected folder') : 'Workspace'}.
-                </DialogDescription>
-              </DialogHeader>
-              <form className="dialog-form" onSubmit={createFolder}>
-                <label htmlFor="folder-name">Folder name</label>
-                <Input
-                  id="folder-name"
-                  autoFocus
-                  value={newFolderName}
-                  onChange={(event) => setNewFolderName(event.target.value)}
-                  placeholder="e.g. Payments API"
-                />
-                <Button type="submit" disabled={!newFolderName.trim()}>
-                  Create folder
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <CreateFolderDialogView folderDialog={collection.folderDialog} />
         </div>
 
         <nav
           className="tree-list"
           aria-label="Workspace folders and requests"
-          onDragOver={(event) => {
-            event.preventDefault()
-            event.dataTransfer.dropEffect = 'move'
-          }}
-          onDrop={(event) => handleDrop(event, null)}
+          onDragOver={collection.handlers.allowDrop}
+          onDrop={(event) => collection.handlers.drop(event, null)}
         >
           <div className="workspace-root-line">
             <Select value={currentWorkspaceId} onValueChange={activateWorkspace}>
               <SelectTrigger
                 aria-label="Select workspace"
                 className="workspace-root-select"
-                onContextMenu={(event) => openContextMenu(event, '')}
-                onKeyDown={(event) => openContextMenuFromKeyboard(event, '')}
-                onDragOver={(event) => {
-                  event.preventDefault()
-                  event.dataTransfer.dropEffect = 'move'
-                }}
-                onDrop={(event) => handleDrop(event, null)}
+                onContextMenu={collection.handlers.openRootContext}
+                onKeyDown={collection.handlers.openRootKeyboard}
+                onDragOver={collection.handlers.allowDrop}
+                onDrop={(event) => collection.handlers.drop(event, null)}
               >
                 <SelectValue className="workspace-root-name" placeholder="Choose workspace">
                   {activeWorkspace && (
@@ -585,12 +341,12 @@ export function WorkspaceView({
               aria-label="Workspace actions"
               aria-haspopup="menu"
               disabled={isReadOnly}
-              onClick={(event) => openDropdownMenu(event, '')}
+              onClick={collection.handlers.openRootDropdown}
             >
               ⌄
             </button>
           </div>
-          {tree.length ? renderTree(tree) : <p className="collection-empty">Workspace is empty. Add a folder or request to get started.</p>}
+          <CollectionTreeView {...collection} />
         </nav>
         <div className="sidebar-footer">
           {syncMenuOpen && (
@@ -913,63 +669,7 @@ export function WorkspaceView({
           </section>
         )}
       </section>
-      {contextMenu && !isReadOnly && (
-        <>
-          <div className="context-menu-dismiss" aria-hidden="true" onMouseDown={() => setContextMenu(null)} />
-          <div
-            className="tree-context-menu"
-            role="menu"
-            aria-label="Collection item actions"
-            style={{ left: contextMenu.x, top: contextMenu.y }}
-            onKeyDown={(event) => {
-              const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
-              const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement)
-              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                event.preventDefault()
-                const direction = event.key === 'ArrowDown' ? 1 : -1
-                items[(activeIndex + direction + items.length) % items.length]?.focus()
-              } else if (event.key === 'Escape') setContextMenu(null)
-            }}
-          >
-            <button
-              type="button"
-              role="menuitem"
-              // biome-ignore lint/a11y/noAutofocus: an open menu moves focus to its first item, as the menu pattern expects
-              autoFocus
-              onClick={() => openCreateFolder(contextMenu.parentFolderId)}
-            >
-              <span aria-hidden="true">＋</span>Create folder
-            </button>
-            <button type="button" role="menuitem" onClick={createRequestFromMenu}>
-              <span aria-hidden="true">↳</span>Create request
-            </button>
-            {contextMenu.targetNodeId &&
-              (() => {
-                const target = treeIndex.nodeById.get(contextMenu.targetNodeId)
-                return target && isFolder(target) ? (
-                  <>
-                    {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
-                    <div className="tree-context-menu-divider" role="separator" />
-                    <button type="button" role="menuitem" onClick={renameFolderFromMenu}>
-                      <span aria-hidden="true">✎</span>Rename folder
-                    </button>
-                    <button type="button" role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
-                      <span aria-hidden="true">×</span>Delete folder
-                    </button>
-                  </>
-                ) : target && isRequest(target) ? (
-                  <>
-                    {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
-                    <div className="tree-context-menu-divider" role="separator" />
-                    <button type="button" role="menuitem" className="context-menu-danger" onClick={openDeleteConfirmFromMenu}>
-                      <span aria-hidden="true">×</span>Delete request
-                    </button>
-                  </>
-                ) : null
-              })()}
-          </div>
-        </>
-      )}
+      {collection.menu && <CollectionMenuView {...collection.menu} />}
       <Dialog open={createWorkspaceOpen} onOpenChange={setCreateWorkspaceOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1089,34 +789,7 @@ export function WorkspaceView({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={deleteConfirmTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteConfirmTarget(null)
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{deleteConfirmTarget?.kind === 'folder' ? 'Delete folder?' : 'Delete request?'}</DialogTitle>
-            <DialogDescription>
-              {deleteConfirmTarget?.kind === 'folder'
-                ? (() => {
-                    const requestCount = treeIndex.requestCountByFolderId.get(deleteConfirmTarget.id) ?? 0
-                    return `Delete “${deleteConfirmTarget.name}” and all of its contents (${requestCount} request${requestCount === 1 ? '' : 's'})? This appears in Changes and will only be shared after you commit and push.`
-                  })()
-                : `Delete “${deleteConfirmTarget?.name ?? 'this request'}”? This appears in Changes and will only be shared after you commit and push.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="dialog-actions">
-            <Button type="button" variant="outline" onClick={() => setDeleteConfirmTarget(null)}>
-              Cancel
-            </Button>
-            <Button type="button" variant="destructive" onClick={confirmDeleteCollectionItem}>
-              Delete {deleteConfirmTarget?.kind ?? 'item'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DeleteItemDialogView deleteDialog={collection.deleteDialog} />
 
       <Dialog open={commitDialogOpen} onOpenChange={setCommitDialogOpen}>
         <DialogContent className="changes-dialog">

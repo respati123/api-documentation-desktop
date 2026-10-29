@@ -1,0 +1,36 @@
+{
+  "tree": {
+    "empty": "Workspace masih kosong. Tambahkan folder atau request untuk memulai.",
+    "emptyFolder": "Folder kosong",
+    "actionsFor": "Aksi untuk {{name}}",
+    "folderNameLabel": "Nama folder",
+    "menuLabel": "Aksi item koleksi",
+    "workspaceActions": "Aksi workspace"
+  },
+  "menu": {
+    "createFolder": "Buat folder",
+    "createRequest": "Buat request",
+    "renameFolder": "Ganti nama folder",
+    "deleteFolder": "Hapus folder",
+    "deleteRequest": "Hapus request"
+  },
+  "createDialog": {
+    "title": "Buat folder",
+    "description": "Buat folder di dalam {{parent}}.",
+    "workspaceName": "Workspace",
+    "selectedFolder": "folder yang dipilih",
+    "label": "Nama folder",
+    "placeholder": "mis. Payments API",
+    "submit": "Buat folder"
+  },
+  "deleteDialog": {
+    "folderTitle": "Hapus folder?",
+    "requestTitle": "Hapus request?",
+    "folderDescription_other": "Hapus “{{name}}” beserta seluruh isinya ({{count}} request)? Ini akan muncul di Perubahan dan baru dibagikan setelah kamu commit dan push.",
+    "requestDescription": "Hapus “{{name}}”? Ini akan muncul di Perubahan dan baru dibagikan setelah kamu commit dan push.",
+    "requestFallbackName": "request ini",
+    "cancel": "Batal",
+    "confirmFolder": "Hapus folder",
+    "confirmRequest": "Hapus request"
+  }
+}

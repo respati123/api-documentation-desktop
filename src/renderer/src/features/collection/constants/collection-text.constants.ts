@@ -1,0 +1,36 @@
+export const COLLECTION_TEXT = {
+  tree: {
+    empty: 'tree.empty',
+    emptyFolder: 'tree.emptyFolder',
+    actionsFor: 'tree.actionsFor',
+    folderNameLabel: 'tree.folderNameLabel',
+    menuLabel: 'tree.menuLabel',
+    workspaceActions: 'tree.workspaceActions',
+  },
+  menu: {
+    createFolder: 'menu.createFolder',
+    createRequest: 'menu.createRequest',
+    renameFolder: 'menu.renameFolder',
+    deleteFolder: 'menu.deleteFolder',
+    deleteRequest: 'menu.deleteRequest',
+  },
+  createDialog: {
+    title: 'createDialog.title',
+    description: 'createDialog.description',
+    workspaceName: 'createDialog.workspaceName',
+    selectedFolder: 'createDialog.selectedFolder',
+    label: 'createDialog.label',
+    placeholder: 'createDialog.placeholder',
+    submit: 'createDialog.submit',
+  },
+  deleteDialog: {
+    folderTitle: 'deleteDialog.folderTitle',
+    requestTitle: 'deleteDialog.requestTitle',
+    folderDescription: 'deleteDialog.folderDescription',
+    requestDescription: 'deleteDialog.requestDescription',
+    requestFallbackName: 'deleteDialog.requestFallbackName',
+    cancel: 'deleteDialog.cancel',
+    confirmFolder: 'deleteDialog.confirmFolder',
+    confirmRequest: 'deleteDialog.confirmRequest',
+  },
+} as const

@@ -23,19 +23,13 @@ import {
   removeNode,
   renameFolder,
   updateNode,
+  useCollectionTreeViewModel,
 } from '@/features/collection'
 import { replaceUrlParams, syncUrlParams } from '@/features/request'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type {
-  CollectionContextMenu,
-  DeleteConfirmTarget,
-  PendingMerge,
-  WorkspaceHistoryCommit,
-  WorkspaceTab,
-  WorkspaceUpdateEvent,
-} from '@/features/workspace/models/workspace.model'
+import type { PendingMerge, WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
 import { appUpdateService } from '@/features/workspace/services/app-update.service'
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
@@ -103,15 +97,6 @@ export function useWorkspaceViewModel() {
           .map((folder) => folder.id),
       ),
   )
-  const [draggedId, setDraggedId] = useState<string | null>(null)
-  const [newFolderName, setNewFolderName] = useState('')
-  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
-  const [newFolderParentId, setNewFolderParentId] = useState('')
-  const [contextMenu, setContextMenu] = useState<CollectionContextMenu | null>(null)
-  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<DeleteConfirmTarget | null>(null)
-  const [renamingFolderId, setRenamingFolderId] = useState('')
-  const [folderNameDraft, setFolderNameDraft] = useState('')
-  const cancelRenameOnBlur = useRef(false)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const sessionTokenRef = useRef<string | null>(null)
   const [user, setUser] = useState<ApiUser | null>(null)
@@ -1543,14 +1528,11 @@ export function useWorkspaceViewModel() {
     setSyncStatus('Conflicts resolved. Push the merge commit to share it.')
   }
 
-  function createFolder(event: FormEvent) {
-    event.preventDefault()
+  function createFolderInTree(parentId: string, name: string) {
     if (isReadOnly) return
-    const name = newFolderName.trim()
-    if (!name) return
     const folder: FolderNode = { id: crypto.randomUUID(), kind: 'folder', name, children: [] }
     setTree((current) => {
-      const parent = findNode(current, newFolderParentId)
+      const parent = findNode(current, parentId)
       if (!parent || !isFolder(parent)) return [...current, folder]
       return current.map((node) =>
         isFolder(node) && node.id === parent.id
@@ -1562,8 +1544,46 @@ export function useWorkspaceViewModel() {
     })
     setSelectedFolderId(folder.id)
     setExpandedFolders((current) => new Set(current).add(folder.id))
-    setNewFolderName('')
-    setFolderDialogOpen(false)
+  }
+
+  // An OpenAPI import adds its folders and opens its first request.
+  function importTree(imported: ApiNode[]) {
+    setTree((current) => [...current, ...imported])
+    const importedRequestId = firstRequestId(imported)
+    if (importedRequestId) {
+      const tab: WorkspaceTab = { kind: 'request', id: importedRequestId }
+      setWorkspaceTabs((current) => [...current.filter((item) => workspaceTabKey(item) !== workspaceTabKey(tab)), tab])
+      setActiveWorkspaceTabKey(workspaceTabKey(tab))
+      setSelectedRequestId(importedRequestId)
+      setSelectedFolderId(findParentFolder(imported, importedRequestId))
+    }
+    const folders = new Set<string>()
+    const collectFolders = (nodes: ApiNode[]) =>
+      nodes.forEach((node) => {
+        if (node.kind === 'folder') {
+          folders.add(node.id)
+          collectFolders(node.children)
+        }
+      })
+    collectFolders(imported)
+    setExpandedFolders((current) => new Set([...current, ...folders]))
+  }
+
+  function renameFolderInTree(folderId: string, name: string) {
+    setTree((current) => renameFolder(current, folderId, name))
+  }
+
+  function selectFolder(folderId: string) {
+    setSelectedFolderId(folderId)
+  }
+
+  function toggleFolderExpanded(folderId: string) {
+    setExpandedFolders((current) => {
+      const next = new Set(current)
+      if (next.has(folderId)) next.delete(folderId)
+      else next.add(folderId)
+      return next
+    })
   }
 
   function createRequest(folderId = selectedFolderId) {
@@ -1600,94 +1620,10 @@ export function useWorkspaceViewModel() {
     setExpandedFolders((current) => new Set(current).add(folderId))
   }
 
-  function openCreateFolder(parentId: string) {
-    setContextMenu(null)
-    setNewFolderParentId(parentId)
-    setSelectedFolderId(parentId)
-    setNewFolderName('')
-    setFolderDialogOpen(true)
-  }
-
-  function contextMenuHeight(targetNodeId: string | null) {
-    if (!targetNodeId) return 92
-    const target = treeIndex.nodeById.get(targetNodeId)
-    return target && isFolder(target) ? 168 : 132
-  }
-
-  function openContextMenu(event: React.MouseEvent<HTMLElement>, parentFolderId: string, targetNodeId: string | null = null) {
-    event.preventDefault()
-    event.stopPropagation()
-    const menuWidth = 188
-    const menuHeight = contextMenuHeight(targetNodeId)
-    setContextMenu({
-      x: Math.max(8, Math.min(event.clientX, window.innerWidth - menuWidth - 8)),
-      y: Math.max(8, Math.min(event.clientY, window.innerHeight - menuHeight - 8)),
-      parentFolderId,
-      targetNodeId,
-    })
-  }
-
-  function openDropdownMenu(event: React.MouseEvent<HTMLElement>, parentFolderId: string, targetNodeId: string | null = null) {
-    event.preventDefault()
-    event.stopPropagation()
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const menuHeight = contextMenuHeight(targetNodeId)
-    setContextMenu({
-      x: Math.max(8, Math.min(bounds.right - 188, window.innerWidth - 196)),
-      y: Math.max(8, Math.min(bounds.bottom + 4, window.innerHeight - menuHeight - 8)),
-      parentFolderId,
-      targetNodeId,
-    })
-  }
-
-  function openContextMenuFromKeyboard(
-    event: React.KeyboardEvent<HTMLElement>,
-    parentFolderId: string,
-    targetNodeId: string | null = null,
-  ) {
-    if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
-    event.preventDefault()
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const menuHeight = contextMenuHeight(targetNodeId)
-    setContextMenu({
-      x: Math.max(8, Math.min(bounds.left + 12, window.innerWidth - 196)),
-      y: Math.max(8, Math.min(bounds.bottom, window.innerHeight - menuHeight - 8)),
-      parentFolderId,
-      targetNodeId,
-    })
-  }
-
-  function createRequestFromMenu() {
-    if (!contextMenu) return
-    const { parentFolderId } = contextMenu
-    setContextMenu(null)
-    createRequest(parentFolderId)
-  }
-
-  function renameFolderFromMenu() {
-    if (!contextMenu?.targetNodeId) return
-    const folder = treeIndex.nodeById.get(contextMenu.targetNodeId)
-    if (!folder || !isFolder(folder)) return
-    setFolderNameDraft(folder.name)
-    setRenamingFolderId(folder.id)
-    setContextMenu(null)
-  }
-
-  function openDeleteConfirmFromMenu() {
-    if (!contextMenu?.targetNodeId) return
-    const target = treeIndex.nodeById.get(contextMenu.targetNodeId)
+  function deleteItem(id: string) {
+    if (isReadOnly) return
+    const target = treeIndex.nodeById.get(id)
     if (!target) return
-    setDeleteConfirmTarget({ id: target.id, kind: target.kind, name: target.name })
-    setContextMenu(null)
-  }
-
-  function confirmDeleteCollectionItem() {
-    if (isReadOnly || !deleteConfirmTarget) return
-    const target = treeIndex.nodeById.get(deleteConfirmTarget.id)
-    if (!target) {
-      setDeleteConfirmTarget(null)
-      return
-    }
 
     const removedIds = new Set<string>()
     const collectIds = (node: ApiNode) => {
@@ -1706,7 +1642,7 @@ export function useWorkspaceViewModel() {
     setTree(nextTree)
     setWorkspaceTabs(nextTabs)
     setActiveWorkspaceTabKey(nextActiveTab ? workspaceTabKey(nextActiveTab) : '')
-    setExpandedFolders((current) => new Set([...current].filter((id) => !removedIds.has(id))))
+    setExpandedFolders((current) => new Set([...current].filter((folderId) => !removedIds.has(folderId))))
     if (nextActiveTab?.kind === 'request' || nextActiveTab?.kind === 'docs') {
       setSelectedRequestId(nextActiveTab.id)
       setSelectedFolderId(findParentFolder(nextTree, nextActiveTab.id))
@@ -1716,30 +1652,6 @@ export function useWorkspaceViewModel() {
       setSelectedFolderId(fallbackRequestId ? findParentFolder(nextTree, fallbackRequestId) : (nextTree.find(isFolder)?.id ?? ''))
       if (nextActiveTab?.kind === 'environment') setActiveEnvironmentId(nextActiveTab.id)
     }
-    setDeleteConfirmTarget(null)
-  }
-
-  function commitFolderRename(folderId: string) {
-    const name = folderNameDraft.trim()
-    if (name) setTree((current) => renameFolder(current, folderId, name))
-    setRenamingFolderId('')
-    setFolderNameDraft('')
-  }
-
-  function cancelFolderRename() {
-    cancelRenameOnBlur.current = true
-    setRenamingFolderId('')
-    setFolderNameDraft('')
-  }
-
-  function toggleFolder(folderId: string) {
-    setSelectedFolderId(folderId)
-    setExpandedFolders((current) => {
-      const next = new Set(current)
-      if (next.has(folderId)) next.delete(folderId)
-      else next.add(folderId)
-      return next
-    })
   }
 
   function moveItem(sourceId: string, targetId: string | null) {
@@ -1760,14 +1672,6 @@ export function useWorkspaceViewModel() {
     if (isRequest(source) && source.id === selectedRequestId) setSelectedFolderId(destination)
     if (isFolder(source)) setExpandedFolders((current) => new Set(current).add(source.id))
     if (target && isFolder(target)) setExpandedFolders((current) => new Set(current).add(target.id))
-  }
-
-  function handleDrop(event: React.DragEvent, targetId: string | null) {
-    event.preventDefault()
-    event.stopPropagation()
-    const sourceId = event.dataTransfer.getData('text/plain') || draggedId
-    if (sourceId) moveItem(sourceId, targetId)
-    setDraggedId(null)
   }
 
   // The active request as the user last edited it. Each editor reads this at send or copy time.
@@ -1792,7 +1696,30 @@ export function useWorkspaceViewModel() {
       }
     : null
 
+  const collection = useCollectionTreeViewModel({
+    tree,
+    isReadOnly: Boolean(isReadOnly),
+    selectedRequestId,
+    selectedFolderId,
+    activeTabKind: activeWorkspaceTab?.kind ?? null,
+    expandedFolders,
+    changes: changeById,
+    actions: {
+      selectFolder,
+      toggleFolderExpanded,
+      openRequest: openRequestTab,
+      openDocs: openDocsTab,
+      createFolder: createFolderInTree,
+      createRequest,
+      renameFolder: renameFolderInTree,
+      deleteItem,
+      moveItem,
+    },
+  })
+
   return {
+    collection,
+    importTree,
     requestWorkbench,
     collectionWidth,
     appShellRef,
@@ -1822,21 +1749,6 @@ export function useWorkspaceViewModel() {
     setSelectedFolderId,
     expandedFolders,
     setExpandedFolders,
-    draggedId,
-    setDraggedId,
-    newFolderName,
-    setNewFolderName,
-    folderDialogOpen,
-    setFolderDialogOpen,
-    newFolderParentId,
-    contextMenu,
-    setContextMenu,
-    deleteConfirmTarget,
-    setDeleteConfirmTarget,
-    renamingFolderId,
-    folderNameDraft,
-    setFolderNameDraft,
-    cancelRenameOnBlur,
     sessionToken,
     user,
     authOpenRequest,
@@ -1947,18 +1859,5 @@ export function useWorkspaceViewModel() {
     pullWorkspace,
     pushWorkspace,
     applyMergeResolution,
-    createFolder,
-    openCreateFolder,
-    openContextMenu,
-    openDropdownMenu,
-    openContextMenuFromKeyboard,
-    createRequestFromMenu,
-    renameFolderFromMenu,
-    openDeleteConfirmFromMenu,
-    confirmDeleteCollectionItem,
-    commitFolderRename,
-    cancelFolderRename,
-    toggleFolder,
-    handleDrop,
   }
 }

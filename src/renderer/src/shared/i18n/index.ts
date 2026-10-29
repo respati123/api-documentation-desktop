@@ -2,11 +2,13 @@ import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 import enAiConnect from '@/shared/i18n/locales/en/ai-connect.json'
+import enCollection from '@/shared/i18n/locales/en/collection.json'
 import enCommon from '@/shared/i18n/locales/en/common.json'
 import enRequest from '@/shared/i18n/locales/en/request.json'
 import enResponse from '@/shared/i18n/locales/en/response.json'
 import enVariables from '@/shared/i18n/locales/en/variables.json'
 import idAiConnect from '@/shared/i18n/locales/id/ai-connect.json'
+import idCollection from '@/shared/i18n/locales/id/collection.json'
 import idCommon from '@/shared/i18n/locales/id/common.json'
 import idRequest from '@/shared/i18n/locales/id/request.json'
 import idResponse from '@/shared/i18n/locales/id/response.json'
@@ -17,8 +19,22 @@ export const supportedLanguages = ['en', 'id'] as const
 
 // Every feature adds its own namespace here, in both languages.
 const resources = {
-  en: { common: enCommon, variables: enVariables, 'ai-connect': enAiConnect, response: enResponse, request: enRequest },
-  id: { common: idCommon, variables: idVariables, 'ai-connect': idAiConnect, response: idResponse, request: idRequest },
+  en: {
+    common: enCommon,
+    variables: enVariables,
+    'ai-connect': enAiConnect,
+    response: enResponse,
+    request: enRequest,
+    collection: enCollection,
+  },
+  id: {
+    common: idCommon,
+    variables: idVariables,
+    'ai-connect': idAiConnect,
+    response: idResponse,
+    request: idRequest,
+    collection: idCollection,
+  },
 }
 
 void i18n
