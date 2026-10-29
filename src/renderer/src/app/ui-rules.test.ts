@@ -62,11 +62,6 @@ const legacyViolations = new Set<string>([
   'features/collection/views/collection-dialogs.view.tsx',
   'features/collection/views/collection-menu.view.tsx',
   'features/collection/views/collection-tree.view.tsx',
-  'features/docs/components/api-reference.tsx',
-  'features/docs/components/openapi-dialog.tsx',
-  'features/sync/components/auth-dialog.tsx',
-  'features/sync/components/workspace-change-rows.tsx',
-  'shared/components/labeled-field.tsx',
   'shared/components/variable-field.tsx',
 ])
 
