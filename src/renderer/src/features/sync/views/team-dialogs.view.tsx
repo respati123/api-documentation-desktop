@@ -18,7 +18,6 @@ export function CreateWorkspaceDialogView({ createWorkspace }: { createWorkspace
         </DialogHeader>
         <form className="dialog-form" onSubmit={(event: FormEvent) => void createWorkspace.onSubmit(event)}>
           <Label htmlFor="cloud-workspace-name">{createWorkspace.nameLabel}</Label>
-          {/* biome-ignore lint/a11y/noAutofocus: the new-workspace dialog opens with the name field focused */}
           <Input
             id="cloud-workspace-name"
             autoFocus

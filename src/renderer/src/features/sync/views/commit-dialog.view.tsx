@@ -54,7 +54,6 @@ function ChangesPane({ changes }: { changes: CommitDialogViewProps['changes'] })
         <Label htmlFor="commit-message" className="text-[12px] font-semibold leading-normal text-slate-700">
           {changes.messageLabel}
         </Label>
-        {/* biome-ignore lint/a11y/noAutofocus: the commit dialog opens with the message field focused */}
         <Input
           id="commit-message"
           autoFocus

@@ -795,11 +795,13 @@ export function useWorkspaceViewModel() {
     sessionTokenRef.current = sessionToken
   }, [sessionToken])
 
+  // Opens the team dialog from an effect. It reads the team hook as it is now, so the effects need not depend on it.
+  const openTeamDialog = useEffectEvent(() => team.openTeam())
   useEffect(
     () =>
       sessionService.onInviteToken((token) => {
         setInviteTokenDraft(token)
-        if (sessionTokenRef.current) team.openTeam()
+        if (sessionTokenRef.current) openTeamDialog()
         else setAuthOpenRequest((current) => current + 1)
       }),
     [],
@@ -896,7 +898,7 @@ export function useWorkspaceViewModel() {
             setUser(result.user)
             const saved = await sessionService.save(result.token)
             if (!saved) setSyncStatus('Session will last until the app closes because secure storage is unavailable on this system.')
-            if (inviteTokenDraft) team.openTeam()
+            if (inviteTokenDraft) openTeamDialog()
           } catch (error) {
             setAuthError(error instanceof Error ? error.message : 'Could not complete sign-in.')
           }
