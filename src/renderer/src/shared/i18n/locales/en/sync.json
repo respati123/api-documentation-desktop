@@ -1,0 +1,16 @@
+{
+  "auth": {
+    "trigger": "Sign in",
+    "title": "Sign in",
+    "description": "Sign in with your browser to sync and share workspaces.",
+    "signInBrowser": "Sign in with browser",
+    "waiting": "Waiting for you to finish signing in in your browser…",
+    "retry": "Didn't open? Try again",
+    "openFailed": "Could not open the browser for sign-in."
+  },
+  "changes": {
+    "untracked": "Untracked",
+    "deleted": "Deleted",
+    "modified": "Modified"
+  }
+}

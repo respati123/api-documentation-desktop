@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
   appendToFolder,
@@ -26,6 +27,7 @@ import {
   useCollectionTreeViewModel,
 } from '@/features/collection'
 import { replaceUrlParams, syncUrlParams } from '@/features/request'
+import { changeStatusKey } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -1696,6 +1698,8 @@ export function useWorkspaceViewModel() {
       }
     : null
 
+  const { t: tSync } = useTranslation('sync')
+  const statusText = (status: WorkspaceChange['status']) => tSync(changeStatusKey(status))
   const collection = useCollectionTreeViewModel({
     tree,
     isReadOnly: Boolean(isReadOnly),
@@ -1720,6 +1724,7 @@ export function useWorkspaceViewModel() {
   return {
     collection,
     importTree,
+    statusText,
     requestWorkbench,
     collectionWidth,
     appShellRef,

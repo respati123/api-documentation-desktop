@@ -7,6 +7,7 @@ import enCommon from '@/shared/i18n/locales/en/common.json'
 import enDocs from '@/shared/i18n/locales/en/docs.json'
 import enRequest from '@/shared/i18n/locales/en/request.json'
 import enResponse from '@/shared/i18n/locales/en/response.json'
+import enSync from '@/shared/i18n/locales/en/sync.json'
 import enVariables from '@/shared/i18n/locales/en/variables.json'
 import idAiConnect from '@/shared/i18n/locales/id/ai-connect.json'
 import idCollection from '@/shared/i18n/locales/id/collection.json'
@@ -14,6 +15,7 @@ import idCommon from '@/shared/i18n/locales/id/common.json'
 import idDocs from '@/shared/i18n/locales/id/docs.json'
 import idRequest from '@/shared/i18n/locales/id/request.json'
 import idResponse from '@/shared/i18n/locales/id/response.json'
+import idSync from '@/shared/i18n/locales/id/sync.json'
 import idVariables from '@/shared/i18n/locales/id/variables.json'
 
 export const languageStorageKey = 'api-docs-language'
@@ -29,6 +31,7 @@ const resources = {
     request: enRequest,
     collection: enCollection,
     docs: enDocs,
+    sync: enSync,
   },
   id: {
     common: idCommon,
@@ -38,6 +41,7 @@ const resources = {
     request: idRequest,
     collection: idCollection,
     docs: idDocs,
+    sync: idSync,
   },
 }
 

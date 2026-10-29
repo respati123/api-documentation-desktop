@@ -9,7 +9,7 @@ import {
 } from '@/features/collection/lib/context-menu-position'
 import { indexTree, isFolder } from '@/features/collection/lib/tree'
 import type { ContextMenuState, DeleteTarget, TreeChange, TreeRow } from '@/features/collection/models/collection-tree.model'
-import { changeStatusCode, changeStatusText } from '@/features/sync'
+import { changeStatusCode, changeStatusKey } from '@/features/sync'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
 import type { ApiNode } from '@/shared/models/api-node.model'
 
@@ -57,7 +57,11 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
   const changeOf = (id: string, name: string): TreeChange | null => {
     const change = input.changes.get(id)
     if (!change) return null
-    return { status: change.status, code: changeStatusCode(change.status), label: `${changeStatusText(change.status)}: ${name}` }
+    return {
+      status: change.status,
+      code: changeStatusCode(change.status),
+      label: `${t(changeStatusKey(change.status), { ns: 'sync' })}: ${name}`,
+    }
   }
 
   function buildRows(nodes: ApiNode[], depth: number): TreeRow[] {

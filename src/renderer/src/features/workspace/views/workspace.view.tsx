@@ -14,7 +14,7 @@ import {
 
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
-import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
+import { AuthDialog, ChangeRow, changeStatusCode, HistoryChangeRow } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 
@@ -43,6 +43,7 @@ export function WorkspaceView({
   requestWorkbench,
   collection,
   importTree,
+  statusText,
   variablesDialog,
   environmentTab,
   localWorkspaces,
@@ -912,7 +913,7 @@ export function WorkspaceView({
                     <header className="diff-file-header">
                       <span className={`change-badge change-${selectedChange.status}`}>{changeStatusCode(selectedChange.status)}</span>
                       <strong title={selectedChange.name}>{selectedChange.name}</strong>
-                      <span>{changeStatusText(selectedChange.status)}</span>
+                      <span>{statusText(selectedChange.status)}</span>
                     </header>
                     <div className="diff-column-headings">
                       <span>Previous</span>
@@ -1001,6 +1002,7 @@ export function WorkspaceView({
                           change={change}
                           selected={selectedHistoryChange?.id === change.id}
                           onSelect={() => setSelectedHistoryChangeId(change.id)}
+                          statusText={statusText(change.status)}
                         />
                       ))
                     ) : historySnapshotsReady ? (
@@ -1025,7 +1027,7 @@ export function WorkspaceView({
                         {changeStatusCode(selectedHistoryChange.status)}
                       </span>
                       <strong title={selectedHistoryChange.name}>{selectedHistoryChange.name}</strong>
-                      <span>{changeStatusText(selectedHistoryChange.status)}</span>
+                      <span>{statusText(selectedHistoryChange.status)}</span>
                     </header>
                     <div className="diff-column-headings">
                       <span>Parent version</span>

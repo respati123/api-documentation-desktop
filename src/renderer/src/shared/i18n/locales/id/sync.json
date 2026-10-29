@@ -1,0 +1,16 @@
+{
+  "auth": {
+    "trigger": "Masuk",
+    "title": "Masuk",
+    "description": "Masuk lewat browser untuk menyinkronkan dan membagikan workspace.",
+    "signInBrowser": "Masuk lewat browser",
+    "waiting": "Menunggu kamu menyelesaikan masuk di browser…",
+    "retry": "Browser tidak terbuka? Coba lagi",
+    "openFailed": "Browser untuk masuk tidak dapat dibuka."
+  },
+  "changes": {
+    "untracked": "Belum dilacak",
+    "deleted": "Dihapus",
+    "modified": "Diubah"
+  }
+}

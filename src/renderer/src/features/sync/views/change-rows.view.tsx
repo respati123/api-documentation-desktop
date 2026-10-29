@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react'
+import { changeStatusCode } from '@/features/sync/lib/change-status'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
 import { cn } from '@/shared/utils/cn'
 
@@ -13,7 +15,7 @@ export function ChangeRow({
   onSelect: () => void
   actionLabel: string
   onAction: () => void
-}) {
+}): ReactElement {
   return (
     <div className={cn('change-row', selected && 'change-row-selected')}>
       <span className={`change-badge change-${change.status}`}>{changeStatusCode(change.status)}</span>
@@ -27,7 +29,17 @@ export function ChangeRow({
   )
 }
 
-export function HistoryChangeRow({ change, selected, onSelect }: { change: WorkspaceChange; selected: boolean; onSelect: () => void }) {
+export function HistoryChangeRow({
+  change,
+  selected,
+  onSelect,
+  statusText,
+}: {
+  change: WorkspaceChange
+  selected: boolean
+  onSelect: () => void
+  statusText: string
+}): ReactElement {
   return (
     <button
       type="button"
@@ -37,15 +49,7 @@ export function HistoryChangeRow({ change, selected, onSelect }: { change: Works
     >
       <span className={`change-badge change-${change.status}`}>{changeStatusCode(change.status)}</span>
       <span>{change.name}</span>
-      <small>{changeStatusText(change.status)}</small>
+      <small>{statusText}</small>
     </button>
   )
-}
-
-export function changeStatusCode(status?: WorkspaceChange['status']): string {
-  return status === 'added' ? 'U' : status === 'deleted' ? 'D' : 'M'
-}
-
-export function changeStatusText(status?: WorkspaceChange['status']): string {
-  return status === 'added' ? 'Untracked' : status === 'deleted' ? 'Deleted' : 'Modified'
 }
