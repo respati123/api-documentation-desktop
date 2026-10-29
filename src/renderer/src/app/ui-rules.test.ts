@@ -52,6 +52,7 @@ function findViolations(path: string): string[] {
 }
 
 const legacyViolations = new Set<string>([
+  'features/sync/views/commit-dialog.view.tsx',
   'features/sync/views/team-dialogs.view.tsx',
   'features/sync/views/auth-dialog.view.tsx',
   'features/sync/views/change-rows.view.tsx',

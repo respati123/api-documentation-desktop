@@ -27,7 +27,13 @@ import {
   useCollectionTreeViewModel,
 } from '@/features/collection'
 import { replaceUrlParams, syncUrlParams } from '@/features/request'
-import { type CloudWorkspaceRecord, changeStatusKey, useTeamDialogsViewModel } from '@/features/sync'
+import {
+  type CloudWorkspaceRecord,
+  changeStatusKey,
+  useCommitDialogStateViewModel,
+  useCommitDialogViewModel,
+  useTeamDialogsViewModel,
+} from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -107,14 +113,23 @@ export function useWorkspaceViewModel() {
   const [cloudWorkspaces, setCloudWorkspaces] = useState<CloudWorkspace[]>([])
   const cloudHistoryWorkspaceIdRef = useRef('')
   const [inviteTokenDraft, setInviteTokenDraft] = useState('')
-  const [commitDialogOpen, setCommitDialogOpen] = useState(false)
-  const [commitDialogView, setCommitDialogView] = useState<'changes' | 'history'>('changes')
+  const commitState = useCommitDialogStateViewModel()
+  const {
+    commitDialogOpen,
+    setCommitDialogOpen,
+    commitDialogView,
+    setCommitDialogView,
+    commitMessage,
+    setCommitMessage,
+    selectedChangeId,
+    setSelectedChangeId,
+    selectedHistoryCommitId,
+    setSelectedHistoryCommitId,
+    selectedHistoryChangeId,
+    setSelectedHistoryChangeId,
+  } = commitState
   const [syncMenuOpen, setSyncMenuOpen] = useState(false)
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
-  const [commitMessage, setCommitMessage] = useState('')
-  const [selectedChangeId, setSelectedChangeId] = useState('')
-  const [selectedHistoryCommitId, setSelectedHistoryCommitId] = useState('')
-  const [selectedHistoryChangeId, setSelectedHistoryChangeId] = useState('')
   const [localCommits, setLocalCommits] = useState<LocalCommit[]>([])
   const [cloudCommits, setCloudCommits] = useState<CloudCommit[]>([])
   const [cloudCommitDetails, setCloudCommitDetails] = useState<Record<string, CloudCommitDetail>>({})
@@ -1598,6 +1613,70 @@ export function useWorkspaceViewModel() {
 
   const { t: tSync } = useTranslation('sync')
   const statusText = (status: WorkspaceChange['status']) => tSync(changeStatusKey(status))
+  const commitDialog = useCommitDialogViewModel({
+    open: commitDialogOpen,
+    view: commitDialogView,
+    message: commitMessage,
+    readOnly: Boolean(isReadOnly),
+    cloudConnected: Boolean(activeWorkspace?.cloudId),
+    changeCount: workspaceChanges.length,
+    staged: stagedChanges,
+    unstaged: unstagedChanges,
+    selectedChangeId,
+    selectedChange,
+    diffRows,
+    history: {
+      commits: historyCommits,
+      localCommitIds,
+      selectedCommit: selectedHistoryCommit,
+      loading: historyLoading,
+      error: historyError,
+      detailLoading: historyDetailLoading,
+      detailError: historyDetailError,
+      snapshotsReady: historySnapshotsReady,
+      changes: historyChanges,
+      selectedChangeId: selectedHistoryChangeId,
+      selectedChange: selectedHistoryChange,
+      diffRows: historyDiffRows,
+    },
+    actions: {
+      onOpenChange: setCommitDialogOpen,
+      onViewChange: (view) => {
+        setCommitDialogView(view)
+        if (view === 'history') {
+          setSelectedHistoryCommitId('')
+          setSelectedHistoryChangeId('')
+        }
+      },
+      onMessageChange: setCommitMessage,
+      onSubmit: (event) => void saveCommit(event),
+      onSelectChange: setSelectedChangeId,
+      onStage: stageChange,
+      onStageAll: stageChanges,
+      onUnstageAll: () => {
+        setStagedSnapshot(null)
+        setStagedVariables(null)
+      },
+      onSelectHistoryCommit: (commitId) => {
+        setSelectedHistoryCommitId(commitId)
+        setSelectedHistoryChangeId('')
+        setHistoryDetailError('')
+      },
+      onSelectHistoryChange: setSelectedHistoryChangeId,
+      onOpenHistory: () => {
+        setCommitDialogView('history')
+        setSelectedHistoryCommitId('')
+        setSelectedHistoryChangeId('')
+        setCommitDialogOpen(true)
+      },
+      onOpenChanges: () => {
+        setCommitDialogView('changes')
+        setCommitMessage('')
+        setSelectedChangeId('')
+        setCommitDialogOpen(true)
+      },
+    },
+  })
   const team = useTeamDialogsViewModel({
     sessionToken,
     activeWorkspace,
@@ -1635,6 +1714,7 @@ export function useWorkspaceViewModel() {
   return {
     collection,
     team,
+    commitDialog,
     importTree,
     statusText,
     requestWorkbench,

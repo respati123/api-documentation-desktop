@@ -14,7 +14,7 @@ import {
 
 import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
-import { AuthDialog, ChangeRow, CreateWorkspaceDialogView, changeStatusCode, HistoryChangeRow, TeamDialogView } from '@/features/sync'
+import { AuthDialog, CommitDialogView, CreateWorkspaceDialogView, TeamDialogView } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 
@@ -23,7 +23,6 @@ import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
 import { StateMessage } from '@/shared/components/state-message'
 import { Button } from '@/shared/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 
 import { cn } from '@/shared/utils/cn'
@@ -43,8 +42,8 @@ export function WorkspaceView({
   requestWorkbench,
   collection,
   team,
+  commitDialog,
   importTree,
-  statusText,
   variablesDialog,
   environmentTab,
   localWorkspaces,
@@ -55,26 +54,10 @@ export function WorkspaceView({
   user,
   authOpenRequest,
   authError,
-  commitDialogOpen,
-  setCommitDialogOpen,
-  commitDialogView,
-  setCommitDialogView,
   syncMenuOpen,
   setSyncMenuOpen,
   discardConfirmOpen,
   setDiscardConfirmOpen,
-  commitMessage,
-  setCommitMessage,
-  setSelectedChangeId,
-  setSelectedHistoryCommitId,
-  setSelectedHistoryChangeId,
-  historyLoading,
-  historyDetailLoading,
-  historyError,
-  historyDetailError,
-  setHistoryDetailError,
-  setStagedSnapshot,
-  setStagedVariables,
   syncStatus,
   pendingMerge,
   setPendingMerge,
@@ -95,18 +78,8 @@ export function WorkspaceView({
   cloudHeadCommitId,
   cloudUpdateAvailable,
   pushDisabledReason,
-  stagedChanges,
-  unstagedChanges,
   changeById,
-  selectedChange,
-  diffRows,
   historyCommits,
-  localCommitIds,
-  selectedHistoryCommit,
-  historySnapshotsReady,
-  historyChanges,
-  selectedHistoryChange,
-  historyDiffRows,
   beginBrowserSignIn,
   clearAuthError,
   accountMenuOpen,
@@ -124,9 +97,6 @@ export function WorkspaceView({
   openEnvironmentTab,
   selectWorkspaceTab,
   closeWorkspaceTab,
-  stageChanges,
-  stageChange,
-  saveCommit,
   discardLocalChanges,
   pullWorkspace,
   pushWorkspace,
@@ -369,10 +339,7 @@ export function WorkspaceView({
                   autoFocus
                   onClick={() => {
                     setSyncMenuOpen(false)
-                    setCommitDialogView('history')
-                    setSelectedHistoryCommitId('')
-                    setSelectedHistoryChangeId('')
-                    setCommitDialogOpen(true)
+                    commitDialog.openHistory()
                   }}
                 >
                   <span aria-hidden="true">◷</span>History{historyCommits.length > 0 && <small>{historyCommits.length}</small>}
@@ -394,10 +361,7 @@ export function WorkspaceView({
                   disabled={isReadOnly || !workspaceChanges.length}
                   onClick={() => {
                     setSyncMenuOpen(false)
-                    setCommitDialogView('changes')
-                    setCommitMessage('')
-                    setSelectedChangeId('')
-                    setCommitDialogOpen(true)
+                    commitDialog.openChanges()
                   }}
                 >
                   <span aria-hidden="true">⬡</span>Commit{workspaceChanges.length > 0 && <small>{workspaceChanges.length}</small>}
@@ -675,284 +639,7 @@ export function WorkspaceView({
 
       <DeleteItemDialogView deleteDialog={collection.deleteDialog} />
 
-      <Dialog open={commitDialogOpen} onOpenChange={setCommitDialogOpen}>
-        <DialogContent className="changes-dialog">
-          <DialogHeader>
-            <DialogTitle>{commitDialogView === 'changes' ? 'Commit changes' : 'Commit history'}</DialogTitle>
-            <DialogDescription>
-              {commitDialogView === 'changes'
-                ? 'Stage the workspace changes you want in this commit. Commit locally, then push to share them with your team.'
-                : activeWorkspace?.cloudId
-                  ? 'Browse local and cloud commits. Select a commit to inspect its changed items and diff.'
-                  : 'Browse commits saved on this device. Connect this workspace to cloud to see your team’s commits.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="commit-view-tabs" role="tablist" aria-label="Workspace changes and history">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={commitDialogView === 'changes'}
-              disabled={Boolean(isReadOnly)}
-              onClick={() => setCommitDialogView('changes')}
-            >
-              Changes <span>{workspaceChanges.length}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={commitDialogView === 'history'}
-              onClick={() => {
-                setCommitDialogView('history')
-                setSelectedHistoryCommitId('')
-                setSelectedHistoryChangeId('')
-              }}
-            >
-              History <span>{historyCommits.length}</span>
-            </button>
-          </div>
-          {commitDialogView === 'changes' ? (
-            <form className="changes-layout" onSubmit={saveCommit}>
-              <div className="changes-sidebar changes-sidebar-commit">
-                <label htmlFor="commit-message">Commit message</label>
-                <Input
-                  id="commit-message"
-                  autoFocus
-                  required
-                  maxLength={200}
-                  value={commitMessage}
-                  onChange={(event) => setCommitMessage(event.target.value)}
-                  placeholder="e.g. Add billing endpoints"
-                />
-                <div className="changes-list-scroll">
-                  <section className="change-list-section">
-                    <div className="change-list-heading">
-                      <strong>Staged changes</strong>
-                      <span>{stagedChanges.length}</span>
-                      <button
-                        type="button"
-                        className="text-action"
-                        onClick={() => {
-                          setStagedSnapshot(null)
-                          setStagedVariables(null)
-                        }}
-                        disabled={!stagedChanges.length}
-                      >
-                        Unstage all
-                      </button>
-                    </div>
-                    {stagedChanges.length ? (
-                      stagedChanges.map((change) => (
-                        <ChangeRow
-                          key={`staged-${change.id}`}
-                          change={change}
-                          selected={selectedChange?.id === change.id}
-                          onSelect={() => setSelectedChangeId(change.id)}
-                          actionLabel="Unstage"
-                          onAction={() => stageChange(change, false)}
-                        />
-                      ))
-                    ) : (
-                      <p className="change-empty">Stage your changes to commit them.</p>
-                    )}
-                  </section>
-                  <section className="change-list-section">
-                    <div className="change-list-heading">
-                      <strong>Changes</strong>
-                      <span>{unstagedChanges.length}</span>
-                      <button
-                        type="button"
-                        className="text-action"
-                        onClick={() => stageChanges(unstagedChanges, true)}
-                        disabled={!unstagedChanges.length}
-                      >
-                        Stage all
-                      </button>
-                    </div>
-                    {unstagedChanges.length ? (
-                      unstagedChanges.map((change) => (
-                        <ChangeRow
-                          key={`unstaged-${change.id}`}
-                          change={change}
-                          selected={selectedChange?.id === change.id}
-                          onSelect={() => setSelectedChangeId(change.id)}
-                          actionLabel="Stage"
-                          onAction={() => stageChange(change, true)}
-                        />
-                      ))
-                    ) : (
-                      <p className="change-empty">No unstaged changes.</p>
-                    )}
-                  </section>
-                </div>
-                <div className="changes-sidebar-footer">
-                  <Button type="submit" disabled={!commitMessage.trim() || !stagedChanges.length}>
-                    Commit
-                  </Button>
-                </div>
-              </div>
-              <section className="diff-view" aria-label="Selected change diff">
-                {selectedChange ? (
-                  <>
-                    <header className="diff-file-header">
-                      <span className={`change-badge change-${selectedChange.status}`}>{changeStatusCode(selectedChange.status)}</span>
-                      <strong title={selectedChange.name}>{selectedChange.name}</strong>
-                      <span>{statusText(selectedChange.status)}</span>
-                    </header>
-                    <div className="diff-column-headings">
-                      <span>Previous</span>
-                      <span>Working tree</span>
-                    </div>
-                    {/* biome-ignore lint/a11y/useSemanticElements: the diff pane is a labelled region with a scroll container, which keeps its current layout */}
-                    <div className="diff-scroll" role="region" aria-label={`Diff for ${selectedChange.name}`}>
-                      {diffRows.map((row, index) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: diff rows have no id, and the list is rebuilt whole each time it changes
-                        <div className="diff-row" key={`${row.kind}-${row.leftLine ?? 'x'}-${row.rightLine ?? 'x'}-${index}`}>
-                          <div className={`diff-cell ${row.kind === 'removed' ? 'diff-cell-removed' : ''}`}>
-                            <span className="diff-gutter">{row.leftLine ?? ''}</span>
-                            <code>{row.leftText || ' '}</code>
-                          </div>
-                          <div className={`diff-cell ${row.kind === 'added' ? 'diff-cell-added' : ''}`}>
-                            <span className="diff-gutter">{row.rightLine ?? ''}</span>
-                            <code>{row.rightText || ' '}</code>
-                          </div>
-                        </div>
-                      ))}
-                      {diffRows.length > 0 && diffRows.every((row) => row.kind === 'same') && (
-                        <p className="diff-note">No content changes. This item moved within the workspace.</p>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="diff-empty">Select a changed item to compare it.</div>
-                )}
-              </section>
-            </form>
-          ) : (
-            <div className="changes-layout history-layout">
-              <div className="changes-sidebar history-sidebar">
-                <section className="change-list-section">
-                  <div className="change-list-heading">
-                    <strong>Commits</strong>
-                    <span>{historyCommits.length}</span>
-                  </div>
-                  {historyLoading && (
-                    <p className="change-empty" role="status">
-                      Loading cloud history…
-                    </p>
-                  )}
-                  {historyError && (
-                    <p className="history-error" role="status">
-                      Cloud history could not load: {historyError}. Local commits are still shown.
-                    </p>
-                  )}
-                  {!historyCommits.length && !historyLoading && (
-                    <p className="change-empty">No commits yet. Make a change, stage it, and commit to start the history.</p>
-                  )}
-                  {historyCommits.map((commit) => {
-                    const status =
-                      commit.source === 'cloud' ? (localCommitIds.has(commit.id) ? 'Pushed' : 'Cloud') : commit.pushed ? 'Pushed' : 'Local'
-                    return (
-                      <button
-                        key={commit.id}
-                        type="button"
-                        className={cn('history-commit-row', selectedHistoryCommit?.id === commit.id && 'history-commit-row-selected')}
-                        aria-pressed={selectedHistoryCommit?.id === commit.id}
-                        onClick={() => {
-                          setSelectedHistoryCommitId(commit.id)
-                          setSelectedHistoryChangeId('')
-                          setHistoryDetailError('')
-                        }}
-                      >
-                        <span className={`history-commit-state history-commit-${status.toLowerCase()}`}>{status}</span>
-                        <span className="history-commit-copy">
-                          <strong title={commit.message}>{commit.message}</strong>
-                          <small>{new Date(commit.createdAt).toLocaleString()}</small>
-                        </span>
-                      </button>
-                    )
-                  })}
-                </section>
-                {selectedHistoryCommit && (
-                  <section className="change-list-section" aria-busy={historyDetailLoading}>
-                    <div className="change-list-heading">
-                      <strong>Changed items</strong>
-                      <span>{historySnapshotsReady ? historyChanges.length : '…'}</span>
-                    </div>
-                    {historySnapshotsReady && historyChanges.length ? (
-                      historyChanges.map((change) => (
-                        <HistoryChangeRow
-                          key={change.id}
-                          change={change}
-                          selected={selectedHistoryChange?.id === change.id}
-                          onSelect={() => setSelectedHistoryChangeId(change.id)}
-                          statusText={statusText(change.status)}
-                        />
-                      ))
-                    ) : historySnapshotsReady ? (
-                      <p className="change-empty">This commit has no visible content changes.</p>
-                    ) : historyDetailError ? (
-                      <p className="history-error" role="status">
-                        Commit details could not load: {historyDetailError}
-                      </p>
-                    ) : (
-                      <p className="change-empty" role="status">
-                        Loading commit details…
-                      </p>
-                    )}
-                  </section>
-                )}
-              </div>
-              <section className="diff-view" aria-label="Selected commit diff">
-                {selectedHistoryCommit && selectedHistoryChange ? (
-                  <>
-                    <header className="diff-file-header">
-                      <span className={`change-badge change-${selectedHistoryChange.status}`}>
-                        {changeStatusCode(selectedHistoryChange.status)}
-                      </span>
-                      <strong title={selectedHistoryChange.name}>{selectedHistoryChange.name}</strong>
-                      <span>{statusText(selectedHistoryChange.status)}</span>
-                    </header>
-                    <div className="diff-column-headings">
-                      <span>Parent version</span>
-                      <span>{selectedHistoryCommit.message}</span>
-                    </div>
-                    {/* biome-ignore lint/a11y/useSemanticElements: the diff pane is a labelled region with a scroll container, which keeps its current layout */}
-                    <div className="diff-scroll" role="region" aria-label={`Commit diff for ${selectedHistoryChange.name}`}>
-                      {historyDiffRows.map((row, index) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: diff rows have no id, and the list is rebuilt whole each time it changes
-                        <div className="diff-row" key={`${row.kind}-${row.leftLine ?? 'x'}-${row.rightLine ?? 'x'}-${index}`}>
-                          <div className={`diff-cell ${row.kind === 'removed' ? 'diff-cell-removed' : ''}`}>
-                            <span className="diff-gutter">{row.leftLine ?? ''}</span>
-                            <code>{row.leftText || ' '}</code>
-                          </div>
-                          <div className={`diff-cell ${row.kind === 'added' ? 'diff-cell-added' : ''}`}>
-                            <span className="diff-gutter">{row.rightLine ?? ''}</span>
-                            <code>{row.rightText || ' '}</code>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="diff-empty">
-                    {selectedHistoryCommit && historyDetailError
-                      ? `Could not load commit details: ${historyDetailError}`
-                      : selectedHistoryCommit && !historySnapshotsReady
-                        ? 'Loading selected commit…'
-                        : selectedHistoryCommit
-                          ? 'Select a changed item to view its diff.'
-                          : historyLoading && !historyCommits.length
-                            ? 'Loading cloud commit history…'
-                            : historyCommits.length
-                              ? 'Select a commit to view its changed items.'
-                              : 'Commit history will appear here after your first commit.'}
-                  </div>
-                )}
-              </section>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <CommitDialogView {...commitDialog} />
 
       <Dialog
         open={!!pendingMerge}
