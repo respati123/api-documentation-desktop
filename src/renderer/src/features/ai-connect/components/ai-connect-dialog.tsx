@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppDialog } from '@/shared/components/app-dialog'
 import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 
 type Status = Awaited<ReturnType<typeof window.apiDesktop.aiStatus>>
 type ToolId = 'codex' | 'claude-cli' | 'claude-desktop'
@@ -60,97 +60,92 @@ export function AiConnectDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const nodeReady = Boolean(status?.node.installed)
 
   return (
-    <Dialog
+    <AppDialog
       open={open}
       onOpenChange={(next) => {
         if (!busy) onOpenChange(next)
       }}
+      title="Connect AI assistant"
+      description={
+        <>Let Codex, Claude Desktop, or Claude CLI read and edit your local API collections through the API Documentation MCP server.</>
+      }
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Connect AI assistant</DialogTitle>
-          <DialogDescription>
-            Let Codex, Claude Desktop, or Claude CLI read and edit your local API collections through the API Documentation MCP server.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="ai-connect-list">
-          <div className="ai-connect-row">
-            <div>
-              <strong>Node.js</strong>
-              <span>
-                {nodeReady
-                  ? `Already installed: ${status?.node.version} (${status?.node.source === 'system' ? 'this computer' : 'app folder'})`
-                  : 'Needed to run the MCP server. Installed into the app folder, no admin rights needed.'}
-              </span>
-            </div>
-            {!nodeReady && (
-              <Button size="sm" disabled={Boolean(busy)} onClick={() => void run('node', () => window.apiDesktop.installNodeRuntime())}>
-                {busy === 'node' ? (nodeProgress !== null ? `Downloading ${nodeProgress}%` : 'Installing…') : 'Install Node.js'}
-              </Button>
-            )}
+      <div className="ai-connect-list">
+        <div className="ai-connect-row">
+          <div>
+            <strong>Node.js</strong>
+            <span>
+              {nodeReady
+                ? `Already installed: ${status?.node.version} (${status?.node.source === 'system' ? 'this computer' : 'app folder'})`
+                : 'Needed to run the MCP server. Installed into the app folder, no admin rights needed.'}
+            </span>
           </div>
-
-          {(['codex', 'claude-cli', 'claude-desktop'] as ToolId[]).map((id) => {
-            const tool = status?.tools.find((item) => item.id === id)
-            const supported = tool?.supported ?? true
-            const installed = tool?.installed ?? false
-            const connected = tool?.connected ?? false
-            const needsInstall = id !== 'claude-desktop' && !installed
-            return (
-              <div className="ai-connect-row" key={id}>
-                <div>
-                  <strong>{toolLabels[id]}</strong>
-                  <span>
-                    {!supported
-                      ? 'Not available on this operating system.'
-                      : connected
-                        ? 'Connected'
-                        : installed || id === 'claude-desktop'
-                          ? 'Not connected yet'
-                          : 'Not installed'}
-                  </span>
-                </div>
-                <div className="ai-connect-actions">
-                  {supported && needsInstall && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={Boolean(busy) || !nodeReady}
-                      onClick={() => void run(id, () => window.apiDesktop.installAiTool(id as 'codex' | 'claude-cli'))}
-                    >
-                      {busy === id ? 'Installing…' : 'Install'}
-                    </Button>
-                  )}
-                  {supported && !needsInstall && (
-                    <Button
-                      size="sm"
-                      disabled={Boolean(busy) || !nodeReady}
-                      onClick={() => void run(id, () => window.apiDesktop.connectAiTool(id))}
-                    >
-                      {busy === id ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+          {!nodeReady && (
+            <Button size="sm" disabled={Boolean(busy)} onClick={() => void run('node', () => window.apiDesktop.installNodeRuntime())}>
+              {busy === 'node' ? (nodeProgress !== null ? `Downloading ${nodeProgress}%` : 'Installing…') : 'Install Node.js'}
+            </Button>
+          )}
         </div>
 
-        <p className="ai-connect-note">
-          Connecting replaces any existing "api-documentation" entry in that tool's settings. Restart Claude Desktop after connecting.
+        {(['codex', 'claude-cli', 'claude-desktop'] as ToolId[]).map((id) => {
+          const tool = status?.tools.find((item) => item.id === id)
+          const supported = tool?.supported ?? true
+          const installed = tool?.installed ?? false
+          const connected = tool?.connected ?? false
+          const needsInstall = id !== 'claude-desktop' && !installed
+          return (
+            <div className="ai-connect-row" key={id}>
+              <div>
+                <strong>{toolLabels[id]}</strong>
+                <span>
+                  {!supported
+                    ? 'Not available on this operating system.'
+                    : connected
+                      ? 'Connected'
+                      : installed || id === 'claude-desktop'
+                        ? 'Not connected yet'
+                        : 'Not installed'}
+                </span>
+              </div>
+              <div className="ai-connect-actions">
+                {supported && needsInstall && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={Boolean(busy) || !nodeReady}
+                    onClick={() => void run(id, () => window.apiDesktop.installAiTool(id as 'codex' | 'claude-cli'))}
+                  >
+                    {busy === id ? 'Installing…' : 'Install'}
+                  </Button>
+                )}
+                {supported && !needsInstall && (
+                  <Button
+                    size="sm"
+                    disabled={Boolean(busy) || !nodeReady}
+                    onClick={() => void run(id, () => window.apiDesktop.connectAiTool(id))}
+                  >
+                    {busy === id ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="ai-connect-note">
+        Connecting replaces any existing "api-documentation" entry in that tool's settings. Restart Claude Desktop after connecting.
+      </p>
+      {error && (
+        <p className="dialog-error" role="alert">
+          {error}
         </p>
-        {error && (
-          <p className="dialog-error" role="alert">
-            {error}
-          </p>
-        )}
-        {log.length > 0 && (
-          <pre className="ai-connect-log" ref={logRef} role="log" aria-label="Setup log">
-            {log.join('\n')}
-          </pre>
-        )}
-      </DialogContent>
-    </Dialog>
+      )}
+      {log.length > 0 && (
+        <pre className="ai-connect-log" ref={logRef} role="log" aria-label="Setup log">
+          {log.join('\n')}
+        </pre>
+      )}
+    </AppDialog>
   )
 }

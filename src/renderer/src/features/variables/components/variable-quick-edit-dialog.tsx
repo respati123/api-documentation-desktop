@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
+import { AppDialog } from '@/shared/components/app-dialog'
 import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import { Input } from '@/shared/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 
@@ -69,72 +69,71 @@ export function VariableQuickEditDialog({
   }
 
   return (
-    <Dialog
+    <AppDialog
       open={Boolean(target)}
       onOpenChange={(open) => {
         if (!open) onClose()
       }}
+      className="variable-quick-dialog"
+      eyebrow={<span className="variable-editor-eyebrow">Workspace variable</span>}
+      title={target?.name ?? 'Edit variable'}
+      description={
+        <>
+          Change a saved value here. The request keeps using the same <code>{`{{${target?.name ?? 'name'}}}`}</code> reference.
+        </>
+      }
     >
-      <DialogContent className="variable-quick-dialog">
-        <DialogHeader>
-          <span className="variable-editor-eyebrow">Workspace variable</span>
-          <DialogTitle>{target?.name ?? 'Edit variable'}</DialogTitle>
-          <DialogDescription>
-            Change a saved value here. The request keeps using the same <code>{`{{${target?.name ?? 'name'}}}`}</code> reference.
-          </DialogDescription>
-        </DialogHeader>
-        <form className="variable-quick-form" onSubmit={submit}>
-          <div className="variable-quick-reference">
-            <span>Reference</span>
-            <code>{target ? `{{${target.name}}}` : ''}</code>
-          </div>
-          <label className="variable-quick-label">
-            <span>Scope</span>
-            <Select value={scopeId} onValueChange={changeScope}>
-              <SelectTrigger aria-label="Variable scope">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="global">Global</SelectItem>
-                {activeEnvironment && <SelectItem value={activeEnvironment.id}>{activeEnvironment.name}</SelectItem>}
-              </SelectContent>
-            </Select>
-          </label>
-          <label className="variable-quick-label">
-            <span>Value{selectedVariable?.secret && <span className="variable-secret-badge">Secret · this device</span>}</span>
-            <Input
-              autoFocus
-              aria-label={`Value for ${target?.name ?? 'variable'}`}
-              type={selectedVariable?.secret ? 'password' : 'text'}
-              autoComplete="off"
-              value={draft}
-              readOnly={!canEdit}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={readOnly ? 'No local secret value saved' : 'Enter a value'}
-            />
-          </label>
-          {!selectedVariable && (
-            <p className="variable-create-note">
-              Saving creates this variable in {scopeId === 'global' ? 'Global' : (activeEnvironment?.name ?? 'the active environment')}.
-            </p>
-          )}
-          <div className="variable-quick-preview">
-            <span>In this field</span>
-            <code>{previewHasSecret ? 'Preview hidden because this reference uses a secret value.' : preview || 'Nothing to preview'}</code>
-          </div>
-          {readOnly && !selectedVariable?.secret && (
-            <p className="variable-create-note">This workspace is read only. Secret values can still be saved on this device.</p>
-          )}
-          <div className="variable-quick-actions">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!canEdit}>
-              Save value
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <form className="variable-quick-form" onSubmit={submit}>
+        <div className="variable-quick-reference">
+          <span>Reference</span>
+          <code>{target ? `{{${target.name}}}` : ''}</code>
+        </div>
+        <label className="variable-quick-label">
+          <span>Scope</span>
+          <Select value={scopeId} onValueChange={changeScope}>
+            <SelectTrigger aria-label="Variable scope">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="global">Global</SelectItem>
+              {activeEnvironment && <SelectItem value={activeEnvironment.id}>{activeEnvironment.name}</SelectItem>}
+            </SelectContent>
+          </Select>
+        </label>
+        <label className="variable-quick-label">
+          <span>Value{selectedVariable?.secret && <span className="variable-secret-badge">Secret · this device</span>}</span>
+          <Input
+            autoFocus
+            aria-label={`Value for ${target?.name ?? 'variable'}`}
+            type={selectedVariable?.secret ? 'password' : 'text'}
+            autoComplete="off"
+            value={draft}
+            readOnly={!canEdit}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder={readOnly ? 'No local secret value saved' : 'Enter a value'}
+          />
+        </label>
+        {!selectedVariable && (
+          <p className="variable-create-note">
+            Saving creates this variable in {scopeId === 'global' ? 'Global' : (activeEnvironment?.name ?? 'the active environment')}.
+          </p>
+        )}
+        <div className="variable-quick-preview">
+          <span>In this field</span>
+          <code>{previewHasSecret ? 'Preview hidden because this reference uses a secret value.' : preview || 'Nothing to preview'}</code>
+        </div>
+        {readOnly && !selectedVariable?.secret && (
+          <p className="variable-create-note">This workspace is read only. Secret values can still be saved on this device.</p>
+        )}
+        <div className="variable-quick-actions">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!canEdit}>
+            Save value
+          </Button>
+        </div>
+      </form>
+    </AppDialog>
   )
 }

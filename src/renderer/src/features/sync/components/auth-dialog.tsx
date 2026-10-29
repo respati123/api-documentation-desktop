@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from 'react'
+import { AppDialog } from '@/shared/components/app-dialog'
 import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 
 export const AuthDialog = memo(function AuthDialog({
   showTrigger,
@@ -53,35 +53,34 @@ export const AuthDialog = memo(function AuthDialog({
           Sign in
         </Button>
       )}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sign in</DialogTitle>
-            <DialogDescription>Sign in with your browser to sync and share workspaces.</DialogDescription>
-          </DialogHeader>
-          <div className="dialog-form">
-            {(error || initialError) && (
-              <p className="dialog-error" role="alert">
-                {error || initialError}
-              </p>
-            )}
-            {pending ? (
-              <p className="auth-pending" role="status">
-                Waiting for you to finish signing in in your browser…
-              </p>
-            ) : (
-              <Button type="button" onClick={() => void startSignIn()}>
-                Sign in with browser
-              </Button>
-            )}
-            {pending && (
-              <button className="dialog-link" type="button" onClick={() => void startSignIn()}>
-                Didn't open? Try again
-              </button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AppDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Sign in"
+        description={<>Sign in with your browser to sync and share workspaces.</>}
+      >
+        <div className="dialog-form">
+          {(error || initialError) && (
+            <p className="dialog-error" role="alert">
+              {error || initialError}
+            </p>
+          )}
+          {pending ? (
+            <p className="auth-pending" role="status">
+              Waiting for you to finish signing in in your browser…
+            </p>
+          ) : (
+            <Button type="button" onClick={() => void startSignIn()}>
+              Sign in with browser
+            </Button>
+          )}
+          {pending && (
+            <button className="dialog-link" type="button" onClick={() => void startSignIn()}>
+              Didn't open? Try again
+            </button>
+          )}
+        </div>
+      </AppDialog>
     </>
   )
 })
