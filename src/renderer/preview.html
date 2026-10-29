@@ -16,7 +16,16 @@
     listCommits: async () => [],
     onExternalWorkspaceChange: () => () => undefined,
     onInviteToken: () => () => undefined,
-    sendRequest: async () => { throw new Error('Preview only') }
+    sendRequest: async () => { throw new Error('Preview only') },
+    aiStatus: async () => ({
+      node: { installed: true, version: 'v22.1.0', source: 'app' },
+      tools: [
+        { id: 'codex', supported: true, installed: false, connected: false },
+        { id: 'claude-cli', supported: true, installed: true, connected: true },
+        { id: 'claude-desktop', supported: true, installed: true, connected: false }
+      ]
+    }),
+    onConnectAiMenu: (handler) => { window.__openConnectAi = handler; return () => undefined }
   }
   window.apiDesktop = new Proxy(window.apiDesktop, { get: (target, key) => (key in target ? target[key] : (String(key).startsWith('on') ? () => () => undefined : async () => undefined)) })
 </script><script type="module" src="/src/main.tsx"></script></body></html>

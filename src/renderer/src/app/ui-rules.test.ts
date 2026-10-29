@@ -52,7 +52,6 @@ export function findViolations(path: string): string[] {
 }
 
 const legacyViolations = new Set<string>([
-  'features/ai-connect/components/ai-connect-dialog.tsx',
   'features/docs/components/api-reference.tsx',
   'features/docs/components/openapi-dialog.tsx',
   'features/request/components/auth-editor.tsx',

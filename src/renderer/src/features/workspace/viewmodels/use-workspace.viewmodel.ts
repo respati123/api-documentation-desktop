@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
   appendToFolder,
   clampCollectionWidth,
@@ -954,8 +955,7 @@ export function useWorkspaceViewModel() {
   const clearAuthError = useCallback(() => setAuthError(''), [])
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement>(null)
-  const [aiConnectOpen, setAiConnectOpen] = useState(false)
-  useEffect(() => window.apiDesktop.onConnectAiMenu(() => setAiConnectOpen(true)), [])
+  const aiConnect = useAiConnectViewModel()
   useEffect(() => {
     if (!accountMenuOpen) return
     const onPointerDown = (event: MouseEvent) => {
@@ -2036,8 +2036,7 @@ export function useWorkspaceViewModel() {
     accountMenuOpen,
     setAccountMenuOpen,
     accountMenuRef,
-    aiConnectOpen,
-    setAiConnectOpen,
+    aiConnect,
     updateStatus,
     setUpdateStatus,
     signOut,

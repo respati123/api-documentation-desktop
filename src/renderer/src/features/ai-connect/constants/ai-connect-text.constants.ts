@@ -1,0 +1,33 @@
+export const AI_CONNECT_TEXT = {
+  dialog: {
+    title: 'dialog.title',
+    description: 'dialog.description',
+    note: 'dialog.note',
+    logLabel: 'dialog.logLabel',
+    errorFallback: 'dialog.errorFallback',
+  },
+  node: {
+    title: 'node.title',
+    installed: 'node.installed',
+    sourceSystem: 'node.sourceSystem',
+    sourceApp: 'node.sourceApp',
+    needed: 'node.needed',
+    install: 'node.install',
+    installing: 'node.installing',
+    downloading: 'node.downloading',
+  },
+  tools: {
+    codex: 'tools.codex',
+    claudeCli: 'tools.claudeCli',
+    claudeDesktop: 'tools.claudeDesktop',
+    unsupported: 'tools.unsupported',
+    connected: 'tools.connected',
+    notConnected: 'tools.notConnected',
+    notInstalled: 'tools.notInstalled',
+    install: 'tools.install',
+    installing: 'tools.installing',
+    connect: 'tools.connect',
+    connecting: 'tools.connecting',
+    reconnect: 'tools.reconnect',
+  },
+} as const

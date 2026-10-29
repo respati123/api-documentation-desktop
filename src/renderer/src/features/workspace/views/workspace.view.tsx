@@ -1,4 +1,4 @@
-import { AiConnectDialog } from '@/features/ai-connect'
+import { AiConnectView } from '@/features/ai-connect'
 import {
   CollectionFolderIcon,
   collectionWidthLimit,
@@ -177,8 +177,7 @@ export function WorkspaceView({
   accountMenuOpen,
   setAccountMenuOpen,
   accountMenuRef,
-  aiConnectOpen,
-  setAiConnectOpen,
+  aiConnect,
   updateStatus,
   setUpdateStatus,
   signOut,
@@ -454,7 +453,7 @@ export function WorkspaceView({
         </div>
       </header>
 
-      <AiConnectDialog open={aiConnectOpen} onOpenChange={setAiConnectOpen} />
+      <AiConnectView {...aiConnect} />
       <Dialog
         open={Boolean(updateStatus && updateStatus.state !== 'available')}
         onOpenChange={(open) => {
