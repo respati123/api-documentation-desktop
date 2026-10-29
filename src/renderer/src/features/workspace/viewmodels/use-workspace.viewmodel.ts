@@ -3,9 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
   addToTree,
-  clampCollectionWidth,
-  collectionWidthLimit,
-  collectionWidthStorageKey,
   containsId,
   findNode,
   findParentFolder,
@@ -15,12 +12,10 @@ import {
   insertNode,
   isFolder,
   isRequest,
-  minCollectionWidth,
   nodeDiffText,
   normalizeSharedTree,
   normalizeSharedVariables,
   normalizeTree,
-  readCollectionWidth,
   removeNode,
   renameFolder,
   updateNode,
@@ -54,6 +49,7 @@ import type { WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from 
 import { appUpdateService } from '@/features/workspace/services/app-update.service'
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
+import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
 import { type ApiUser, apiCall, apiListAll, apiWebSocketUrl, type CloudWorkspace } from '@/lib/api'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
@@ -72,11 +68,14 @@ import type { VariableSuggestion } from '@/shared/components/variable-field'
 import type { ApiNode, FolderNode, RequestNode } from '@/shared/models/api-node.model'
 
 export function useWorkspaceViewModel() {
-  const [collectionWidth, setCollectionWidth] = useState(readCollectionWidth)
-  const collectionWidthRef = useRef(collectionWidth)
-  const pendingCollectionWidthRef = useRef(collectionWidth)
-  const collectionResizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null)
-  const appShellRef = useRef<HTMLElement>(null)
+  const {
+    collectionWidth,
+    appShellRef,
+    startCollectionResize,
+    moveCollectionResize,
+    finishCollectionResize,
+    handleCollectionResizeKeyDown,
+  } = useCollectionWidthViewModel()
   const [tree, setTree] = useState<ApiNode[]>(initialTree)
   const [workspaceVariables, setWorkspaceVariables] = useState<WorkspaceVariables>(emptyWorkspaceVariables())
   const [activeEnvironmentId, setActiveEnvironmentId] = useState<string | null>(null)
@@ -139,60 +138,6 @@ export function useWorkspaceViewModel() {
   const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
   const treeIndex = useMemo(() => indexTree(tree), [tree])
-  function commitCollectionWidth(width: number) {
-    const nextWidth = clampCollectionWidth(width)
-    collectionWidthRef.current = nextWidth
-    pendingCollectionWidthRef.current = nextWidth
-    appShellRef.current?.style.setProperty('--sidebar-width', `${nextWidth}px`)
-    setCollectionWidth(nextWidth)
-    try {
-      localStorage.setItem(collectionWidthStorageKey, String(nextWidth))
-    } catch {
-      /* The panel still resizes for this session. */
-    }
-  }
-  function startCollectionResize(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) return
-    event.preventDefault()
-    collectionResizeRef.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: collectionWidthRef.current }
-    pendingCollectionWidthRef.current = collectionWidthRef.current
-    event.currentTarget.setPointerCapture(event.pointerId)
-    document.body.classList.add('is-resizing-collection')
-  }
-  function moveCollectionResize(event: React.PointerEvent<HTMLDivElement>) {
-    const resize = collectionResizeRef.current
-    if (!resize || resize.pointerId !== event.pointerId) return
-    const nextWidth = clampCollectionWidth(resize.startWidth + event.clientX - resize.startX)
-    pendingCollectionWidthRef.current = nextWidth
-    appShellRef.current?.style.setProperty('--sidebar-width', `${nextWidth}px`)
-  }
-  function finishCollectionResize(event: React.PointerEvent<HTMLDivElement>) {
-    if (collectionResizeRef.current?.pointerId !== event.pointerId) return
-    collectionResizeRef.current = null
-    document.body.classList.remove('is-resizing-collection')
-    commitCollectionWidth(pendingCollectionWidthRef.current)
-  }
-  function handleCollectionResizeKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    const increment = event.shiftKey ? 48 : 16
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Home' || event.key === 'End') {
-      event.preventDefault()
-      const nextWidth =
-        event.key === 'Home'
-          ? minCollectionWidth
-          : event.key === 'End'
-            ? collectionWidthLimit()
-            : collectionWidthRef.current + (event.key === 'ArrowRight' ? increment : -increment)
-      commitCollectionWidth(nextWidth)
-    }
-  }
-  const constrainCollectionWidth = useEffectEvent(() => {
-    const nextWidth = clampCollectionWidth(collectionWidthRef.current)
-    if (nextWidth !== collectionWidthRef.current) commitCollectionWidth(nextWidth)
-  })
-  useEffect(() => {
-    window.addEventListener('resize', constrainCollectionWidth)
-    return () => window.removeEventListener('resize', constrainCollectionWidth)
-  }, [])
   const restoreTabsEvent = useEffectEvent(restoreTabs)
   useEffect(() => {
     let active = true
