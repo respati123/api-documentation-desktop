@@ -45,15 +45,16 @@ import {
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type { WorkspaceHistoryCommit, WorkspaceTab, WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
+import type { WorkspaceHistoryCommit, WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
 import { sessionService } from '@/features/workspace/services/session.service'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
+import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
 import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
 import { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
 import { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
-import { type ApiUser, apiCall, apiListAll, apiWebSocketUrl, type CloudWorkspace } from '@/lib/api'
+import { type ApiUser, apiCall, apiListAll, type CloudWorkspace } from '@/lib/api'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
@@ -393,98 +394,12 @@ export function useWorkspaceViewModel() {
       : undefined
   const activeWorkspace = localWorkspaces.find((item) => item.id === currentWorkspaceId)
   const isReadOnly = activeWorkspace?.role === 'viewer'
-  useEffect(() => {
-    if (!sessionToken || !cloudWorkspaces.length) return
-    let active = true
-    const refreshCloudHeads = async () => {
-      try {
-        const workspaces = await apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken })
-        if (active) setCloudWorkspaces(workspaces)
-      } catch {
-        // Keep the last known cloud status when the network is temporarily unavailable.
-      }
-    }
-    void refreshCloudHeads()
-    const timer = window.setInterval(() => void refreshCloudHeads(), 30_000)
-    return () => {
-      active = false
-      window.clearInterval(timer)
-    }
-  }, [sessionToken, cloudWorkspaces.length])
-  useEffect(() => {
-    if (!sessionToken) return
-    let active = true
-    let socket: WebSocket | undefined
-    let reconnectTimer: number | undefined
-    let reconnectAttempt = 0
-
-    const scheduleReconnect = () => {
-      if (!active || reconnectTimer !== undefined) return
-      const delay = Math.min(30_000, 1_000 * 2 ** Math.min(reconnectAttempt, 5))
-      reconnectAttempt += 1
-      reconnectTimer = window.setTimeout(() => {
-        reconnectTimer = undefined
-        void connect()
-      }, delay)
-    }
-
-    const connect = async () => {
-      try {
-        const { ticket } = await apiCall<{ ticket: string }>('/api/sync/events-ticket', { token: sessionToken, method: 'POST' })
-        if (!active) return
-        const endpoint = new URL(apiWebSocketUrl('/api/sync/events'))
-        endpoint.searchParams.set('ticket', ticket)
-        const connection = new WebSocket(endpoint.toString())
-        socket = connection
-        connection.addEventListener(
-          'open',
-          () => {
-            reconnectAttempt = 0
-            void refreshCloudHeads()
-          },
-          { once: true },
-        )
-        connection.addEventListener('message', (messageEvent) => {
-          try {
-            const update = JSON.parse(String(messageEvent.data)) as WorkspaceUpdateEvent
-            if (update.type !== 'workspace.updated' || typeof update.workspaceId !== 'string' || typeof update.headCommitId !== 'string')
-              return
-            setCloudWorkspaces((current) =>
-              current.map((workspace) =>
-                workspace.id === update.workspaceId ? { ...workspace, headCommitId: update.headCommitId } : workspace,
-              ),
-            )
-            const count = update.commitCount === 1 ? '1 commit' : `${update.commitCount} commits`
-            const actor = typeof update.actorEmail === 'string' ? update.actorEmail : 'A teammate'
-            const message = typeof update.message === 'string' ? `: “${update.message}”` : ''
-            setSyncStatus(`${actor} pushed ${count}${message}. Pull to get updates.`)
-          } catch {
-            // Ignore malformed messages and keep the sync connection available.
-          }
-        })
-        connection.addEventListener('close', scheduleReconnect, { once: true })
-        connection.addEventListener('error', () => connection.close(), { once: true })
-      } catch {
-        scheduleReconnect()
-      }
-    }
-
-    const refreshCloudHeads = async () => {
-      try {
-        const workspaces = await apiListAll<CloudWorkspace>('/api/workspaces', 'workspaces', { token: sessionToken })
-        if (active) setCloudWorkspaces(workspaces)
-      } catch {
-        // The existing polling fallback will retry when the current workspace is cloud-backed.
-      }
-    }
-
-    void connect()
-    return () => {
-      active = false
-      if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer)
-      socket?.close(1000, 'Session ended')
-    }
-  }, [sessionToken])
+  useCloudRealtimeViewModel({
+    sessionToken,
+    cloudWorkspaceCount: cloudWorkspaces.length,
+    setCloudWorkspaces,
+    onStatus: setSyncStatus,
+  })
   const cloudHistoryOpen = commitDialogOpen && commitDialogView === 'history'
   const {
     commits: cloudCommits,
