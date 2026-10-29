@@ -1,34 +1,33 @@
 import { Cloud } from 'lucide-react'
-import { AiConnectDialog } from '@/components/ai-connect-dialog'
-import { ApiReferencePage } from '@/components/api-reference'
-import { AuthDialog } from '@/components/auth-dialog'
-import { AuthEditor } from '@/components/auth-editor'
-import { BodyEditor } from '@/components/body-editor'
-import { HeaderEditor } from '@/components/header-editor'
-import { OpenApiDialog } from '@/components/openapi-dialog'
-import { ParamsEditor } from '@/components/params-editor'
-import { ResponseEditor } from '@/components/response-editor'
-import { ResponseInspector } from '@/components/response-inspector'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
-import { VariableQuickEditDialog } from '@/components/variable-quick-edit-dialog'
-import { VariableRows } from '@/components/variable-rows'
-import { VariablesDialog } from '@/components/variables-dialog'
-import { ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/components/workspace-change-rows'
-import { CollectionFolderIcon, WorkspaceStorageIcon } from '@/components/workspace-icons'
+import { AiConnectDialog } from '@/features/ai-connect'
+import {
+  CollectionFolderIcon,
+  collectionWidthLimit,
+  findParentFolder,
+  firstRequestId,
+  isFolder,
+  isRequest,
+  minCollectionWidth,
+  WorkspaceStorageIcon,
+} from '@/features/collection'
+import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
+import { AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, ResponseEditor } from '@/features/request'
+import { ResponseInspector } from '@/features/response'
+import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
+import { VariableQuickEditDialog, VariableRows, VariablesDialog } from '@/features/variables'
+import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
+import { Folder, type TreeNode, type WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
-import { collectionWidthLimit, minCollectionWidth } from '@/lib/collection-width'
-import { findParentFolder, firstRequestId, isFolder, isRequest } from '@/lib/tree'
 import { cn } from '@/lib/utils'
-import { workspaceTabKey } from '@/lib/workspace-tabs'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
-import { Folder, type TreeNode, type WorkspaceTab } from '@/models/workspace.model'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
 import { StateMessage } from '@/shared/components/state-message'
+import { Button } from '@/shared/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
+import { Input } from '@/shared/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
+import { Textarea } from '@/shared/components/ui/textarea'
 import { VariableUrlField } from '@/shared/components/variable-field'
 
 export type WorkspaceViewProps = ReturnType<typeof useWorkspaceViewModel>

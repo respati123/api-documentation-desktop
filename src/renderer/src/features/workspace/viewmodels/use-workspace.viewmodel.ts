@@ -1,6 +1,46 @@
 import { Cloud } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Select } from '@/components/ui/select'
+import {
+  appendToFolder,
+  clampCollectionWidth,
+  collectionWidthLimit,
+  collectionWidthStorageKey,
+  containsId,
+  findNode,
+  findParentFolder,
+  firstRequestId,
+  indexTree,
+  initialTree,
+  insertNode,
+  isFolder,
+  isRequest,
+  minCollectionWidth,
+  nodeDiffText,
+  normalizeSharedTree,
+  normalizeSharedVariables,
+  normalizeTree,
+  readCollectionWidth,
+  removeNode,
+  renameFolder,
+  requestHeaderCount,
+  updateNode,
+} from '@/features/collection'
+import { buildCurlCommand, replaceUrlParams, syncUrlParams, toApiRequest } from '@/features/request'
+import { downloadResponse } from '@/features/response'
+import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
+import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
+import type {
+  CollectionContextMenu,
+  DeleteConfirmTarget,
+  Folder,
+  PendingMerge,
+  ResponseState,
+  SavedRequest,
+  TreeNode,
+  WorkspaceHistoryCommit,
+  WorkspaceTab,
+  WorkspaceUpdateEvent,
+} from '@/features/workspace/models/workspace.model'
 import {
   ApiError,
   type ApiUser,
@@ -11,40 +51,9 @@ import {
   type CloudCommitDetail,
   type CloudWorkspace,
 } from '@/lib/api'
-import { toApiRequest } from '@/lib/api-request'
-import {
-  clampCollectionWidth,
-  collectionWidthLimit,
-  collectionWidthStorageKey,
-  minCollectionWidth,
-  readCollectionWidth,
-} from '@/lib/collection-width'
-import { buildCurlCommand } from '@/lib/curl'
 import { mergeTreeSnapshots, type SyncTreeNode, stripLocalFilePaths } from '@/lib/merge'
-import { downloadResponse } from '@/lib/response-export'
-import { initialTree } from '@/lib/sample-tree'
-import { readStagedSnapshot, readStagedVariables, readTree } from '@/lib/storage'
 import { diffText } from '@/lib/text-diff'
-import {
-  appendToFolder,
-  containsId,
-  findNode,
-  findParentFolder,
-  firstRequestId,
-  indexTree,
-  insertNode,
-  isFolder,
-  isRequest,
-  nodeDiffText,
-  removeNode,
-  renameFolder,
-  requestHeaderCount,
-  updateNode,
-} from '@/lib/tree'
-import { normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/lib/tree-normalize'
-import { replaceUrlParams, syncUrlParams } from '@/lib/url-params'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
-import { readWorkspaceTabs, workspaceTabKey } from '@/lib/workspace-tabs'
 import {
   activeVariableValues,
   emptyWorkspaceVariables,
@@ -58,18 +67,7 @@ import {
   workspaceVariablesChangeId,
   workspaceVariablesDiffText,
 } from '@/lib/workspace-variables'
-import type {
-  CollectionContextMenu,
-  DeleteConfirmTarget,
-  Folder,
-  PendingMerge,
-  ResponseState,
-  SavedRequest,
-  TreeNode,
-  WorkspaceHistoryCommit,
-  WorkspaceTab,
-  WorkspaceUpdateEvent,
-} from '@/models/workspace.model'
+import { Select } from '@/shared/components/ui/select'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
 
 export function useWorkspaceViewModel() {
