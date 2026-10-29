@@ -1,0 +1,5 @@
+{
+  "language": { "label": "Language", "en": "English", "id": "Bahasa Indonesia" },
+  "actions": { "cancel": "Cancel", "save": "Save", "close": "Close", "retry": "Try again", "remove": "Remove" },
+  "errors": { "title": "Something went wrong", "description": "The app hit an unexpected problem. Try again." }
+}

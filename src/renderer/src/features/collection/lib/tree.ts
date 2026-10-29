@@ -81,6 +81,7 @@ export function findNode(nodes: TreeNode[], id: string): TreeNode | undefined {
       if (nested) return nested
     }
   }
+  return undefined
 }
 
 export function findParentFolder(nodes: TreeNode[], id: string, parentId = ''): string {

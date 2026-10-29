@@ -15,7 +15,8 @@
     "dist": "bun run build && electron-builder",
     "dist:linux": "bun run build && electron-builder --linux",
     "dist:mac": "bun run build && electron-builder --mac",
-    "dist:win": "bun run build && electron-builder --win"
+    "dist:win": "bun run build && electron-builder --win",
+    "i18n-check": "bun run scripts/i18n-check.ts"
   },
   "build": {
     "appId": "dev.apidocs.desktop",
