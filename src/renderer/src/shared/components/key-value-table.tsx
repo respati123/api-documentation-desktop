@@ -16,6 +16,7 @@ export function KeyValueTable<T extends { id: string }>({
   classNames,
   renderCells,
   removeLabel,
+  removeTestId,
   onRemove,
   empty,
 }: {
@@ -27,6 +28,7 @@ export function KeyValueTable<T extends { id: string }>({
   classNames: { table: string; heading: string; entry?: string; row: string; remove: string }
   renderCells: (row: T, index: number) => ReactNode
   removeLabel: (row: T, index: number) => string
+  removeTestId: (row: T) => string
   onRemove: (row: T) => void
   empty?: ReactNode
 }) {
@@ -58,6 +60,7 @@ export function KeyValueTable<T extends { id: string }>({
               size="sm"
               className={classNames.remove}
               aria-label={removeLabel(row, index)}
+              data-testid={removeTestId(row)}
               disabled={readOnly}
               onClick={() => onRemove(row)}
             >

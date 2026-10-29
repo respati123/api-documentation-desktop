@@ -1,7 +1,11 @@
+import { Trans, useTranslation } from 'react-i18next'
+import { VARIABLES_TEST_IDS } from '@/features/variables/constants/variables-test-ids.constants'
+import { VARIABLES_TEXT } from '@/features/variables/constants/variables-text.constants'
 import type { useVariableQuickEditViewModel } from '@/features/variables/viewmodels/use-variable-quick-edit.viewmodel'
 import { AppDialog } from '@/shared/components/app-dialog'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 
 export type VariableQuickEditViewProps = ReturnType<typeof useVariableQuickEditViewModel>
@@ -15,7 +19,7 @@ export function VariableQuickEditView({
   scopeLabel,
   environment,
   draft,
-  valueLabel,
+  valueAriaLabel,
   valueIsSecret,
   valuePlaceholder,
   valueReadOnly,
@@ -29,41 +33,58 @@ export function VariableQuickEditView({
   onScopeChange,
   onSubmit,
 }: VariableQuickEditViewProps) {
+  const { t } = useTranslation('variables')
+
   return (
     <AppDialog
       open={open}
       onOpenChange={onOpenChange}
       className="variable-quick-dialog"
-      eyebrow={<span className="variable-editor-eyebrow">Workspace variable</span>}
+      testId={VARIABLES_TEST_IDS.quickEdit}
+      eyebrow={<span className="variable-editor-eyebrow">{t(VARIABLES_TEXT.quickEdit.eyebrow)}</span>}
       title={dialogTitle}
       description={
-        <>
-          Change a saved value here. The request keeps using the same <code>{`{{${referenceName}}}`}</code> reference.
-        </>
+        <Trans
+          t={t}
+          i18nKey={VARIABLES_TEXT.quickEdit.description}
+          ns="variables"
+          values={{ reference: referenceName }}
+          components={{ code: <code /> }}
+        />
       }
     >
       <form className="variable-quick-form" onSubmit={onSubmit}>
         <div className="variable-quick-reference">
-          <span>Reference</span>
+          <span>{t(VARIABLES_TEXT.quickEdit.referenceLabel)}</span>
           <code>{referenceText}</code>
         </div>
-        <label className="variable-quick-label">
-          <span>Scope</span>
+        <div className="variable-quick-label">
+          <Label htmlFor="variable-quick-scope">{t(VARIABLES_TEXT.quickEdit.scopeLabel)}</Label>
           <Select value={scopeId} onValueChange={onScopeChange}>
-            <SelectTrigger aria-label="Variable scope">
+            <SelectTrigger
+              id="variable-quick-scope"
+              data-testid={VARIABLES_TEST_IDS.quickScope}
+              aria-label={t(VARIABLES_TEXT.quickEdit.scopeAria)}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="global">Global</SelectItem>
+              <SelectItem value="global">{t(VARIABLES_TEXT.quickEdit.scopeGlobal)}</SelectItem>
               {environment && <SelectItem value={environment.id}>{environment.name}</SelectItem>}
             </SelectContent>
           </Select>
-        </label>
-        <label className="variable-quick-label">
-          <span>Value{valueIsSecret && <span className="variable-secret-badge">Secret · this device</span>}</span>
+        </div>
+        <div className="variable-quick-label">
+          <Label htmlFor="variable-quick-value">
+            {t(VARIABLES_TEXT.quickEdit.valueLabel)}
+            {valueIsSecret && <span className="variable-secret-badge">{t(VARIABLES_TEXT.quickEdit.secretBadge)}</span>}
+          </Label>
           <Input
+            id="variable-quick-value"
+            data-testid={VARIABLES_TEST_IDS.quickValue}
+            // biome-ignore lint/a11y/noAutofocus: the dialog exists to edit this one value, so focus starts here
             autoFocus
-            aria-label={`Value for ${valueLabel}`}
+            aria-label={valueAriaLabel}
             type={valueIsSecret ? 'password' : 'text'}
             autoComplete="off"
             value={draft}
@@ -71,21 +92,19 @@ export function VariableQuickEditView({
             onChange={(event) => onDraftChange(event.target.value)}
             placeholder={valuePlaceholder}
           />
-        </label>
-        {!hasSelectedVariable && <p className="variable-create-note">Saving creates this variable in {scopeLabel}.</p>}
+        </div>
+        {!hasSelectedVariable && <p className="variable-create-note">{t(VARIABLES_TEXT.quickEdit.createNote, { scope: scopeLabel })}</p>}
         <div className="variable-quick-preview">
-          <span>In this field</span>
+          <span>{t(VARIABLES_TEXT.quickEdit.previewLabel)}</span>
           <code>{previewText}</code>
         </div>
-        {showReadOnlyNote && (
-          <p className="variable-create-note">This workspace is read only. Secret values can still be saved on this device.</p>
-        )}
+        {showReadOnlyNote && <p className="variable-create-note">{t(VARIABLES_TEXT.quickEdit.readOnlyNote)}</p>}
         <div className="variable-quick-actions">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+          <Button type="button" variant="outline" data-testid={VARIABLES_TEST_IDS.quickCancel} onClick={onClose}>
+            {t(VARIABLES_TEXT.quickEdit.cancel)}
           </Button>
-          <Button type="submit" disabled={!canSave}>
-            Save value
+          <Button type="submit" data-testid={VARIABLES_TEST_IDS.quickSave} disabled={!canSave}>
+            {t(VARIABLES_TEXT.quickEdit.save)}
           </Button>
         </div>
       </form>

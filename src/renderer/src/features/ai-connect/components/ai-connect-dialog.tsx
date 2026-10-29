@@ -61,6 +61,7 @@ export function AiConnectDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
   return (
     <AppDialog
+      testId="ai-connect-dialog-container"
       open={open}
       onOpenChange={(next) => {
         if (!busy) onOpenChange(next)

@@ -11,8 +11,10 @@ function flatten(value: unknown, prefix = ''): string[] {
   return Object.entries(value).flatMap(([key, child]) => flatten(child, prefix ? `${prefix}.${key}` : key))
 }
 
+// i18next plural forms (key_one, key_other) differ by language, so compare them by their base name.
 function readKeys(language: string, file: string): string[] {
-  return flatten(JSON.parse(readFileSync(join(localesDir, language, file), 'utf8'))).sort()
+  const keys = flatten(JSON.parse(readFileSync(join(localesDir, language, file), 'utf8')))
+  return [...new Set(keys.map((key) => key.replace(/_(zero|one|two|few|many|other)$/, '')))].sort()
 }
 
 const problems: string[] = []

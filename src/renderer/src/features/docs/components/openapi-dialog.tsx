@@ -75,6 +75,7 @@ export function OpenApiDialog({
 
   return (
     <AppDialog
+      testId="docs-openapi-dialog-container"
       open={open}
       onOpenChange={onOpenChange}
       className="openapi-dialog"

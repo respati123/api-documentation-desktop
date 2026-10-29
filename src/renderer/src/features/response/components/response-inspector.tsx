@@ -1,10 +1,10 @@
 import { memo, useMemo } from 'react'
 import { cookieParts, responseCookies } from '@/features/response/lib/response-export'
 import type { ResponseState } from '@/features/workspace'
-import { cn } from '@/shared/utils/cn'
 import { StateMessage } from '@/shared/components/state-message'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
+import { cn } from '@/shared/utils/cn'
 
 export const ResponseInspector = memo(function ResponseInspector({
   response,

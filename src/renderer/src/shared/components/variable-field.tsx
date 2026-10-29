@@ -14,9 +14,9 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { cn } from '@/shared/utils/cn'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
+import { cn } from '@/shared/utils/cn'
 
 export type VariableSuggestion = { name: string; scope: string; value?: string; secret?: boolean }
 

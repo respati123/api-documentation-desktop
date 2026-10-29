@@ -54,6 +54,7 @@ export const AuthDialog = memo(function AuthDialog({
         </Button>
       )}
       <AppDialog
+        testId="sync-auth-dialog-container"
         open={open}
         onOpenChange={setOpen}
         title="Sign in"

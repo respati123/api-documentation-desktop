@@ -26,7 +26,7 @@ import {
 } from '@/features/collection'
 import { buildCurlCommand, replaceUrlParams, syncUrlParams, toApiRequest } from '@/features/request'
 import { downloadResponse } from '@/features/response'
-import { useVariableQuickEditViewModel } from '@/features/variables'
+import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type {
@@ -897,6 +897,24 @@ export function useWorkspaceViewModel() {
     executeRequest,
   })
 
+  const variablesDialog = useVariablesDialogViewModel({
+    open: variablesDialogOpen,
+    onOpenChange: setVariablesDialogOpen,
+    variables: workspaceVariables,
+    activeEnvironmentId,
+    readOnly: Boolean(isReadOnly),
+    secureStorageAvailable,
+    onVariablesChange: updateWorkspaceVariables,
+    onActiveEnvironmentChange: (id) => (id ? openEnvironmentTab(id) : updateActiveEnvironment(null)),
+  })
+  const environmentTab = useEnvironmentTabViewModel({
+    environment: activeEnvironmentTab ?? null,
+    isActive: activeEnvironmentTab?.id === activeEnvironmentId,
+    readOnly: Boolean(isReadOnly),
+    secureStorageAvailable,
+    onUpdate: updateEnvironmentTab,
+    onActivate: updateActiveEnvironment,
+  })
   const variableQuickEdit = useVariableQuickEditViewModel({
     target: quickEditTarget,
     variables: workspaceVariables,
@@ -1880,6 +1898,8 @@ export function useWorkspaceViewModel() {
     quickEditTarget,
     setQuickEditTarget,
     variableQuickEdit,
+    variablesDialog,
+    environmentTab,
     secureStorageAvailable,
     localWorkspaces,
     currentWorkspaceId,

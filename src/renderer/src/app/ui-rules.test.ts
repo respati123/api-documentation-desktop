@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest'
 const root = join(__dirname, '..')
 const rawElements = new Set(['button', 'input', 'select', 'textarea', 'label', 'table', 'hr', 'a'])
 const textAttributes = new Set(['aria-label', 'title', 'placeholder', 'alt', 'label'])
-const interactiveComponents = new Set(['Button', 'Input', 'Textarea', 'Select', 'SelectTrigger', 'TabsTrigger'])
+const interactiveComponents = new Set(['Button', 'Input', 'Textarea', 'SelectTrigger', 'TabsTrigger'])
 const hookNames = new Set(['useState', 'useEffect', 'useLayoutEffect', 'useReducer', 'useRef', 'useMemo', 'useCallback'])
 
 function sourceFiles(dir: string): string[] {
@@ -63,11 +63,7 @@ const legacyViolations = new Set<string>([
   'features/response/components/response-inspector.tsx',
   'features/sync/components/auth-dialog.tsx',
   'features/sync/components/workspace-change-rows.tsx',
-  'features/variables/components/variable-rows.tsx',
-  'features/variables/components/variables-dialog.tsx',
-  'features/variables/views/variable-quick-edit.view.tsx',
   'features/workspace/views/workspace.view.tsx',
-  'shared/components/key-value-table.tsx',
   'shared/components/labeled-field.tsx',
   'shared/components/variable-field.tsx',
 ])

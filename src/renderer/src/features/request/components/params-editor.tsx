@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import type { SavedRequest } from '@/features/workspace'
 import type { ParamField } from '@/lib/merge'
-import { cn } from '@/shared/utils/cn'
 import { DebouncedInput } from '@/shared/components/debounced-field'
 import { KeyValueTable } from '@/shared/components/key-value-table'
 import { Button } from '@/shared/components/ui/button'
 import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
+import { cn } from '@/shared/utils/cn'
 
 export function ParamsEditor({
   request,
@@ -97,6 +97,7 @@ export function ParamsEditor({
             )}
           </>
         )}
+        removeTestId={(param) => `request-params-remove-button-${param.id}`}
         removeLabel={(_param, index) => `Delete parameter ${index + 1}`}
         onRemove={(param) => onChange({ params: params.filter((item) => item.id !== param.id) })}
       />

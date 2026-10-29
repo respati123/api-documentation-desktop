@@ -1,5 +1,5 @@
-import { cn } from '@/shared/utils/cn'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
+import { cn } from '@/shared/utils/cn'
 
 export function ChangeRow({
   change,

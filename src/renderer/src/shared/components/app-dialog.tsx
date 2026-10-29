@@ -9,6 +9,7 @@ export function AppDialog({
   title,
   description,
   className,
+  testId,
   children,
 }: {
   open: boolean
@@ -17,11 +18,12 @@ export function AppDialog({
   title: ReactNode
   description?: ReactNode
   className?: string
+  testId: string
   children: ReactNode
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={className}>
+      <DialogContent className={className} data-testid={testId}>
         <DialogHeader>
           {eyebrow}
           <DialogTitle>{title}</DialogTitle>

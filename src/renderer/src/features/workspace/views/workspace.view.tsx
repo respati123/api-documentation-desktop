@@ -13,11 +13,10 @@ import { ApiReferencePage, OpenApiDialog } from '@/features/docs'
 import { AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, ResponseEditor } from '@/features/request'
 import { ResponseInspector } from '@/features/response'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
-import { VariableQuickEditView, VariableRows, VariablesDialog } from '@/features/variables'
+import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { TreeNode, WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
-import { cn } from '@/shared/utils/cn'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
 import { StateMessage } from '@/shared/components/state-message'
@@ -28,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { VariableUrlField } from '@/shared/components/variable-field'
+import { cn } from '@/shared/utils/cn'
 
 export type WorkspaceViewProps = ReturnType<typeof useWorkspaceViewModel>
 
@@ -38,12 +38,12 @@ export function WorkspaceView({
   setTree,
   workspaceVariables,
   activeEnvironmentId,
-  variablesDialogOpen,
   setVariablesDialogOpen,
   openApiDialogOpen,
   setOpenApiDialogOpen,
   variableQuickEdit,
-  secureStorageAvailable,
+  variablesDialog,
+  environmentTab,
   localWorkspaces,
   currentWorkspaceId,
   selectedRequestId,
@@ -149,7 +149,6 @@ export function WorkspaceView({
   activeFolder,
   activeWorkspaceTab,
   activeDocsRequest,
-  activeEnvironmentTab,
   requestTabIndicators,
   activeWorkspace,
   isReadOnly,
@@ -187,7 +186,6 @@ export function WorkspaceView({
   createCloudWorkspace,
   createInvite,
   acceptInvite,
-  updateWorkspaceVariables,
   updateActiveEnvironment,
   openRequestTab,
   openDocsTab,
@@ -195,7 +193,6 @@ export function WorkspaceView({
   openEnvironmentTab,
   selectWorkspaceTab,
   closeWorkspaceTab,
-  updateEnvironmentTab,
   openVariableEditor,
   stageChanges,
   stageChange,
@@ -506,16 +503,7 @@ export function WorkspaceView({
           )}
         </DialogContent>
       </Dialog>
-      <VariablesDialog
-        open={variablesDialogOpen}
-        onOpenChange={setVariablesDialogOpen}
-        variables={workspaceVariables}
-        activeEnvironmentId={activeEnvironmentId}
-        readOnly={Boolean(isReadOnly)}
-        secureStorageAvailable={secureStorageAvailable}
-        onVariablesChange={updateWorkspaceVariables}
-        onActiveEnvironmentChange={(id) => (id ? openEnvironmentTab(id) : updateActiveEnvironment(null))}
-      />
+      <VariablesDialogView {...variablesDialog} />
       <VariableQuickEditView {...variableQuickEdit} />
       <OpenApiDialog
         open={openApiDialogOpen}
@@ -930,49 +918,7 @@ export function WorkspaceView({
           </div>
         </div>
         {activeWorkspaceTab?.kind === 'environment' ? (
-          activeEnvironmentTab ? (
-            <section className="request-card environment-tab-panel" aria-label={`${activeEnvironmentTab.name} environment`}>
-              <div className="environment-tab-heading">
-                <div>
-                  <p className="section-kicker">Environment / Variables</p>
-                  <Input
-                    aria-label="Environment name"
-                    maxLength={100}
-                    value={activeEnvironmentTab.name}
-                    readOnly={isReadOnly}
-                    onChange={(event) => updateEnvironmentTab(activeEnvironmentTab.id, { name: event.target.value })}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant={activeEnvironmentId === activeEnvironmentTab.id ? 'default' : 'outline'}
-                  size="sm"
-                  disabled={isReadOnly || activeEnvironmentId === activeEnvironmentTab.id}
-                  onClick={() => updateActiveEnvironment(activeEnvironmentTab.id)}
-                >
-                  {activeEnvironmentId === activeEnvironmentTab.id ? 'Active for requests' : 'Use for requests'}
-                </Button>
-              </div>
-              <p className="variable-policy">
-                Values here override matching Global variables when this environment is active. Secret values stay on this device and out of
-                cloud sync.
-              </p>
-              {!secureStorageAvailable && (
-                <p className="variable-storage-warning" role="status">
-                  Secure storage is unavailable. Secret values will last only until the app closes.
-                </p>
-              )}
-              <VariableRows
-                rows={activeEnvironmentTab.variables}
-                readOnly={Boolean(isReadOnly)}
-                onChange={(rows) => updateEnvironmentTab(activeEnvironmentTab.id, { variables: rows })}
-              />
-            </section>
-          ) : (
-            <section className="request-card workspace-full-panel">
-              <StateMessage title="Environment unavailable" description="It may have been removed from this workspace." />
-            </section>
-          )
+          <EnvironmentTabView {...environmentTab} />
         ) : activeWorkspaceTab?.kind === 'docs' ? (
           activeDocsRequest && isRequest(activeDocsRequest) ? (
             <ApiReferencePage
