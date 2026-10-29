@@ -1,4 +1,4 @@
-import type { SyncRequest } from '@/lib/merge'
+import type { RequestNode } from '@/shared/models/api-node.model'
 
 export type WorkspaceVariable = {
   id: string
@@ -78,7 +78,7 @@ export function activeVariableValues(value: WorkspaceVariables, environmentId: s
   return values
 }
 
-export function resolveRequestVariables<T extends SyncRequest>(request: T, values: Record<string, string>): T {
+export function resolveRequestVariables<T extends RequestNode>(request: T, values: Record<string, string>): T {
   const replace = (value: string) =>
     value.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, rawName: string) => {
       const name = rawName.trim()

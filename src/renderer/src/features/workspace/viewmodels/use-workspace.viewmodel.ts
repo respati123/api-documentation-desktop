@@ -33,10 +33,7 @@ import { readWorkspaceTabs, workspaceTabKey } from '@/features/workspace/lib/wor
 import type {
   CollectionContextMenu,
   DeleteConfirmTarget,
-  Folder,
   PendingMerge,
-  SavedRequest,
-  TreeNode,
   WorkspaceHistoryCommit,
   WorkspaceTab,
   WorkspaceUpdateEvent,
@@ -52,7 +49,7 @@ import {
   type CloudCommitDetail,
   type CloudWorkspace,
 } from '@/lib/api'
-import { mergeTreeSnapshots, type SyncTreeNode, stripLocalFilePaths } from '@/lib/merge'
+import { mergeTreeSnapshots, stripLocalFilePaths } from '@/lib/merge'
 import { diffText } from '@/lib/text-diff'
 import { buildStagedSnapshot, getWorkspaceChanges, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
@@ -69,6 +66,7 @@ import {
   workspaceVariablesDiffText,
 } from '@/lib/workspace-variables'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
+import type { ApiNode, FolderNode, RequestNode } from '@/shared/models/api-node.model'
 
 export function useWorkspaceViewModel() {
   const [collectionWidth, setCollectionWidth] = useState(readCollectionWidth)
@@ -76,7 +74,7 @@ export function useWorkspaceViewModel() {
   const pendingCollectionWidthRef = useRef(collectionWidth)
   const collectionResizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null)
   const appShellRef = useRef<HTMLElement>(null)
-  const [tree, setTree] = useState<TreeNode[]>(initialTree)
+  const [tree, setTree] = useState<ApiNode[]>(initialTree)
   const [workspaceVariables, setWorkspaceVariables] = useState<WorkspaceVariables>(emptyWorkspaceVariables())
   const [activeEnvironmentId, setActiveEnvironmentId] = useState<string | null>(null)
   const [variablesDialogOpen, setVariablesDialogOpen] = useState(false)
@@ -154,7 +152,7 @@ export function useWorkspaceViewModel() {
   const [historyDetailLoading, setHistoryDetailLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
   const [historyDetailError, setHistoryDetailError] = useState('')
-  const [stagedSnapshot, setStagedSnapshot] = useState<TreeNode[] | null>(null)
+  const [stagedSnapshot, setStagedSnapshot] = useState<ApiNode[] | null>(null)
   const [stagedVariables, setStagedVariables] = useState<WorkspaceVariables | null>(null)
   const stagedWorkspaceIdRef = useRef('')
   const [syncStatus, setSyncStatus] = useState('')
@@ -328,7 +326,7 @@ export function useWorkspaceViewModel() {
           if (existing) {
             records.push({ ...existing, name: cloud.name, role: cloud.role })
           } else {
-            const result = await apiCall<{ workspace: CloudWorkspace & { tree: TreeNode[]; variables?: WorkspaceVariables } }>(
+            const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
               `/api/workspaces/${cloud.id}/sync/pull`,
               { token: sessionToken },
             )
@@ -454,7 +452,7 @@ export function useWorkspaceViewModel() {
   }, [stagedVariables, currentWorkspaceId])
 
   const activeRequest = treeIndex.nodeById.get(selectedRequestId)
-  const activeRequestRef = useRef<SavedRequest | undefined>(undefined)
+  const activeRequestRef = useRef<RequestNode | undefined>(undefined)
   useLayoutEffect(() => {
     activeRequestRef.current = activeRequest && isRequest(activeRequest) ? activeRequest : undefined
   }, [activeRequest])
@@ -603,7 +601,7 @@ export function useWorkspaceViewModel() {
     }
   }, [commitDialogOpen, commitDialogView, sessionToken, activeWorkspace?.cloudId])
   const lastLocalCommit = localCommits.find((commit) => commit.id === activeWorkspace?.localHeadId)
-  const committedTree = (lastLocalCommit?.tree ?? activeWorkspace?.baseTree ?? tree) as TreeNode[]
+  const committedTree = (lastLocalCommit?.tree ?? activeWorkspace?.baseTree ?? tree) as ApiNode[]
   const committedVariablesSource = lastLocalCommit?.variables ?? activeWorkspace?.baseVariables ?? activeWorkspace?.variables
   const committedVariables = useMemo(() => normalizeWorkspaceVariables(committedVariablesSource), [committedVariablesSource])
   const stageBaseTree = stagedSnapshot ?? committedTree
@@ -687,7 +685,7 @@ export function useWorkspaceViewModel() {
   const historyBeforeTree = useMemo(() => {
     if (Array.isArray(historyParentTreeValue)) return normalizeTree(historyParentTreeValue)
     return selectedHistoryCommit && (selectedHistoryCommit.source === 'local' || selectedHistoryCommit.parentIds.length > 0)
-      ? ((activeWorkspace?.baseTree as TreeNode[]) ?? [])
+      ? ((activeWorkspace?.baseTree as ApiNode[]) ?? [])
       : []
   }, [historyParentTreeValue, selectedHistoryCommit, activeWorkspace?.baseTree])
   const historyBeforeVariables = useMemo(
@@ -836,7 +834,7 @@ export function useWorkspaceViewModel() {
     window.addEventListener('keydown', handleSendShortcut)
     return () => window.removeEventListener('keydown', handleSendShortcut)
   }, [])
-  function updateActiveRequest(patch: Partial<SavedRequest>) {
+  function updateActiveRequest(patch: Partial<RequestNode>) {
     const request =
       activeRequestRef.current?.id === selectedRequestId ? activeRequestRef.current : treeIndex.nodeById.get(selectedRequestId)
     if (!request || !isRequest(request)) return
@@ -853,7 +851,7 @@ export function useWorkspaceViewModel() {
     })
   }
 
-  async function executeRequest(download = false, requestOverride?: SavedRequest) {
+  async function executeRequest(download = false, requestOverride?: RequestNode) {
     const request =
       requestOverride ??
       (activeRequestRef.current?.id === selectedRequestId
@@ -1023,14 +1021,11 @@ export function useWorkspaceViewModel() {
     setSyncStatus('Creating cloud workspace…')
     try {
       const sharedVariables = shareableWorkspaceVariables(workspaceVariables)
-      const result = await apiCall<{ workspace: CloudWorkspace & { tree: TreeNode[]; variables?: WorkspaceVariables } }>(
-        '/api/workspaces',
-        {
-          token: sessionToken,
-          method: 'POST',
-          body: { name: cloudWorkspaceName.trim(), tree: stripLocalFilePaths(tree), variables: sharedVariables },
-        },
-      )
+      const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>('/api/workspaces', {
+        token: sessionToken,
+        method: 'POST',
+        body: { name: cloudWorkspaceName.trim(), tree: stripLocalFilePaths(tree), variables: sharedVariables },
+      })
       const createdTree = normalizeSharedTree(result.workspace.tree)
       const baseVariables = normalizeSharedVariables(result.workspace.variables ?? sharedVariables)
       const createdVariables = preserveLocalSecretValues(baseVariables, workspaceVariables)
@@ -1058,7 +1053,7 @@ export function useWorkspaceViewModel() {
       setCurrentWorkspaceId(workspace.id)
       setWorkspaceVariables(createdVariables)
       setActiveEnvironmentId(activeEnvironmentId)
-      resetTabs(workspace.tree as TreeNode[])
+      resetTabs(workspace.tree as ApiNode[])
       setSyncStatus('Cloud workspace created.')
     } catch (error) {
       setSyncStatus(error instanceof Error ? error.message : 'Could not create cloud workspace.')
@@ -1105,7 +1100,7 @@ export function useWorkspaceViewModel() {
     setInviteError('')
     setInviteNotice('')
     try {
-      const result = await apiCall<{ workspace: CloudWorkspace & { tree: TreeNode[]; variables?: WorkspaceVariables } }>(
+      const result = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
         '/api/invites/accept',
         { token: sessionToken, method: 'POST', body: { token } },
       )
@@ -1132,10 +1127,10 @@ export function useWorkspaceViewModel() {
       setStagedSnapshot(null)
       setStagedVariables(null)
       setCurrentWorkspaceId(workspace.id)
-      setTree(workspace.tree as TreeNode[])
+      setTree(workspace.tree as ApiNode[])
       setWorkspaceVariables(invitedVariables)
       setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
-      resetTabs(workspace.tree as TreeNode[])
+      resetTabs(workspace.tree as ApiNode[])
       setInviteLink('')
       setInviteNotice('Invite accepted. Workspace added.')
     } catch (error) {
@@ -1241,7 +1236,7 @@ export function useWorkspaceViewModel() {
     })
   }
 
-  function restoreTabs(workspaceId: string, nextTree: TreeNode[], variables: WorkspaceVariables) {
+  function restoreTabs(workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) {
     const restored = readWorkspaceTabs(workspaceId, nextTree, variables)
     setWorkspaceTabs(restored.tabs)
     setActiveWorkspaceTabKey(restored.activeKey)
@@ -1257,7 +1252,7 @@ export function useWorkspaceViewModel() {
     }
   }
 
-  function resetTabs(nextTree: TreeNode[]) {
+  function resetTabs(nextTree: ApiNode[]) {
     const requestId = firstRequestId(nextTree)
     const tabs: WorkspaceTab[] = requestId ? [{ kind: 'request', id: requestId }] : []
     setWorkspaceTabs(tabs)
@@ -1321,7 +1316,7 @@ export function useWorkspaceViewModel() {
       setSyncStatus('Stage at least one change before committing.')
       return
     }
-    const stagedTree = stagedSnapshot ?? (previousTree as TreeNode[])
+    const stagedTree = stagedSnapshot ?? (previousTree as ApiNode[])
     const stagedVariableSnapshot = stagedVariables ?? committedVariables
     if (
       JSON.stringify(previousTree) === JSON.stringify(stagedTree) &&
@@ -1371,7 +1366,7 @@ export function useWorkspaceViewModel() {
     try {
       const result = await apiCall<{
         workspace: CloudWorkspace & {
-          tree: TreeNode[]
+          tree: ApiNode[]
           variables?: WorkspaceVariables
           parentIds: string[]
           message: string
@@ -1423,7 +1418,7 @@ export function useWorkspaceViewModel() {
       }
 
       const baseVariables = normalizeSharedVariables(activeWorkspace.baseVariables)
-      const merged = mergeTreeSnapshots(activeWorkspace.baseTree as TreeNode[], tree, remoteTree, {})
+      const merged = mergeTreeSnapshots(activeWorkspace.baseTree as ApiNode[], tree, remoteTree, {})
       const variableMerge = mergeWorkspaceVariables(baseVariables, workspaceVariables, remoteVariables)
       if (merged.unresolved.length || variableMerge.conflict) {
         setMergeChoices({})
@@ -1431,7 +1426,7 @@ export function useWorkspaceViewModel() {
           remoteHeadId: result.workspace.headCommitId,
           remoteTree: remoteTree,
           localTree: tree,
-          baseTree: activeWorkspace.baseTree as TreeNode[],
+          baseTree: activeWorkspace.baseTree as ApiNode[],
           localHeadId: activeWorkspace.localHeadId ?? activeWorkspace.baseCommitId ?? '',
           conflicts: merged.conflicts,
           remoteVariables,
@@ -1499,14 +1494,14 @@ export function useWorkspaceViewModel() {
         const baseVariables = shareableWorkspaceVariables(
           normalizeWorkspaceVariables(activeWorkspace.baseVariables ?? activeWorkspace.variables),
         )
-        const created = await apiCall<{ workspace: CloudWorkspace & { tree: TreeNode[]; variables?: WorkspaceVariables } }>(
+        const created = await apiCall<{ workspace: CloudWorkspace & { tree: ApiNode[]; variables?: WorkspaceVariables } }>(
           '/api/workspaces',
           {
             token: sessionToken,
             method: 'POST',
             body: {
               name: activeWorkspace.name,
-              tree: stripLocalFilePaths(activeWorkspace.baseTree as TreeNode[]),
+              tree: stripLocalFilePaths(activeWorkspace.baseTree as ApiNode[]),
               variables: baseVariables,
             },
           },
@@ -1540,7 +1535,7 @@ export function useWorkspaceViewModel() {
 
       const sharedCommits = pending.map((commit) => ({
         ...commit,
-        tree: stripLocalFilePaths(commit.tree as SyncTreeNode[]),
+        tree: stripLocalFilePaths(commit.tree as ApiNode[]),
         variables: shareableWorkspaceVariables(normalizeWorkspaceVariables(commit.variables)),
       }))
       const result = await apiCall<{ headCommitId: string }>(`/api/workspaces/${targetCloudId}/sync/push`, {
@@ -1629,7 +1624,7 @@ export function useWorkspaceViewModel() {
     if (isReadOnly) return
     const name = newFolderName.trim()
     if (!name) return
-    const folder: Folder = { id: crypto.randomUUID(), kind: 'folder', name, children: [] }
+    const folder: FolderNode = { id: crypto.randomUUID(), kind: 'folder', name, children: [] }
     setTree((current) => {
       const parent = findNode(current, newFolderParentId)
       if (!parent || !isFolder(parent)) return [...current, folder]
@@ -1649,7 +1644,7 @@ export function useWorkspaceViewModel() {
 
   function createRequest(folderId = selectedFolderId) {
     if (isReadOnly) return
-    const request: SavedRequest = {
+    const request: RequestNode = {
       id: crypto.randomUUID(),
       kind: 'request',
       name: 'Untitled request',
@@ -1772,7 +1767,7 @@ export function useWorkspaceViewModel() {
     }
 
     const removedIds = new Set<string>()
-    const collectIds = (node: TreeNode) => {
+    const collectIds = (node: ApiNode) => {
       removedIds.add(node.id)
       if (isFolder(node)) node.children.forEach(collectIds)
     }

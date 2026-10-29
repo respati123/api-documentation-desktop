@@ -1,11 +1,11 @@
 import { bodyContentType } from '@/features/request/components/body-editor'
-import type { SavedRequest } from '@/features/workspace'
+import type { RequestNode } from '@/shared/models/api-node.model'
 
 export function shellQuote(value: string): string {
   return `'${value.replace(/'/g, "'\\''")}'`
 }
 
-export function buildCurlCommand(request: SavedRequest): string {
+export function buildCurlCommand(request: RequestNode): string {
   const mode = request.bodyMode ?? (request.body.trim() ? 'json' : 'none')
   const auth = request.auth ?? { type: 'none' as const }
   const headers = new Map<string, { name: string; value: string }>()

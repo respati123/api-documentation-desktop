@@ -1,6 +1,7 @@
 import { firstRequestId } from '@/features/collection'
-import type { TreeNode, WorkspaceTab } from '@/features/workspace/models/workspace.model'
+import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
+import type { ApiNode } from '@/shared/models/api-node.model'
 
 export function workspaceTabKey(tab: WorkspaceTab): string {
   return `${tab.kind}:${tab.id}`
@@ -8,11 +9,11 @@ export function workspaceTabKey(tab: WorkspaceTab): string {
 
 export function readWorkspaceTabs(
   workspaceId: string,
-  tree: TreeNode[],
+  tree: ApiNode[],
   variables: WorkspaceVariables,
 ): { tabs: WorkspaceTab[]; activeKey: string } {
   const requestIds = new Set<string>()
-  const collectRequests = (nodes: TreeNode[]) => {
+  const collectRequests = (nodes: ApiNode[]) => {
     for (const node of nodes) {
       if (node.kind === 'request') requestIds.add(node.id)
       else collectRequests(node.children)

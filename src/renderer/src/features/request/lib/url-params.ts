@@ -1,4 +1,4 @@
-import type { ParamField } from '@/lib/merge'
+import type { ParamField } from '@/shared/models/api-node.model'
 
 export function splitUrlParams(url: string): { url: string; params: ParamField[] } {
   const hashIndex = url.indexOf('#')

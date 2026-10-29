@@ -1,18 +1,19 @@
 import { hasUrlQuery, mergeUrlParamRows, replaceUrlParams, splitUrlParams } from '@/features/request'
-import type { SavedRequest, TreeNode } from '@/features/workspace'
+import { stripLocalFilePaths } from '@/lib/merge'
+import { normalizeWorkspaceVariables, shareableWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
 import {
+  type ApiNode,
   type BodyField,
   type HeaderField,
   isBodyMode,
   type ParamField,
   type RequestAuth,
+  type RequestNode,
   type ResponseContent,
   type ResponseDefinition,
-  stripLocalFilePaths,
-} from '@/lib/merge'
-import { normalizeWorkspaceVariables, shareableWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
+} from '@/shared/models/api-node.model'
 
-export function migrateNode(value: unknown): TreeNode | null {
+export function migrateNode(value: unknown): ApiNode | null {
   if (!value || typeof value !== 'object') return null
   const item = value as Record<string, unknown>
   if (item.kind === 'request' && typeof item.id === 'string') {
@@ -48,14 +49,14 @@ export function migrateNode(value: unknown): TreeNode | null {
       ...(item.openApiSchemas && typeof item.openApiSchemas === 'object' && !Array.isArray(item.openApiSchemas)
         ? { openApiSchemas: item.openApiSchemas as Record<string, unknown> }
         : {}),
-    } as unknown as SavedRequest
+    } as unknown as RequestNode
   }
   if (item.kind === 'folder' && typeof item.id === 'string' && Array.isArray(item.children)) {
     return {
       id: item.id,
       kind: 'folder',
       name: String(item.name || 'Untitled folder'),
-      children: item.children.map(migrateNode).filter((node): node is TreeNode => node !== null),
+      children: item.children.map(migrateNode).filter((node): node is ApiNode => node !== null),
     }
   }
   // Keep collections and requests created by the previous version.
@@ -79,17 +80,17 @@ export function migrateNode(value: unknown): TreeNode | null {
           auth: { type: 'none' as const },
         }
       })
-      .filter((node) => node !== null) as unknown as SavedRequest[]
+      .filter((node) => node !== null) as unknown as RequestNode[]
     return { id: item.id, kind: 'folder', name: String(item.name || 'Untitled folder'), children }
   }
   return null
 }
 
-export function normalizeTree(value: unknown): TreeNode[] {
-  return Array.isArray(value) ? value.map(migrateNode).filter((node): node is TreeNode => node !== null) : []
+export function normalizeTree(value: unknown): ApiNode[] {
+  return Array.isArray(value) ? value.map(migrateNode).filter((node): node is ApiNode => node !== null) : []
 }
 
-export function normalizeSharedTree(value: unknown): TreeNode[] {
+export function normalizeSharedTree(value: unknown): ApiNode[] {
   return stripLocalFilePaths(normalizeTree(value))
 }
 

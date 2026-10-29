@@ -1,11 +1,6 @@
-import type { SyncConflict, SyncTreeNode } from '@/lib/merge'
+import type { SyncConflict } from '@/lib/merge'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
-
-export type SavedRequest = Extract<SyncTreeNode, { kind: 'request' }>
-
-export type Folder = Extract<SyncTreeNode, { kind: 'folder' }>
-
-export type TreeNode = SyncTreeNode
+import type { ApiNode } from '@/shared/models/api-node.model'
 
 export type WorkspaceTab = { kind: 'request'; id: string } | { kind: 'docs'; id: string } | { kind: 'environment'; id: string }
 
@@ -35,9 +30,9 @@ export type DeleteConfirmTarget = { id: string; kind: 'folder' | 'request'; name
 
 export type PendingMerge = {
   remoteHeadId: string
-  remoteTree: TreeNode[]
-  localTree: TreeNode[]
-  baseTree: TreeNode[]
+  remoteTree: ApiNode[]
+  localTree: ApiNode[]
+  baseTree: ApiNode[]
   localHeadId: string
   conflicts: SyncConflict[]
   remoteVariables: WorkspaceVariables

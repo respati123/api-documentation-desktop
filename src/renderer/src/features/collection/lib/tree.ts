@@ -1,15 +1,15 @@
-import type { Folder, SavedRequest, TreeNode } from '@/features/workspace'
-import { type RequestAuth, stripLocalFilePaths } from '@/lib/merge'
+import { stripLocalFilePaths } from '@/lib/merge'
+import type { ApiNode, FolderNode, RequestAuth, RequestNode } from '@/shared/models/api-node.model'
 
-export function isRequest(node: TreeNode): node is SavedRequest {
+export function isRequest(node: ApiNode): node is RequestNode {
   return node.kind === 'request'
 }
 
-export function isFolder(node: TreeNode): node is Folder {
+export function isFolder(node: ApiNode): node is FolderNode {
   return node.kind === 'folder'
 }
 
-export function requestHeaderCount(request: SavedRequest): number {
+export function requestHeaderCount(request: RequestNode): number {
   const names = new Set(
     (request.headers ?? []).filter((header) => header.enabled && header.name.trim()).map((header) => header.name.trim().toLowerCase()),
   )
@@ -23,9 +23,9 @@ export function requestHeaderCount(request: SavedRequest): number {
   return names.size
 }
 
-export function redactDiffNode(node: TreeNode): TreeNode {
+export function redactDiffNode(node: ApiNode): ApiNode {
   if (isFolder(node)) return { ...node, children: node.children.map(redactDiffNode) }
-  const shared = stripLocalFilePaths([node])[0] as SavedRequest
+  const shared = stripLocalFilePaths([node])[0] as RequestNode
   const headers = shared.headers?.map((header) => ({
     ...header,
     value:
@@ -44,7 +44,7 @@ export function redactDiffNode(node: TreeNode): TreeNode {
   return { ...shared, headers, auth }
 }
 
-export function nodeDiffText(node: TreeNode | undefined): string {
+export function nodeDiffText(node: ApiNode | undefined): string {
   if (!node) return ''
   const safe = redactDiffNode(node)
   if (isFolder(safe)) return JSON.stringify(safe, null, 2)
@@ -73,7 +73,7 @@ export function nodeDiffText(node: TreeNode | undefined): string {
   )
 }
 
-export function findNode(nodes: TreeNode[], id: string): TreeNode | undefined {
+export function findNode(nodes: ApiNode[], id: string): ApiNode | undefined {
   for (const node of nodes) {
     if (node.id === id) return node
     if (isFolder(node)) {
@@ -84,7 +84,7 @@ export function findNode(nodes: TreeNode[], id: string): TreeNode | undefined {
   return undefined
 }
 
-export function findParentFolder(nodes: TreeNode[], id: string, parentId = ''): string {
+export function findParentFolder(nodes: ApiNode[], id: string, parentId = ''): string {
   for (const node of nodes) {
     if (node.id === id) return parentId
     if (isFolder(node)) {
@@ -95,11 +95,11 @@ export function findParentFolder(nodes: TreeNode[], id: string, parentId = ''): 
   return ''
 }
 
-export function indexTree(nodes: TreeNode[]) {
-  const nodeById = new Map<string, TreeNode>()
+export function indexTree(nodes: ApiNode[]) {
+  const nodeById = new Map<string, ApiNode>()
   const parentFolderById = new Map<string, string>()
   const requestCountByFolderId = new Map<string, number>()
-  const visit = (items: TreeNode[], parentId = ''): number => {
+  const visit = (items: ApiNode[], parentId = ''): number => {
     let requestCount = 0
     for (const node of items) {
       nodeById.set(node.id, node)
@@ -116,7 +116,7 @@ export function indexTree(nodes: TreeNode[]) {
   return { nodeById, parentFolderById, requestCountByFolderId }
 }
 
-export function updateNode(nodes: TreeNode[], id: string, patch: Partial<SavedRequest>): TreeNode[] {
+export function updateNode(nodes: ApiNode[], id: string, patch: Partial<RequestNode>): ApiNode[] {
   let changed = false
   const updated = nodes.map((node) => {
     if (node.id === id && isRequest(node)) {
@@ -132,15 +132,15 @@ export function updateNode(nodes: TreeNode[], id: string, patch: Partial<SavedRe
   return changed ? updated : nodes
 }
 
-export function renameFolder(nodes: TreeNode[], id: string, name: string): TreeNode[] {
+export function renameFolder(nodes: ApiNode[], id: string, name: string): ApiNode[] {
   return nodes.map((node) =>
     isFolder(node) ? (node.id === id ? { ...node, name } : { ...node, children: renameFolder(node.children, id, name) }) : node,
   )
 }
 
-export function removeNode(nodes: TreeNode[], id: string): { nodes: TreeNode[]; removed?: TreeNode } {
-  const kept: TreeNode[] = []
-  let removed: TreeNode | undefined
+export function removeNode(nodes: ApiNode[], id: string): { nodes: ApiNode[]; removed?: ApiNode } {
+  const kept: ApiNode[] = []
+  let removed: ApiNode | undefined
   for (const node of nodes) {
     if (node.id === id) removed = node
     else if (isFolder(node)) {
@@ -152,11 +152,11 @@ export function removeNode(nodes: TreeNode[], id: string): { nodes: TreeNode[]; 
   return { nodes: kept, removed }
 }
 
-export function containsId(node: TreeNode, id: string): boolean {
+export function containsId(node: ApiNode, id: string): boolean {
   return node.id === id || (isFolder(node) && node.children.some((child) => containsId(child, id)))
 }
 
-export function insertNode(nodes: TreeNode[], item: TreeNode, targetId: string | null): TreeNode[] {
+export function insertNode(nodes: ApiNode[], item: ApiNode, targetId: string | null): ApiNode[] {
   if (!targetId) return [...nodes, item]
   const target = findNode(nodes, targetId)
   if (!target) return [...nodes, item]
@@ -176,12 +176,12 @@ export function insertNode(nodes: TreeNode[], item: TreeNode, targetId: string |
   })
 }
 
-export function appendToFolder(folder: Folder, targetId: string, item: TreeNode): Folder {
+export function appendToFolder(folder: FolderNode, targetId: string, item: ApiNode): FolderNode {
   if (folder.id === targetId) return { ...folder, children: [...folder.children, item] }
   return { ...folder, children: folder.children.map((child) => (isFolder(child) ? appendToFolder(child, targetId, item) : child)) }
 }
 
-export function firstRequestId(nodes: TreeNode[]): string {
+export function firstRequestId(nodes: ApiNode[]): string {
   for (const node of nodes) {
     if (isRequest(node)) return node.id
     const nested = firstRequestId(node.children)

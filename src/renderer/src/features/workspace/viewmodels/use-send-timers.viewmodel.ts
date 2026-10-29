@@ -1,15 +1,15 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { isRequest } from '@/features/collection'
-import type { SavedRequest, TreeNode } from '@/features/workspace/models/workspace.model'
+import type { ApiNode, RequestNode } from '@/shared/models/api-node.model'
 
-type ExecuteRequest = (download?: boolean, requestOverride?: SavedRequest) => Promise<void>
+type ExecuteRequest = (download?: boolean, requestOverride?: RequestNode) => Promise<void>
 
 // Owns the send-later and repeat timers. Each timer stops on unmount.
 export function useSendTimersViewModel({
   readRequest,
   executeRequest,
 }: {
-  readRequest: () => TreeNode | undefined
+  readRequest: () => ApiNode | undefined
   executeRequest: ExecuteRequest
 }) {
   const [sendDelayDialogOpen, setSendDelayDialogOpen] = useState(false)

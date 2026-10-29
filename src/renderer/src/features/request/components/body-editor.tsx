@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import type { SavedRequest } from '@/features/workspace'
-import { type BodyField, type BodyMode, bodyModes } from '@/lib/merge'
 import { LabeledField } from '@/shared/components/labeled-field'
 import { Button } from '@/shared/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { VariableInput, type VariableSuggestion, VariableTextarea } from '@/shared/components/variable-field'
+import { type BodyField, type BodyMode, bodyModes, type RequestNode } from '@/shared/models/api-node.model'
 import { cn } from '@/shared/utils/cn'
 
 export const bodyModeLabels: Record<BodyMode, string> = {
@@ -28,11 +27,11 @@ export function BodyEditor({
   onVariableClick,
   onChange,
 }: {
-  request: SavedRequest
+  request: RequestNode
   readOnly: boolean
   suggestions: VariableSuggestion[]
   onVariableClick: (name: string, sourceValue: string) => void
-  onChange: (patch: Partial<SavedRequest>) => void
+  onChange: (patch: Partial<RequestNode>) => void
 }) {
   const [fileError, setFileError] = useState('')
   const mode = request.bodyMode ?? (request.body.trim() ? 'json' : 'none')

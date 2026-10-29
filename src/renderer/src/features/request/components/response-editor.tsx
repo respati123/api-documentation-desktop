@@ -1,7 +1,7 @@
-import type { ResponseContent, ResponseDefinition } from '@/lib/merge'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
 import { SectionHeading } from '@/shared/components/section-heading'
 import { Button } from '@/shared/components/ui/button'
+import type { ResponseContent, ResponseDefinition } from '@/shared/models/api-node.model'
 
 function newContent(): ResponseContent {
   return { id: crypto.randomUUID(), mediaType: 'application/json', schema: '', example: '' }

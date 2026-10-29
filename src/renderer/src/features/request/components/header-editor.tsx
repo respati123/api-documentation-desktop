@@ -1,16 +1,15 @@
 import { memo, useState } from 'react'
-import type { SavedRequest } from '@/features/workspace'
-import type { HeaderField } from '@/lib/merge'
 import { DebouncedInput } from '@/shared/components/debounced-field'
 import { Button } from '@/shared/components/ui/button'
 import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
+import type { HeaderField, RequestNode } from '@/shared/models/api-node.model'
 
 export type HeaderEditorProps = {
-  request: SavedRequest
+  request: RequestNode
   readOnly: boolean
   suggestions: VariableSuggestion[]
   onVariableClick: (name: string, sourceValue: string) => void
-  onChange: (patch: Partial<SavedRequest>) => void
+  onChange: (patch: Partial<RequestNode>) => void
 }
 
 export function HeaderEditorView({ request, readOnly, suggestions, onVariableClick, onChange }: HeaderEditorProps) {

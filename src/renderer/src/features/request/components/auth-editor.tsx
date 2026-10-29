@@ -1,8 +1,7 @@
-import type { SavedRequest } from '@/features/workspace'
-import type { RequestAuth } from '@/lib/merge'
 import { LabeledField } from '@/shared/components/labeled-field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
+import type { RequestAuth, RequestNode } from '@/shared/models/api-node.model'
 
 export function AuthEditor({
   request,
@@ -11,11 +10,11 @@ export function AuthEditor({
   onVariableClick,
   onChange,
 }: {
-  request: SavedRequest
+  request: RequestNode
   readOnly: boolean
   suggestions: VariableSuggestion[]
   onVariableClick: (name: string, sourceValue: string) => void
-  onChange: (patch: Partial<SavedRequest>) => void
+  onChange: (patch: Partial<RequestNode>) => void
 }) {
   const auth = request.auth ?? { type: 'none' as const }
   const setAuthType = (type: string) => {

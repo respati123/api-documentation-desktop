@@ -1,6 +1,6 @@
-import type { TreeNode } from '@/features/workspace'
+import type { ApiNode } from '@/shared/models/api-node.model'
 
-export const initialTree: TreeNode[] = [
+export const initialTree: ApiNode[] = [
   {
     id: 'example-api',
     kind: 'folder',

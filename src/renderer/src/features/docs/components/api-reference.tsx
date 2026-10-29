@@ -1,5 +1,5 @@
-import type { BodyMode, SyncRequest } from '@/lib/merge'
 import { Button } from '@/shared/components/ui/button'
+import type { BodyMode, RequestNode } from '@/shared/models/api-node.model'
 
 const bodyModeNames: Record<BodyMode, string> = {
   'form-data': 'Form Data',
@@ -19,7 +19,7 @@ function sensitiveName(value: string): boolean {
   return /authorization|cookie|token|secret|password|api[-_]?key/i.test(value)
 }
 
-function bodyMode(request: SyncRequest): BodyMode {
+function bodyMode(request: RequestNode): BodyMode {
   return request.bodyMode ?? (request.body.trim() ? 'json' : 'none')
 }
 
@@ -57,7 +57,7 @@ function schemaForDisplay(source: string, components: Record<string, unknown> | 
   return JSON.stringify(expand(parsed, new Set()), null, 2) ?? source
 }
 
-function RequestPayload({ request }: { request: SyncRequest }) {
+function RequestPayload({ request }: { request: RequestNode }) {
   const mode = bodyMode(request)
   const fields = (request.bodyFields ?? []).filter((field) => field.enabled && field.name.trim())
   if (mode === 'none') return <p className="docs-muted">This request has no body.</p>
@@ -102,7 +102,7 @@ export function ApiReferencePage({
   onOpenRequest,
   onOpenOpenApi,
 }: {
-  request: SyncRequest
+  request: RequestNode
   folderName: string
   onOpenRequest: () => void
   onOpenOpenApi: () => void

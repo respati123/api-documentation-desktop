@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import type { SavedRequest } from '@/features/workspace'
-import type { ParamField } from '@/lib/merge'
 import { DebouncedInput } from '@/shared/components/debounced-field'
 import { KeyValueTable } from '@/shared/components/key-value-table'
 import { Button } from '@/shared/components/ui/button'
 import { VariableInput, type VariableSuggestion } from '@/shared/components/variable-field'
+import type { ParamField, RequestNode } from '@/shared/models/api-node.model'
 import { cn } from '@/shared/utils/cn'
 
 export function ParamsEditor({
@@ -14,11 +13,11 @@ export function ParamsEditor({
   onVariableClick,
   onChange,
 }: {
-  request: SavedRequest
+  request: RequestNode
   readOnly: boolean
   suggestions: VariableSuggestion[]
   onVariableClick: (name: string, sourceValue: string) => void
-  onChange: (patch: Partial<SavedRequest>) => void
+  onChange: (patch: Partial<RequestNode>) => void
 }) {
   const params = request.params ?? []
   const [showDescriptions, setShowDescriptions] = useState(false)

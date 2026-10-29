@@ -15,7 +15,7 @@ import { ResponseView } from '@/features/response'
 import { AuthDialog, ChangeRow, changeStatusCode, changeStatusText, HistoryChangeRow } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type { TreeNode, WorkspaceTab } from '@/features/workspace/models/workspace.model'
+import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
 import { workspaceVariablesChangeId } from '@/lib/workspace-variables'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { VariableUrlField } from '@/shared/components/variable-field'
+import type { ApiNode } from '@/shared/models/api-node.model'
 import { cn } from '@/shared/utils/cn'
 
 export type WorkspaceViewProps = ReturnType<typeof useWorkspaceViewModel>
@@ -220,7 +221,7 @@ export function WorkspaceView({
   stopRepeating,
   startRepeating,
 }: WorkspaceViewProps) {
-  function renderTree(nodes: TreeNode[], depth = 0): React.ReactNode {
+  function renderTree(nodes: ApiNode[], depth = 0): React.ReactNode {
     return nodes.map((node) =>
       isFolder(node) ? (
         <div key={node.id} className="tree-node" style={{ '--tree-depth': depth } as React.CSSProperties}>
@@ -521,7 +522,7 @@ export function WorkspaceView({
             setResponse({ kind: 'empty' })
           }
           const folders = new Set<string>()
-          const collectFolders = (nodes: TreeNode[]) =>
+          const collectFolders = (nodes: ApiNode[]) =>
             nodes.forEach((node) => {
               if (node.kind === 'folder') {
                 folders.add(node.id)

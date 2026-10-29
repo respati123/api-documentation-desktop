@@ -1,6 +1,6 @@
-import type { SavedRequest } from '@/features/workspace'
+import type { RequestNode } from '@/shared/models/api-node.model'
 
-export function toApiRequest(request: SavedRequest): ApiRequest {
+export function toApiRequest(request: RequestNode): ApiRequest {
   return {
     method: request.method,
     url: request.url,

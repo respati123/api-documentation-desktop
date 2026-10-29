@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { TreeNode } from '@/features/workspace'
 import { importOpenApi, serializeOpenApi } from '@/lib/openapi'
 import { AppDialog } from '@/shared/components/app-dialog'
 import { Button } from '@/shared/components/ui/button'
+import type { ApiNode } from '@/shared/models/api-node.model'
 
 export function OpenApiDialog({
   open,
@@ -14,13 +14,13 @@ export function OpenApiDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  tree: TreeNode[]
+  tree: ApiNode[]
   workspaceName: string
   readOnly: boolean
-  onImport: (tree: TreeNode[]) => void
+  onImport: (tree: ApiNode[]) => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [preview, setPreview] = useState<{ tree: TreeNode[]; title: string; fileName: string; requestCount: number } | null>(null)
+  const [preview, setPreview] = useState<{ tree: ApiNode[]; title: string; fileName: string; requestCount: number } | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
