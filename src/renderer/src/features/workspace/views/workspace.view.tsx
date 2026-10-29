@@ -20,6 +20,8 @@ import {
   CreateWorkspaceDialogView,
   DiscardDialogView,
   MergeDialogView,
+  SyncFooterView,
+  SyncToastView,
   TeamDialogView,
 } from '@/features/sync'
 import { EnvironmentTabView, VariableQuickEditView, VariablesDialogView } from '@/features/variables'
@@ -58,13 +60,10 @@ export function WorkspaceView({
   currentWorkspaceId,
   workspaceTabs,
   activeWorkspaceTabKey,
-  sessionToken,
   user,
   authOpenRequest,
   authError,
-  syncMenuOpen,
-  setSyncMenuOpen,
-  setDiscardConfirmOpen,
+  syncFooter,
   syncStatus,
   treeIndex,
   startCollectionResize,
@@ -76,13 +75,7 @@ export function WorkspaceView({
   activeDocsRequest,
   activeWorkspace,
   isReadOnly,
-  workspaceChanges,
-  pendingPushCount,
-  cloudHeadCommitId,
-  cloudUpdateAvailable,
-  pushDisabledReason,
   changeById,
-  historyCommits,
   beginBrowserSignIn,
   clearAuthError,
   accountMenuOpen,
@@ -100,8 +93,6 @@ export function WorkspaceView({
   openEnvironmentTab,
   selectWorkspaceTab,
   closeWorkspaceTab,
-  pullWorkspace,
-  pushWorkspace,
 }: WorkspaceViewProps) {
   return (
     <main ref={appShellRef} className="app-shell" style={{ '--sidebar-width': `${collectionWidth}px` } as React.CSSProperties}>
@@ -299,165 +290,7 @@ export function WorkspaceView({
           </div>
           <CollectionTreeView {...collection} />
         </nav>
-        <div className="sidebar-footer">
-          {syncMenuOpen && (
-            <>
-              <button
-                type="button"
-                className="sidebar-sync-dismiss"
-                aria-label="Close sync menu"
-                onMouseDown={() => setSyncMenuOpen(false)}
-              />
-              <div
-                id="sidebar-sync-menu"
-                className="sidebar-sync-menu"
-                role="menu"
-                aria-label="Workspace sync actions"
-                onKeyDown={(event) => {
-                  const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)'))
-                  const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement)
-                  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                    event.preventDefault()
-                    const direction = event.key === 'ArrowDown' ? 1 : -1
-                    items[(activeIndex + direction + items.length) % items.length]?.focus()
-                  } else if (event.key === 'Escape') setSyncMenuOpen(false)
-                }}
-              >
-                <div className="sidebar-sync-menu-heading">
-                  <WorkspaceStorageIcon kind={activeWorkspace?.cloudId ? 'cloud' : 'local'} className="sidebar-sync-menu-icon" />
-                  <div>
-                    <strong>{activeWorkspace?.name ?? 'Workspace'}</strong>
-                    <small>
-                      {activeWorkspace?.cloudId ? (cloudUpdateAvailable ? 'Cloud updates available' : 'Cloud workspace') : 'Local vault'}
-                    </small>
-                  </div>
-                </div>
-                <div className="sidebar-sync-menu-divider" />
-                <button
-                  type="button"
-                  role="menuitem"
-                  // biome-ignore lint/a11y/noAutofocus: an open menu moves focus to its first item, as the menu pattern expects
-                  autoFocus
-                  onClick={() => {
-                    setSyncMenuOpen(false)
-                    commitDialog.openHistory()
-                  }}
-                >
-                  <span aria-hidden="true">◷</span>History{historyCommits.length > 0 && <small>{historyCommits.length}</small>}
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={!workspaceChanges.length}
-                  onClick={() => {
-                    setSyncMenuOpen(false)
-                    setDiscardConfirmOpen(true)
-                  }}
-                >
-                  <span aria-hidden="true">↶</span>Discard local changes
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={isReadOnly || !workspaceChanges.length}
-                  onClick={() => {
-                    setSyncMenuOpen(false)
-                    commitDialog.openChanges()
-                  }}
-                >
-                  <span aria-hidden="true">⬡</span>Commit{workspaceChanges.length > 0 && <small>{workspaceChanges.length}</small>}
-                </button>
-                <div className="sidebar-sync-menu-divider" />
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={!sessionToken || !activeWorkspace?.cloudId}
-                  onClick={() => {
-                    setSyncMenuOpen(false)
-                    void pullWorkspace()
-                  }}
-                >
-                  <span aria-hidden="true">↓</span>Pull{cloudUpdateAvailable && <small>Updates available</small>}
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={!sessionToken || isReadOnly || !pendingPushCount}
-                  onClick={() => {
-                    setSyncMenuOpen(false)
-                    void pushWorkspace()
-                  }}
-                >
-                  <span aria-hidden="true">↑</span>Push
-                  {pendingPushCount > 0 && (
-                    <small>
-                      {pendingPushCount} {pendingPushCount === 1 ? 'commit' : 'commits'}
-                    </small>
-                  )}
-                </button>
-                {pushDisabledReason && (
-                  <p className="sidebar-sync-hint" role="status">
-                    {pushDisabledReason}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-          <button
-            type="button"
-            className="sidebar-sync-trigger"
-            aria-haspopup="menu"
-            aria-expanded={syncMenuOpen}
-            aria-controls="sidebar-sync-menu"
-            disabled={!activeWorkspace}
-            onClick={() => setSyncMenuOpen((open) => !open)}
-          >
-            <WorkspaceStorageIcon kind={activeWorkspace?.cloudId ? 'cloud' : 'local'} className="sidebar-sync-trigger-icon" />
-            <span className="sidebar-sync-trigger-label">Changes</span>
-            {workspaceChanges.length > 0 && <span className="sidebar-sync-trigger-count">{workspaceChanges.length}</span>}
-            {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the label summarizes the children, which stay readable */}
-            <span
-              className="sidebar-sync-trigger-meta"
-              aria-label={`${activeWorkspace?.cloudId ? `${pendingPushCount} commits to push` : 'Saved locally'}${cloudUpdateAvailable ? ', cloud update available' : ''}`}
-            >
-              {cloudUpdateAvailable && <span title="Cloud updates available">↓</span>}
-              {pendingPushCount > 0 && activeWorkspace?.cloudId && (
-                <span title={`${pendingPushCount} commits to push`}>↑{pendingPushCount}</span>
-              )}
-              {!cloudUpdateAvailable && (!pendingPushCount || !activeWorkspace?.cloudId) && (
-                <span title={activeWorkspace?.cloudId ? 'Up to date' : 'Saved locally'}>•</span>
-              )}
-            </span>
-            <span className="sidebar-sync-trigger-chevron" aria-hidden="true">
-              ⌃
-            </span>
-          </button>
-          <div className="sidebar-footer-status" role="status" aria-live="polite">
-            {workspaceChanges.length > 0 && (
-              <span>
-                {workspaceChanges.length} local {workspaceChanges.length === 1 ? 'change' : 'changes'}
-              </span>
-            )}
-            {pendingPushCount > 0 && activeWorkspace?.cloudId && (
-              <span>
-                {pendingPushCount} {pendingPushCount === 1 ? 'commit' : 'commits'} to push
-              </span>
-            )}
-            {pendingPushCount > 0 && !activeWorkspace?.cloudId && (
-              <span>
-                {pendingPushCount} local {pendingPushCount === 1 ? 'commit' : 'commits'}
-              </span>
-            )}
-            {cloudUpdateAvailable && <span className="sidebar-cloud-status">Cloud updates available</span>}
-            {!workspaceChanges.length && !pendingPushCount && !cloudUpdateAvailable && !activeWorkspace?.cloudId && (
-              <span>Saved locally</span>
-            )}
-            {!workspaceChanges.length && !pendingPushCount && !cloudUpdateAvailable && activeWorkspace?.cloudId && cloudHeadCommitId && (
-              <span>Cloud workspace up to date</span>
-            )}
-            {!cloudHeadCommitId && activeWorkspace?.cloudId && <span>Checking cloud status…</span>}
-          </div>
-        </div>
+        <SyncFooterView {...syncFooter} />
       </aside>
 
       {/* biome-ignore lint/a11y/useSemanticElements: a resizer needs a separator with value controls, which hr does not offer */}
@@ -625,11 +458,7 @@ export function WorkspaceView({
       <CommitDialogView {...commitDialog} />
 
       <MergeDialogView {...mergeDialog} />
-      {syncStatus && (
-        <div className="sync-toast" role="status">
-          {syncStatus}
-        </div>
-      )}
+      <SyncToastView message={syncStatus} />
     </main>
   )
 }

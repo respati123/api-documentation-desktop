@@ -44,6 +44,7 @@ import {
   useCommitDialogViewModel,
   useDiscardDialogViewModel,
   useMergeDialogViewModel,
+  useSyncFooterViewModel,
   useTeamDialogsViewModel,
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
@@ -554,16 +555,6 @@ export function useWorkspaceViewModel() {
   )
   const pendingPushCount = localCommits.filter((commit) => !commit.pushed).length
   const cloudHeadCommitId = cloudWorkspaces.find((workspace) => workspace.id === activeWorkspace?.cloudId)?.headCommitId
-  const cloudUpdateAvailable = Boolean(activeWorkspace?.cloudId && cloudHeadCommitId && cloudHeadCommitId !== activeWorkspace.baseCommitId)
-  const pushDisabledReason = !sessionToken
-    ? 'Sign in to sync this workspace.'
-    : isReadOnly
-      ? 'Viewer access cannot push changes.'
-      : !pendingPushCount
-        ? activeWorkspace?.cloudId
-          ? 'Commit local changes before pushing.'
-          : 'Commit changes first; Push will publish this local workspace.'
-        : ''
   const showChanges = commitDialogOpen && commitDialogView === 'changes'
   const hasStagedContent = Boolean(stagedSnapshot || stagedVariables)
   const stagedChanges = useMemo(
@@ -1488,7 +1479,29 @@ export function useWorkspaceViewModel() {
     },
   })
 
+  const syncFooter = useSyncFooterViewModel({
+    open: syncMenuOpen,
+    onOpenChange: setSyncMenuOpen,
+    workspace: activeWorkspace
+      ? { name: activeWorkspace.name, cloudId: activeWorkspace.cloudId, baseCommitId: activeWorkspace.baseCommitId }
+      : null,
+    signedIn: Boolean(sessionToken),
+    readOnly: isReadOnly,
+    changeCount: workspaceChanges.length,
+    historyCount: historyCommits.length,
+    pendingPushCount,
+    cloudHeadCommitId,
+    actions: {
+      openHistory: commitDialog.openHistory,
+      discard: () => setDiscardConfirmOpen(true),
+      openCommit: commitDialog.openChanges,
+      pull: () => void pullWorkspace(),
+      push: () => void pushWorkspace(),
+    },
+  })
+
   return {
+    syncFooter,
     collection,
     team,
     commitDialog,
@@ -1535,8 +1548,6 @@ export function useWorkspaceViewModel() {
     setCommitDialogOpen,
     commitDialogView,
     setCommitDialogView,
-    syncMenuOpen,
-    setSyncMenuOpen,
     discardConfirmOpen,
     setDiscardConfirmOpen,
     commitMessage,
@@ -1570,8 +1581,6 @@ export function useWorkspaceViewModel() {
     workspaceChanges,
     pendingPushCount,
     cloudHeadCommitId,
-    cloudUpdateAvailable,
-    pushDisabledReason,
     stagedChanges,
     unstagedChanges,
     changeById,
