@@ -17,6 +17,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { VariableUrlField } from '@/shared/components/variable-field'
 
+const TAB_COUNT =
+  'ml-2 inline-flex h-[15px] min-w-[15px] shrink-0 items-center justify-center rounded-full border border-border px-2 text-center text-[9px] leading-none text-muted-foreground tabular-nums'
+const TAB_DOT = 'ml-2 inline-block size-[6px] shrink-0 rounded-full bg-primary'
+
 export type RequestWorkbenchViewProps = ReturnType<typeof useRequestWorkbenchViewModel>
 
 export function RequestWorkbenchView({
@@ -51,25 +55,25 @@ export function RequestWorkbenchView({
   return (
     <>
       <form className="request-card" data-testid={REQUEST_TEST_IDS.workbench} onSubmit={send.onSubmit}>
-        <div className="request-card-heading">
+        <div className="flex min-h-[66px] items-center justify-between gap-4 border-b border-border px-4 py-4 max-[720px]:px-4">
           <div>
             <p className="section-kicker">{kicker}</p>
             <DebouncedInput
               data-testid={REQUEST_TEST_IDS.name}
               aria-label={t(REQUEST_TEXT.workbench.nameLabel)}
-              className="request-name-input"
+              className="mt-2 h-[32px] min-h-[32px] w-[min(360px,62vw)] border-transparent px-2 text-[16px] font-bold shadow-none hover:border-border focus-visible:border-primary md:text-[16px] focus-visible:ring-2 focus-visible:ring-primary/20"
               value={name}
               readOnly={readOnly}
               onValueChange={onNameChange}
             />
           </div>
-          <div className="request-heading-actions">
-            <span className="request-status">{statusText}</span>
+          <div className="flex items-center gap-2 max-[720px]:flex-col max-[720px]:items-end max-[720px]:gap-2">
+            <span className="text-[12px] font-medium text-muted-foreground">{statusText}</span>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="request-view-docs"
+              className="shrink-0 text-[11px] text-foreground"
               data-testid={REQUEST_TEST_IDS.openDocs}
               onClick={onOpenDocs}
             >
@@ -77,12 +81,12 @@ export function RequestWorkbenchView({
             </Button>
           </div>
         </div>
-        <div className="request-line">
+        <div className="grid grid-cols-[116px_minmax(0,1fr)_auto] gap-2 px-4 pt-4 pb-4 max-[1040px]:grid-cols-[104px_minmax(0,1fr)] max-[720px]:grid-cols-[92px_minmax(0,1fr)] max-[720px]:p-4">
           <Select value={method} onValueChange={onMethodChange} disabled={readOnly}>
             <SelectTrigger
               data-testid={REQUEST_TEST_IDS.method}
               aria-label={t(REQUEST_TEXT.workbench.methodLabel)}
-              className="method-select"
+              className="h-9 w-full px-2 font-bold"
             >
               <SelectValue />
             </SelectTrigger>
@@ -109,20 +113,34 @@ export function RequestWorkbenchView({
           <SendControlView {...send} />
         </div>
         {send.notice && (
-          <div className="send-schedule-notice" role="status" data-testid={REQUEST_TEST_IDS.send.notice}>
+          <div
+            className="mx-4 mb-2 flex min-h-[36px] items-center justify-between gap-4 rounded-[6px] border border-primary/20 bg-primary/5 py-0 pr-2 pl-4 text-[12px] text-foreground"
+            role="status"
+            data-testid={REQUEST_TEST_IDS.send.notice}
+          >
             <span>{send.notice.text}</span>
-            <Button type="button" variant="ghost" size="sm" data-testid={REQUEST_TEST_IDS.send.noticeAction} onClick={send.notice.onAction}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-[28px] min-h-[28px] px-2"
+              data-testid={REQUEST_TEST_IDS.send.noticeAction}
+              onClick={send.notice.onAction}
+            >
               {send.notice.actionLabel}
             </Button>
           </div>
         )}
-        <Tabs defaultValue="params" className="request-tabs">
+        <Tabs
+          defaultValue="params"
+          className="flex min-h-0 flex-1 flex-col px-4 pb-4 max-[1040px]:px-4 max-[1040px]:pb-4 [&>[role=tablist]]:self-start max-[1040px]:[&>[role=tablist]]:w-full max-[1040px]:[&>[role=tablist]]:overflow-x-auto max-[1040px]:[&_[role=tab]]:flex-[1_0_auto] max-[1040px]:[&_[role=tab]]:px-4"
+        >
           <TabsList aria-label={t(REQUEST_TEXT.tabs.label)}>
             <TabsTrigger value="params" data-testid={REQUEST_TEST_IDS.tab('params')}>
               {t(REQUEST_TEXT.tabs.params)}
               {tabs.activeParams > 0 && (
                 <>
-                  <span className="request-tab-count" aria-hidden="true">
+                  <span className={TAB_COUNT} aria-hidden="true">
                     {tabs.activeParams}
                   </span>
                   <span className="sr-only">{tabs.activeParamsText}</span>
@@ -133,7 +151,7 @@ export function RequestWorkbenchView({
               {t(REQUEST_TEXT.tabs.body)}
               {tabs.hasBody && (
                 <>
-                  <span className="request-tab-dot" aria-hidden="true" />
+                  <span className={TAB_DOT} aria-hidden="true" />
                   <span className="sr-only">{t(REQUEST_TEXT.tabs.bodyConfigured)}</span>
                 </>
               )}
@@ -142,7 +160,7 @@ export function RequestWorkbenchView({
               {t(REQUEST_TEXT.tabs.auth)}
               {tabs.hasAuth && (
                 <>
-                  <span className="request-tab-dot" aria-hidden="true" />
+                  <span className={TAB_DOT} aria-hidden="true" />
                   <span className="sr-only">{t(REQUEST_TEXT.tabs.authConfigured)}</span>
                 </>
               )}
@@ -151,7 +169,7 @@ export function RequestWorkbenchView({
               {t(REQUEST_TEXT.tabs.headers)}
               {tabs.headers > 0 && (
                 <>
-                  <span className="request-tab-count" aria-hidden="true">
+                  <span className={TAB_COUNT} aria-hidden="true">
                     {tabs.headers}
                   </span>
                   <span className="sr-only">{tabs.headersText}</span>
@@ -160,7 +178,7 @@ export function RequestWorkbenchView({
             </TabsTrigger>
             <TabsTrigger value="responses" data-testid={REQUEST_TEST_IDS.tab('responses')}>
               {t(REQUEST_TEXT.tabs.responses)}
-              {tabs.responses > 0 && <span className="request-tab-count">{tabs.responses}</span>}
+              {tabs.responses > 0 && <span className={TAB_COUNT}>{tabs.responses}</span>}
             </TabsTrigger>
             <TabsTrigger value="docs" data-testid={REQUEST_TEST_IDS.tab('docs')}>
               {t(REQUEST_TEXT.tabs.docs)}

@@ -22,9 +22,14 @@ export type WorkspaceViewProps = ReturnType<typeof useWorkspaceViewModel>
 // The workspace screen: it arranges the topbar, sidebar, and main pane, and renders the dialogs that sit above them.
 export function WorkspaceView(props: WorkspaceViewProps): ReactElement {
   return (
-    <main ref={props.appShellRef} className="app-shell" style={styleWithVariables({ '--sidebar-width': `${props.collectionWidth}px` })}>
+    <main
+      ref={props.appShellRef}
+      className="grid h-screen min-h-0 grid-cols-[clamp(220px,var(--sidebar-width,280px),min(38vw,520px))_8px_minmax(0,1fr)] grid-rows-[64px_minmax(0,1fr)] bg-background max-[720px]:block max-[720px]:h-auto max-[720px]:min-h-dvh max-[720px]:overflow-visible"
+      style={styleWithVariables({ '--sidebar-width': `${props.collectionWidth}px` })}
+    >
       <WorkspaceTopbarView
         chrome={props.chrome}
+        picker={props.sidebar.picker}
         accountMenuRef={props.accountMenuRef}
         auth={{
           showTrigger: !props.user,
@@ -52,6 +57,7 @@ export function WorkspaceView(props: WorkspaceViewProps): ReactElement {
         sidebar={props.sidebar}
         collection={props.collection}
         syncFooter={props.syncFooter}
+        environment={props.tabbar.environment}
         resize={{
           onPointerDown: props.startCollectionResize,
           onPointerMove: props.moveCollectionResize,

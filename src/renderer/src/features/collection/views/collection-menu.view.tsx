@@ -1,9 +1,7 @@
 import type { CSSProperties, ReactElement } from 'react'
 import type { useCollectionTreeViewModel } from '@/features/collection/viewmodels/use-collection-tree.viewmodel'
+import { CONTEXT_MENU_PANEL, CONTEXT_MENU_SEPARATOR, CONTEXT_MENU_ITEM as MENU_ITEM } from '@/shared/components/context-menu'
 import { Button } from '@/shared/components/ui/button'
-
-// Menu items keep the context menu's own styling. The shadcn base sizing and weight are reset here.
-const MENU_ITEM = 'h-auto justify-start font-normal focus-visible:ring-0'
 
 export type CollectionMenuViewProps = NonNullable<ReturnType<typeof useCollectionTreeViewModel>['menu']>
 
@@ -27,9 +25,9 @@ export function CollectionMenuView({
 }: CollectionMenuViewProps): ReactElement {
   return (
     <>
-      <div className="context-menu-dismiss" aria-hidden="true" onMouseDown={onDismiss} />
+      <div className="fixed inset-0 z-[70]" aria-hidden="true" onMouseDown={onDismiss} />
       <div
-        className="tree-context-menu"
+        className={`fixed z-[71] ${CONTEXT_MENU_PANEL}`}
         role="menu"
         aria-label={label}
         style={{ left: x, top: y } satisfies CSSProperties}
@@ -44,7 +42,6 @@ export function CollectionMenuView({
           autoFocus
           onClick={onCreateFolder}
         >
-          <span aria-hidden="true">＋</span>
           {createFolder}
         </Button>
         <Button
@@ -55,13 +52,12 @@ export function CollectionMenuView({
           data-testid="collection-menu-create-request"
           onClick={onCreateRequest}
         >
-          <span aria-hidden="true">↳</span>
           {createRequest}
         </Button>
         {targetKind === 'folder' && (
           <>
             {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
-            <div className="tree-context-menu-divider" role="separator" />
+            <div className={CONTEXT_MENU_SEPARATOR} role="separator" />
             <Button
               type="button"
               variant="ghost"
@@ -70,18 +66,16 @@ export function CollectionMenuView({
               data-testid="collection-menu-rename"
               onClick={onRename}
             >
-              <span aria-hidden="true">✎</span>
               {renameFolder}
             </Button>
             <Button
               type="button"
               variant="ghost"
               role="menuitem"
-              className={`${MENU_ITEM} context-menu-danger`}
+              className={MENU_ITEM}
               data-testid="collection-menu-delete-folder"
               onClick={onDelete}
             >
-              <span aria-hidden="true">×</span>
               {deleteFolder}
             </Button>
           </>
@@ -89,16 +83,15 @@ export function CollectionMenuView({
         {targetKind === 'request' && (
           <>
             {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
-            <div className="tree-context-menu-divider" role="separator" />
+            <div className={CONTEXT_MENU_SEPARATOR} role="separator" />
             <Button
               type="button"
               variant="ghost"
               role="menuitem"
-              className={`${MENU_ITEM} context-menu-danger`}
+              className={MENU_ITEM}
               data-testid="collection-menu-delete-request"
               onClick={onDelete}
             >
-              <span aria-hidden="true">×</span>
               {deleteRequest}
             </Button>
           </>

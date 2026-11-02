@@ -24,8 +24,28 @@ function MenuItemButton({ item }: { item: SyncMenuItem }): ReactElement {
   )
 }
 
+function FooterStatus({ lines }: { lines: SyncFooterViewModel['statusLines'] }): ReactElement {
+  return (
+    <div className="sidebar-footer-status" role="status" aria-live="polite">
+      {lines.map((line) => (
+        <span key={line.key} className={line.className}>
+          {line.text}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export function SyncFooterView(props: SyncFooterViewModel): ReactElement {
   const storageKind = props.cloud ? 'cloud' : 'local'
+  // Commit, push, pull, history, and discard exist only for cloud workspaces. A local folder shows its status and nothing else.
+  if (!props.cloud) {
+    return (
+      <div className="sidebar-footer">
+        <FooterStatus lines={props.statusLines} />
+      </div>
+    )
+  }
   return (
     <div className="sidebar-footer">
       {props.open && (
@@ -94,13 +114,7 @@ export function SyncFooterView(props: SyncFooterViewModel): ReactElement {
           {props.chevron}
         </span>
       </Button>
-      <div className="sidebar-footer-status" role="status" aria-live="polite">
-        {props.statusLines.map((line) => (
-          <span key={line.key} className={line.className}>
-            {line.text}
-          </span>
-        ))}
-      </div>
+      <FooterStatus lines={props.statusLines} />
     </div>
   )
 }

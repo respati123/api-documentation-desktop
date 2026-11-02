@@ -5,7 +5,8 @@
     "actionsFor": "Aksi untuk {{name}}",
     "folderNameLabel": "Nama folder",
     "menuLabel": "Aksi item koleksi",
-    "workspaceActions": "Aksi workspace"
+    "workspaceActions": "Aksi workspace",
+    "newRequestIn": "Request baru di {{name}}"
   },
   "menu": {
     "createFolder": "Buat folder",

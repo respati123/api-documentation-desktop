@@ -306,8 +306,11 @@ export function useWorkspaceViewModel() {
     openDocsTab,
     openCurrentDocs,
     openEnvironmentTab,
+    viewEnvironment,
     selectWorkspaceTab,
     closeWorkspaceTab,
+    closeOtherWorkspaceTabs,
+    closeAllWorkspaceTabs,
     updateEnvironmentTab,
     resetTabs,
     openVariableEditor,
@@ -406,8 +409,18 @@ export function useWorkspaceViewModel() {
     setActiveWorkspaceTabKey,
     setActiveEnvironmentId,
   })
-  const { createFolderInTree, importTree, renameFolderInTree, selectFolder, toggleFolderExpanded, createRequest, deleteItem, moveItem } =
-    treeActions
+  const {
+    createFolderInTree,
+    importTree,
+    renameFolderInTree,
+    selectFolder,
+    toggleFolderExpanded,
+    createRequest,
+    duplicateRequest,
+    revealRequestInTree,
+    deleteItem,
+    moveItem,
+  } = treeActions
 
   const { t: tSync } = useTranslation('sync')
   const statusText = (status: WorkspaceChange['status']) => tSync(changeStatusKey(status))
@@ -569,6 +582,14 @@ export function useWorkspaceViewModel() {
     collectionWidth,
     onActivateWorkspace: activateWorkspace,
     onOpenOpenApi: () => setOpenApiDialogOpen(true),
+    onCreateEnvironment: variablesDialog.createEnvironment,
+    onRenameEnvironment: variablesDialog.renameEnvironment,
+    onDuplicateEnvironment: variablesDialog.duplicateEnvironment,
+    onDeleteEnvironment: variablesDialog.deleteEnvironment,
+    onSelectEnvironment: updateActiveEnvironment,
+    onViewEnvironment: viewEnvironment,
+    viewingEnvironmentId: activeEnvironmentTab?.id ?? null,
+    canCreateEnvironment: variablesDialog.canCreateEnvironment,
   })
   const tabbar = useWorkspaceTabbarViewModel({
     tabs: workspaceTabs,
@@ -585,9 +606,17 @@ export function useWorkspaceViewModel() {
     hasRequestWorkbench: Boolean(requestWorkbench),
     onSelectTab: selectWorkspaceTab,
     onCloseTab: closeWorkspaceTab,
+    onCloseOtherTabs: closeOtherWorkspaceTabs,
+    onCloseAllTabs: closeAllWorkspaceTabs,
+    onNewRequest: () => createRequest(),
+    onDuplicateTab: (tab) => duplicateRequest(tab.id),
+    onRevealTab: (tab) => {
+      sidebar.onSelectPanel(tab.kind === 'environment' ? 'environments' : 'collections')
+      if (tab.kind !== 'environment') revealRequestInTree(tab.id)
+    },
     onReadDocs: openCurrentDocs,
     onOpenVariables: () => setVariablesDialogOpen(true),
-    onEnvironmentChange: (environmentId) => (environmentId === null ? updateActiveEnvironment(null) : openEnvironmentTab(environmentId)),
+    onEnvironmentChange: updateActiveEnvironment,
     onOpenRequest: openRequestTab,
     onOpenOpenApi: () => setOpenApiDialogOpen(true),
   })

@@ -245,7 +245,9 @@ function isExternalLink(url: string): boolean {
 }
 
 function createWindow(): void {
+  const appTitle = app.isPackaged ? 'API Documentation' : 'API Documentation (DEVELOPMENT)'
   const window = new BrowserWindow({
+    title: appTitle,
     width: 1440,
     height: 900,
     minWidth: 860,
@@ -270,6 +272,11 @@ function createWindow(): void {
   })
   // Check again when the user brings the app back to the front.
   window.on('focus', () => checkForUpdatesNow?.())
+  // The page title in index.html would otherwise replace the environment label.
+  window.webContents.on('page-title-updated', (event) => {
+    event.preventDefault()
+    window.setTitle(appTitle)
+  })
   window.on('closed', () => {
     if (mainWindow === window) mainWindow = undefined
   })

@@ -33,8 +33,13 @@ export function SendControlView({
   const { t } = useTranslation('request')
 
   return (
-    <div className="send-control">
-      <Button type="submit" className="send-primary" data-testid={REQUEST_TEST_IDS.send.submit} disabled={isSending}>
+    <div className="relative flex h-[38px] min-w-[118px] max-[1040px]:col-span-full max-[1040px]:w-full">
+      <Button
+        type="submit"
+        className="h-[38px] min-h-[38px] min-w-0 flex-1 rounded-l-[7px] rounded-r-none px-4"
+        data-testid={REQUEST_TEST_IDS.send.submit}
+        disabled={isSending}
+      >
         {label}
       </Button>
       <DropdownMenu modal={false}>
@@ -43,7 +48,7 @@ export function SendControlView({
             type="button"
             variant="default"
             size="sm"
-            className="send-options-trigger"
+            className="h-[38px] min-h-[38px] w-[36px] shrink-0 rounded-l-none rounded-r-[7px] border-l border-primary-foreground/30 p-0 text-[18px] shadow-none"
             data-testid={REQUEST_TEST_IDS.send.options}
             aria-label={t(REQUEST_TEXT.send.optionsLabel)}
           >

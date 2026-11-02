@@ -45,10 +45,12 @@ export function useWorkspaceChangesViewModel(input: ChangesInput) {
   const committedVariables = normalizeWorkspaceVariables(committedVariablesSource)
   const stageBaseTree = stagedSnapshot ?? committedTree
   const stageBaseVariables = stagedVariables ?? committedVariables
-  const workspaceChanges = getWorkspaceChanges(committedTree, tree, committedVariables, workspaceVariables)
-  const pendingPushCount = localCommits.filter((commit) => !commit.pushed).length
+  // Versioning (changes, commits, push) exists only for cloud workspaces. A local folder has no change tracking.
+  const versioned = Boolean(activeWorkspace?.cloudId)
+  const workspaceChanges = versioned ? getWorkspaceChanges(committedTree, tree, committedVariables, workspaceVariables) : []
+  const pendingPushCount = versioned ? localCommits.filter((commit) => !commit.pushed).length : 0
   const cloudHeadCommitId = cloudWorkspaces.find((workspace) => workspace.id === activeWorkspace?.cloudId)?.headCommitId
-  const showChanges = commitDialogOpen && commitDialogView === 'changes'
+  const showChanges = versioned && commitDialogOpen && commitDialogView === 'changes'
   const hasStagedContent = Boolean(stagedSnapshot || stagedVariables)
   const stagedChanges =
     showChanges && hasStagedContent ? getWorkspaceChanges(committedTree, stageBaseTree, committedVariables, stageBaseVariables) : []

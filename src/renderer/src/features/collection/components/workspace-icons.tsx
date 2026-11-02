@@ -15,5 +15,5 @@ export function WorkspaceStorageIcon({ kind, className }: { kind: 'cloud' | 'loc
 
 export function CollectionFolderIcon({ open }: { open: boolean }) {
   const Icon = open ? FolderOpen : FolderIcon
-  return <Icon aria-hidden="true" className="folder-glyph" size={15} strokeWidth={1.8} />
+  return <Icon aria-hidden="true" className="shrink-0 text-primary" size={15} strokeWidth={1.8} />
 }

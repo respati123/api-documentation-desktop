@@ -122,6 +122,35 @@ export function useWorkspaceTreeActionsViewModel(input: TreeActionsInput) {
     setExpandedFolders((current) => new Set(current).add(folderId))
   }
 
+  // Copies a request next to the original and opens the copy in a tab.
+  function duplicateRequest(requestId: string) {
+    if (isReadOnly) return
+    const source = treeIndex.nodeById.get(requestId)
+    if (!source || !isRequest(source)) return
+    const parentId = treeIndex.parentFolderById.get(requestId) ?? ''
+    const copy: RequestNode = { ...structuredClone(source), id: crypto.randomUUID(), name: `${source.name}_copy` }
+    setTree((current) => addToTree(current, parentId, copy))
+    const tab: WorkspaceTab = { kind: 'request', id: copy.id }
+    setWorkspaceTabs((current) => [...current, tab])
+    setActiveWorkspaceTabKey(workspaceTabKey(tab))
+    setSelectedRequestId(copy.id)
+    setSelectedFolderId(parentId)
+    setExpandedFolders((current) => new Set(current).add(parentId))
+  }
+
+  // Expands every folder above a request so the sidebar shows it, and selects its folder.
+  function revealRequestInTree(requestId: string) {
+    const parentId = treeIndex.parentFolderById.get(requestId) ?? ''
+    const ancestors: string[] = []
+    let folderId = parentId
+    while (folderId) {
+      ancestors.push(folderId)
+      folderId = treeIndex.parentFolderById.get(folderId) ?? ''
+    }
+    setExpandedFolders((current) => new Set([...current, ...ancestors]))
+    setSelectedFolderId(parentId)
+  }
+
   function deleteItem(id: string) {
     if (isReadOnly) return
     const target = treeIndex.nodeById.get(id)
@@ -176,5 +205,16 @@ export function useWorkspaceTreeActionsViewModel(input: TreeActionsInput) {
     if (target && isFolder(target)) setExpandedFolders((current) => new Set(current).add(target.id))
   }
 
-  return { createFolderInTree, importTree, renameFolderInTree, selectFolder, toggleFolderExpanded, createRequest, deleteItem, moveItem }
+  return {
+    createFolderInTree,
+    importTree,
+    renameFolderInTree,
+    selectFolder,
+    toggleFolderExpanded,
+    createRequest,
+    duplicateRequest,
+    revealRequestInTree,
+    deleteItem,
+    moveItem,
+  }
 }

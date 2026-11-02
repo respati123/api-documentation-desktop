@@ -30,7 +30,18 @@
     "resize": "Resize collections panel",
     "pixels": "{{value}} pixels",
     "myWorkspace": "My workspace",
-    "fallbackName": "Workspace"
+    "fallbackName": "Workspace",
+    "collectionsTab": "Collections",
+    "environmentsTab": "Environments",
+    "environmentsHeading": "Environments",
+    "manageVariables": "Manage variables",
+    "noEnvironments": "No environments yet. Create one in Manage variables.",
+    "newEnvironmentName": "New environment",
+    "environmentActions": "Environment actions",
+    "setActive": "Set active",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "remove": "Delete"
   },
   "tabs": {
     "list": "Open workspace tabs",
@@ -45,7 +56,17 @@
     "environmentLabel": "Environment",
     "noEnvironment": "No environment",
     "activeEnvironment": "Active environment",
-    "variables": "Variables"
+    "variables": "Variables",
+    "menu": {
+      "newRequest": "New request",
+      "duplicate": "Duplicate tab",
+      "close": "Close tab",
+      "forceClose": "Force close tab",
+      "closeOthers": "Close other tabs",
+      "closeAll": "Close all tabs",
+      "forceCloseAll": "Force close all tabs",
+      "reveal": "Reveal in sidebar"
+    }
   },
   "main": {
     "requestWorkspace": "Request workspace",

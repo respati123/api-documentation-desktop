@@ -149,6 +149,13 @@ export function useWorkspaceNavigationViewModel(input: NavigationInput) {
     if (selected && isRequest(selected)) openDocsTab(selected.id)
   }
 
+  // Shows an environment in its tab without making it the one requests use.
+  function viewEnvironment(environmentId: string) {
+    const tab: WorkspaceTab = { kind: 'environment', id: environmentId }
+    setWorkspaceTabs((current) => (current.some((item) => workspaceTabKey(item) === workspaceTabKey(tab)) ? current : [...current, tab]))
+    setActiveWorkspaceTabKey(workspaceTabKey(tab))
+  }
+
   function openEnvironmentTab(environmentId: string) {
     const tab: WorkspaceTab = { kind: 'environment', id: environmentId }
     setWorkspaceTabs((current) => (current.some((item) => workspaceTabKey(item) === workspaceTabKey(tab)) ? current : [...current, tab]))
@@ -181,6 +188,23 @@ export function useWorkspaceNavigationViewModel(input: NavigationInput) {
       setSelectedRequestId(next.id)
       setSelectedFolderId(treeIndex.parentFolderById.get(next.id) ?? '')
     } else if (next?.kind === 'environment') updateActiveEnvironment(next.id)
+  }
+
+  // Right-click "Close other tabs": keeps only the clicked tab and makes it active. An environment tab is shown, never made the active environment.
+  function closeOtherWorkspaceTabs(tab: WorkspaceTab) {
+    const key = workspaceTabKey(tab)
+    if (!workspaceTabs.some((item) => workspaceTabKey(item) === key)) return
+    setWorkspaceTabs(workspaceTabs.filter((item) => workspaceTabKey(item) === key))
+    setActiveWorkspaceTabKey(key)
+    if (tab.kind === 'request' || tab.kind === 'docs') {
+      setSelectedRequestId(tab.id)
+      setSelectedFolderId(treeIndex.parentFolderById.get(tab.id) ?? '')
+    }
+  }
+
+  function closeAllWorkspaceTabs() {
+    setWorkspaceTabs([])
+    setActiveWorkspaceTabKey('')
   }
 
   function updateEnvironmentTab(environmentId: string, patch: Partial<WorkspaceEnvironment>) {
@@ -256,8 +280,11 @@ export function useWorkspaceNavigationViewModel(input: NavigationInput) {
     openDocsTab,
     openCurrentDocs,
     openEnvironmentTab,
+    viewEnvironment,
     selectWorkspaceTab,
     closeWorkspaceTab,
+    closeOtherWorkspaceTabs,
+    closeAllWorkspaceTabs,
     updateEnvironmentTab,
     restoreTabs,
     resetTabs,

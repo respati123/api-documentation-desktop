@@ -1,5 +1,4 @@
 import { act, renderHook } from '@testing-library/react'
-import type { FormEvent } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { useVariablesDialogViewModel } from '@/features/variables/viewmodels/use-variables-dialog.viewmodel'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
@@ -30,8 +29,6 @@ function setup(overrides: { readOnly?: boolean; activeEnvironmentId?: string | n
   return { ...hook, onVariablesChange, onActiveEnvironmentChange }
 }
 
-const submitEvent = { preventDefault: vi.fn() } as unknown as FormEvent
-
 describe('useVariablesDialogViewModel', () => {
   it('marks only the active environment and counts its variables', () => {
     const { result } = setup()
@@ -44,8 +41,7 @@ describe('useVariablesDialogViewModel', () => {
 
   it('creates a trimmed environment and makes it active', () => {
     const { result, onVariablesChange, onActiveEnvironmentChange } = setup()
-    act(() => result.current.createForm.onNameChange('  Staging  '))
-    act(() => result.current.createForm.onSubmit(submitEvent))
+    act(() => result.current.createEnvironment('  Staging  '))
     const next = onVariablesChange.mock.calls[0][0] as WorkspaceVariables
     expect(next.environments.at(-1)).toMatchObject({ name: 'Staging', variables: [] })
     expect(onActiveEnvironmentChange).toHaveBeenCalledWith(next.environments.at(-1)?.id)
@@ -53,9 +49,7 @@ describe('useVariablesDialogViewModel', () => {
 
   it('ignores a blank environment name', () => {
     const { result, onVariablesChange } = setup()
-    act(() => result.current.createForm.onNameChange('   '))
-    expect(result.current.createForm.canSubmit).toBe(false)
-    act(() => result.current.createForm.onSubmit(submitEvent))
+    act(() => result.current.createEnvironment('   '))
     expect(onVariablesChange).not.toHaveBeenCalled()
   })
 
@@ -68,8 +62,7 @@ describe('useVariablesDialogViewModel', () => {
 
   it('cannot create or delete environments in a read-only workspace', () => {
     const { result, onVariablesChange } = setup({ readOnly: true })
-    act(() => result.current.createForm.onNameChange('Staging'))
-    act(() => result.current.createForm.onSubmit(submitEvent))
+    act(() => result.current.createEnvironment('Staging'))
     act(() => result.current.selected?.onDelete())
     expect(onVariablesChange).not.toHaveBeenCalled()
   })

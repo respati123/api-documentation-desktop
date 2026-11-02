@@ -25,7 +25,6 @@ export function VariablesDialogView({
   environments,
   noEnvironmentActive,
   onSelectEnvironment,
-  createForm,
   selected,
   promptText,
 }: VariablesDialogViewProps) {
@@ -116,26 +115,6 @@ export function VariablesDialogView({
               ))}
             </fieldset>
           </section>
-          <div className="environment-create-panel">
-            <div className="environment-create-copy">
-              <strong>{t(VARIABLES_TEXT.environments.addTitle)}</strong>
-              <span>{t(VARIABLES_TEXT.environments.addDescription)}</span>
-            </div>
-            <form className="environment-create-form" onSubmit={createForm.onSubmit}>
-              <Input
-                data-testid={VARIABLES_TEST_IDS.environmentNewName}
-                aria-label={t(VARIABLES_TEXT.environments.newNameLabel)}
-                maxLength={100}
-                value={createForm.nameDraft}
-                readOnly={createForm.readOnly}
-                onChange={(event) => createForm.onNameChange(event.target.value)}
-                placeholder={t(VARIABLES_TEXT.environments.newNamePlaceholder)}
-              />
-              <Button type="submit" size="sm" data-testid={VARIABLES_TEST_IDS.environmentAdd} disabled={!createForm.canSubmit}>
-                {t(VARIABLES_TEXT.environments.addButton)}
-              </Button>
-            </form>
-          </div>
           {selected ? (
             <>
               <div className="environment-name-row">

@@ -37,10 +37,10 @@ export function EnvironmentTabView({
 
   return (
     <section className="request-card environment-tab-panel" aria-label={sectionLabel} data-testid={VARIABLES_TEST_IDS.tabPanel}>
-      <div className="environment-tab-heading">
-        <div>
-          <p className="section-kicker">{t(VARIABLES_TEXT.environmentTab.kicker)}</p>
+      <div className="flex items-center justify-between gap-4 pb-4">
+        <div className="min-w-0 flex-1">
           <Input
+            className="h-[36px] border-transparent bg-transparent px-2 text-[18px] font-bold shadow-none hover:border-border focus-visible:border-primary"
             data-testid={VARIABLES_TEST_IDS.tabName}
             aria-label={t(VARIABLES_TEXT.environments.nameLabel)}
             maxLength={100}

@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VARIABLES_TEXT } from '@/features/variables/constants/variables-text.constants'
 import { useVariableRowsViewModel } from '@/features/variables/viewmodels/use-variable-rows.viewmodel'
@@ -30,7 +30,6 @@ export function useVariablesDialogViewModel({
 }) {
   const { t } = useTranslation('variables')
   const [scope, setScope] = useState<DialogScope>('global')
-  const [nameDraft, setNameDraft] = useState('')
   const selectedEnvironment = variables.environments.find((environment) => environment.id === activeEnvironmentId)
 
   function updateEnvironment(patch: Partial<WorkspaceEnvironment>) {
@@ -54,21 +53,45 @@ export function useVariablesDialogViewModel({
     onChange: (rows) => updateEnvironment({ variables: rows }),
   })
 
-  function handleCreateEnvironment(event: FormEvent) {
-    event.preventDefault()
-    const name = nameDraft.trim()
-    if (readOnly || !name) return
+  // Adds an environment with this name and makes it active. Returns false when it was not added.
+  function createEnvironment(rawName: string): boolean {
+    const name = rawName.trim()
+    if (readOnly || !name || variables.environments.length >= maxEnvironments) return false
     const environment = { id: crypto.randomUUID(), name, variables: [] }
     onVariablesChange({ ...variables, environments: [...variables.environments, environment] })
     onActiveEnvironmentChange(environment.id)
-    setNameDraft('')
+    return true
   }
 
-  function handleDeleteEnvironment() {
-    if (!selectedEnvironment || readOnly) return
-    const remaining = variables.environments.filter((environment) => environment.id !== selectedEnvironment.id)
+  function deleteEnvironment(id: string) {
+    if (readOnly || !variables.environments.some((environment) => environment.id === id)) return
+    const remaining = variables.environments.filter((environment) => environment.id !== id)
     onVariablesChange({ ...variables, environments: remaining })
     onActiveEnvironmentChange(remaining[0]?.id ?? null)
+  }
+
+  function renameEnvironment(id: string, rawName: string): boolean {
+    const name = rawName.trim()
+    if (readOnly || !name) return false
+    onVariablesChange({
+      ...variables,
+      environments: variables.environments.map((environment) => (environment.id === id ? { ...environment, name } : environment)),
+    })
+    return true
+  }
+
+  // A copy keeps the values, gets fresh ids, and is named "<name>_copy".
+  function duplicateEnvironment(id: string): boolean {
+    const source = variables.environments.find((environment) => environment.id === id)
+    if (readOnly || !source || variables.environments.length >= maxEnvironments) return false
+    const copy = {
+      id: crypto.randomUUID(),
+      name: `${source.name}_copy`,
+      variables: source.variables.map((variable) => ({ ...variable, id: crypto.randomUUID() })),
+    }
+    onVariablesChange({ ...variables, environments: [...variables.environments, copy] })
+    onActiveEnvironmentChange(copy.id)
+    return true
   }
 
   return {
@@ -88,19 +111,17 @@ export function useVariablesDialogViewModel({
     })),
     noEnvironmentActive: !selectedEnvironment,
     onSelectEnvironment: onActiveEnvironmentChange,
-    createForm: {
-      nameDraft,
-      readOnly,
-      canSubmit: !readOnly && variables.environments.length < maxEnvironments && nameDraft.trim() !== '',
-      onNameChange: setNameDraft,
-      onSubmit: handleCreateEnvironment,
-    },
+    createEnvironment,
+    renameEnvironment,
+    duplicateEnvironment,
+    deleteEnvironment,
+    canCreateEnvironment: !readOnly && variables.environments.length < maxEnvironments,
     selected: selectedEnvironment
       ? {
           name: selectedEnvironment.name,
           readOnly,
           onNameChange: (name: string) => updateEnvironment({ name }),
-          onDelete: handleDeleteEnvironment,
+          onDelete: () => deleteEnvironment(selectedEnvironment.id),
         }
       : null,
     promptText: t(variables.environments.length ? VARIABLES_TEXT.environments.selectPrompt : VARIABLES_TEXT.environments.emptyPrompt),

@@ -3,6 +3,7 @@ export const COLLECTION_TEXT = {
     empty: 'tree.empty',
     emptyFolder: 'tree.emptyFolder',
     actionsFor: 'tree.actionsFor',
+    newRequestIn: 'tree.newRequestIn',
     folderNameLabel: 'tree.folderNameLabel',
     menuLabel: 'tree.menuLabel',
     workspaceActions: 'tree.workspaceActions',

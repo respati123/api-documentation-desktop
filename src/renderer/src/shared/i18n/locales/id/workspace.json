@@ -30,7 +30,18 @@
     "resize": "Ubah lebar panel koleksi",
     "pixels": "{{value}} piksel",
     "myWorkspace": "Workspace saya",
-    "fallbackName": "Workspace"
+    "fallbackName": "Workspace",
+    "collectionsTab": "Koleksi",
+    "environmentsTab": "Environment",
+    "environmentsHeading": "Environment",
+    "manageVariables": "Kelola variable",
+    "noEnvironments": "Belum ada environment. Buat di Kelola variable.",
+    "newEnvironmentName": "Environment baru",
+    "environmentActions": "Aksi environment",
+    "setActive": "Jadikan aktif",
+    "rename": "Ganti nama",
+    "duplicate": "Duplikat",
+    "remove": "Hapus"
   },
   "tabs": {
     "list": "Tab workspace terbuka",
@@ -45,7 +56,17 @@
     "environmentLabel": "Environment",
     "noEnvironment": "Tanpa environment",
     "activeEnvironment": "Environment aktif",
-    "variables": "Variabel"
+    "variables": "Variabel",
+    "menu": {
+      "newRequest": "Request baru",
+      "duplicate": "Duplikat tab",
+      "close": "Tutup tab",
+      "forceClose": "Paksa tutup tab",
+      "closeOthers": "Tutup tab lain",
+      "closeAll": "Tutup semua tab",
+      "forceCloseAll": "Paksa tutup semua tab",
+      "reveal": "Tampilkan di sidebar"
+    }
   },
   "main": {
     "requestWorkspace": "Workspace request",

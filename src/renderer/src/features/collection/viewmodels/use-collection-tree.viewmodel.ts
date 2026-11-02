@@ -271,6 +271,7 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
       folderNameLabel: t(COLLECTION_TEXT.tree.folderNameLabel),
       workspaceActions: t(COLLECTION_TEXT.tree.workspaceActions),
       actionsFor: (name: string) => t(COLLECTION_TEXT.tree.actionsFor, { name }),
+      newRequestIn: (name: string) => t(COLLECTION_TEXT.tree.newRequestIn, { name }),
     },
     rename: {
       draft: renameDraft,
@@ -318,6 +319,8 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
         actions.toggleFolderExpanded(folderId)
       },
       openRequest: (requestId: string) => (input.activeTabKind === 'docs' ? actions.openDocs(requestId) : actions.openRequest(requestId)),
+      createRequestIn: (folderId: string) => actions.createRequest(folderId),
+      createFolderIn: (folderId: string) => openCreateFolder(folderId),
       openFolderMenu: (event: MouseEvent<HTMLElement>, folderId: string) => openAtPointer(event, folderId, folderId),
       openRequestMenu: (event: MouseEvent<HTMLElement>, requestId: string) =>
         openAtPointer(event, treeIndex.parentFolderById.get(requestId) ?? '', requestId),

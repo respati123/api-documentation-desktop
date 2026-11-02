@@ -5,7 +5,8 @@
     "actionsFor": "Actions for {{name}}",
     "folderNameLabel": "Folder name",
     "menuLabel": "Collection item actions",
-    "workspaceActions": "Workspace actions"
+    "workspaceActions": "Workspace actions",
+    "newRequestIn": "New request in {{name}}"
   },
   "menu": {
     "createFolder": "Create folder",
