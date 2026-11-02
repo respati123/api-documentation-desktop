@@ -1,79 +1,54 @@
 # Performance
 
-Read this when you build a list, add a route, add a dependency, write a heavy computation, or review a change for speed.
+Read this when you build a list, add a page, add a dependency, write heavy computation, or review for speed.
 
-## Required skill
+## Skill
 
-Use the **vercel-react-best-practices** skill, installed in this folder at `.agents/skills/vercel-react-best-practices/`.
+Use **vercel-react-best-practices** (`.agents/skills/vercel-react-best-practices/`).
 
-1. Read its `SKILL.md`. The quick reference lists all rules by category and priority.
-2. Open only the rule files you need, from `rules/<rule-name>.md`. Each has an incorrect and a correct example.
-3. Do not load the compiled `AGENTS.md` inside the skill folder unless you are doing a full performance audit. It is large.
+1. Read its `SKILL.md`.
+2. Open only the `rules/<rule-name>.md` files you need.
+3. Load its compiled `AGENTS.md` only for a full performance audit. It is large.
 
-The skill is written for React and Next.js. This app is a Vite single-page app, so some rules do not apply and some are replaced. The table below wins over the skill.
+The skill targets Next.js. This is an Electron renderer with Vite. This table wins over the skill:
 
-| Skill rule | In this project |
+| Skill rule | Here |
 |---|---|
-| `server-*` | Does not apply. There is no SSR or React Server Components. |
-| `rendering-hydration-*` | Does not apply. There is no hydration. |
-| `async-api-routes`, `server-after-nonblocking` | Next.js API routes do not exist here. The parallel-work principle still applies to `src/main/index.ts`. |
-| `client-swr-dedup` | Use TanStack Query, not SWR. See `data-and-state.md`. |
-| `bundle-dynamic-imports` (`next/dynamic`) | Use `React.lazy` and `Suspense`. |
-| `bundle-barrel-imports` | Applies to large third-party packages. A feature's `index.ts` is allowed: it exports only its page and a few types, with named exports, never `export *`. Do not create any other barrel file, such as `shared/components/index.ts`. |
-| `rerender-memo`, `rerender-simple-expression-in-memo`, `advanced-use-latest`, `advanced-event-handler-refs` | React Compiler handles memoization. Apply these by hand only after the Profiler shows a problem the compiler did not fix. |
-| `rendering-conditional-render` | In Views, use `condition ? <X /> : null` instead of `&&` when the left side can be a number. One level only. No nested ternaries (see `code-quality.md`). |
+| `server-*`, `rendering-hydration-*` | Do not apply. No SSR, no RSC, no hydration. |
+| `async-api-routes`, `server-after-nonblocking` | No API routes. The parallel-work principle applies to IPC handlers in `src/main/`. |
+| `client-swr-dedup` | Use TanStack Query. See `data-and-state.md`. |
+| `bundle-dynamic-imports` | Use `React.lazy` and `Suspense`. |
+| `bundle-barrel-imports` | A feature's `index.ts` is allowed (named exports only, no `export *`). No other barrel files. |
+| `rerender-memo`, `rerender-simple-expression-in-memo`, `advanced-use-latest`, `advanced-event-handler-refs` | React Compiler handles these. Apply by hand only with a Profiler reason. |
+| `rendering-conditional-render` | Use `cond ? <X /> : null` when `cond` can be a number. |
 
 ## React Compiler
 
-React Compiler is on for the whole renderer. It memoizes components and hooks automatically.
+On for the whole renderer, through `babel-plugin-react-compiler` (exact version) in the renderer's `@vitejs/plugin-react` config in `electron.vite.config.ts`. Recheck the setup before upgrading Vite or `@vitejs/plugin-react`.
 
-Setup, done once in the first refactor step:
+- No manual `useMemo`, `useCallback`, or `React.memo` unless the Profiler shows a slow render the compiler missed. Write the reason beside it.
+- Render is pure. No mutation of props, state, or hook values. No side effects in the body.
+- New components show the "Memo ✨" badge in React DevTools. If not, find the violation.
+- Opt out only with `"use no memo"` and a comment explaining why.
 
-- Install `babel-plugin-react-compiler` with an exact version (no `^`).
-- Enable it in `vite.config.ts` through `@vitejs/plugin-react`:
+## Rules
 
-```ts
-react({ babel: { plugins: [['babel-plugin-react-compiler', {}]] } })
-```
+1. **Virtualize long lists.** A list that can pass about 100 rows uses `@tanstack/react-virtual` in a `ScrollArea`: the collection tree (up to 10,000 nodes) and commit history (up to 500).
+2. **Lazy-load heavy views.** Pages load with `React.lazy` and a skeleton `Suspense` fallback. The commit diff and docs views stay out of the startup chunk.
+3. **Watch startup.** Check chunk sizes from `bun run build` after adding a dependency. Inspect with `rollup-plugin-visualizer` before adding more if the startup chunk grows noticeably.
+4. **Heavy work off render.** Snapshot diffs are computed once per commit and cached by query key. Over about 50 ms on a large tree, move to a Web Worker or the main process.
+5. **Responsive input.** Search and filter results use `useDeferredValue`. Tab switches use `startTransition`.
+6. **Prefetch on intent.** On hover or focus of a workspace row, `prefetchQuery` its data and preload its chunk.
+7. **Narrow invalidation.** A `workspace.updated` event invalidates only that workspace's keys.
+8. **No waterfalls.** Independent queries start together.
+9. **No components defined inside components.**
+10. **Fonts.** Bundle fonts locally with `font-display: swap` in `index.css`.
+11. **Read storage once.** Cache `localStorage` reads.
+12. **IPC.** Do not call `window.apiDesktop` in a loop. Batch on the main side.
 
-- This works with `@vitejs/plugin-react` 5. Version 6 (used with Vite 8) changes how Babel plugins are loaded. Check the setup again before upgrading either package.
+## Checklist
 
-Rules:
-
-- Do not write `useMemo`, `useCallback`, or `React.memo` by hand. Add one only when React Profiler shows a slow render that the compiler did not fix, and write the reason beside it.
-- Render must be pure. Do not mutate props, state, or values from hooks. Do not run side effects in the component body.
-- Check new components in React DevTools. A compiled component shows the "Memo ✨" badge. If the badge is missing, find the rule violation and fix it.
-- To opt one component out, add the `"use no memo"` directive with a comment that explains why.
-- Biome does not check compiler rules. Review for purity by hand.
-
-## Rules for this app
-
-1. **Virtualize long lists.** Any list that can pass about 100 rows uses `@tanstack/react-virtual` inside a `ScrollArea`. This applies to the collection tree (the cloud API allows up to 10,000 nodes) and to the commit history (up to 500 commits).
-2. **Split code by route.** Every page is loaded with `React.lazy` and wrapped in `Suspense` with a skeleton fallback. The commit diff and the endpoint documentation views are the heaviest and must not be in the initial bundle.
-3. **Keep the bundle within budget.** The initial JavaScript must stay under 150 KB gzip. Check the sizes printed by `bun run build` after adding a dependency. If the budget is exceeded, inspect the bundle with `rollup-plugin-visualizer` before you add more.
-4. **Keep heavy work out of render.** Diffing commit snapshots (`compareSnapshots` in the activity feature today) is computed once per commit, cached by query key, and never recomputed on each render. If it takes more than about 50 ms on a large tree, move it to a Web Worker.
-5. **Keep input responsive.** Search and filter inputs use `useDeferredValue` for the filtered result. Tab switches and other non-urgent updates use `startTransition`.
-6. **Prefetch on intent.** On hover or focus of a workspace row, prefetch its data with `queryClient.prefetchQuery` and preload its route chunk. The page then opens without a loading state.
-7. **Invalidate narrowly on sync events.** A `workspace.updated` WebSocket event invalidates only that workspace's keys.
-8. **Avoid request waterfalls.** Queries that do not depend on each other start together. Do not nest components so that each one waits for its parent's data before starting its own request.
-9. **Do not define components inside components.** Hoist them to module level.
-10. **Load fonts without layout shift.** Self-host the font files, declare them with `font-display: swap` in `index.css`, and preload the weight used above the fold.
-11. **Read storage once.** Cache `localStorage` reads, such as the language preference, instead of reading on every render.
-
-## Targets
-
-Measure on a production build (`bun run build`, then `vite preview`), with Lighthouse in mobile mode:
-
-- LCP under 2.5 s
-- INP under 200 ms
-- CLS under 0.1
-
-Use React Profiler for interactions that feel slow.
-
-## Checklist before handoff
-
-1. No new request waterfall.
-2. Initial bundle under 150 KB gzip.
-3. Lists that can pass about 100 rows are virtualized.
-4. New components show the compiler badge.
-5. Changed routes meet the Lighthouse targets.
+1. No new waterfall.
+2. Long lists virtualized.
+3. New components show the compiler badge.
+4. Slow interactions profiled with React Profiler. Target: input response under 200 ms, no layout shift on load.
