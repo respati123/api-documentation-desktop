@@ -3,8 +3,13 @@ import { basename, join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
 import updaterModule from 'electron-updater'
+import { z } from 'zod'
 import type { WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
-import { type AiToolId, connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
+import { bodyModeSchema } from '../renderer/src/shared/models/api-node.model'
+import { isRecord } from '../renderer/src/shared/utils/record'
+import { CHANNELS } from '../shared/ipc/channels'
+import { connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
+import { assertTrustedSender, isTrustedPage } from './ipc-guard'
 import { type LoopbackSignIn, startLoopbackSignIn } from './loopback-auth'
 import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
 
@@ -25,32 +30,53 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 
-type ApiRequest = {
-  method: string
-  url: string
-  headers: Array<{ name: string; value: string; enabled: boolean }>
-  params?: Array<{ id: string; name: string; value: string; enabled: boolean; description?: string }>
-  auth?:
-    | { type: 'none' }
-    | { type: 'bearer'; token: string }
-    | { type: 'basic'; username: string; password: string }
-    | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
-  body?: string
-  bodyMode?: 'form-data' | 'urlencoded' | 'graphql' | 'json' | 'xml' | 'yaml' | 'edn' | 'text' | 'other' | 'file' | 'none'
-  bodyFields?: Array<{
-    id: string
-    name: string
-    value: string
-    enabled: boolean
-    type: 'text' | 'file'
-    filePath?: string
-    fileName?: string
-  }>
-  bodyVariables?: string
-  bodyMimeType?: string
-  bodyPath?: string
-  bodyFileName?: string
-}
+const keyValueRowSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  value: z.string(),
+  enabled: z.boolean(),
+  description: z.string().optional(),
+})
+
+const apiRequestSchema = z.object({
+  method: z.string(),
+  url: z.string(),
+  headers: z.array(z.object({ name: z.string(), value: z.string(), enabled: z.boolean() })),
+  params: z.array(keyValueRowSchema).optional(),
+  auth: z
+    .discriminatedUnion('type', [
+      z.object({ type: z.literal('none') }),
+      z.object({ type: z.literal('bearer'), token: z.string() }),
+      z.object({ type: z.literal('basic'), username: z.string(), password: z.string() }),
+      z.object({ type: z.literal('api-key'), name: z.string(), value: z.string(), location: z.enum(['header', 'query']) }),
+    ])
+    .optional(),
+  body: z.string().optional(),
+  bodyMode: bodyModeSchema.optional(),
+  bodyFields: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        value: z.string(),
+        enabled: z.boolean(),
+        type: z.enum(['text', 'file']),
+        filePath: z.string().optional(),
+        fileName: z.string().optional(),
+      }),
+    )
+    .optional(),
+  bodyVariables: z.string().optional(),
+  bodyMimeType: z.string().optional(),
+  bodyPath: z.string().optional(),
+  bodyFileName: z.string().optional(),
+})
+
+// Rows read from the local database. Each one is checked before its fields are used.
+const dataRowSchema = z.object({ data: z.string() })
+const secretRowSchema = z.object({ value: z.instanceof(Uint8Array) })
+const keyRowSchema = z.object({ key: z.string() })
+const pragmaRowSchema = z.object({ data_version: z.union([z.number(), z.bigint()]) })
 
 type LocalWorkspace = {
   id: string
@@ -78,7 +104,7 @@ function receiveInviteLink(link: string): void {
     if (!token) return
     pendingInviteToken = token
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('invite:token', token)
+      mainWindow.webContents.send(CHANNELS.invite.token, token)
       pendingInviteToken = undefined
     }
   } catch {
@@ -103,13 +129,13 @@ let databaseWatchTimer: NodeJS.Timeout | undefined
 function watchExternalWorkspaceChanges(): void {
   if (databaseWatchTimer) return
   const db = database()
-  let observedVersion = Number((db.prepare('PRAGMA data_version').get() as { data_version: number }).data_version)
+  let observedVersion = Number(pragmaRowSchema.parse(db.prepare('PRAGMA data_version').get()).data_version)
   databaseWatchTimer = setInterval(() => {
     try {
-      const currentVersion = Number((db.prepare('PRAGMA data_version').get() as { data_version: number }).data_version)
+      const currentVersion = Number(pragmaRowSchema.parse(db.prepare('PRAGMA data_version').get()).data_version)
       if (currentVersion === observedVersion) return
       observedVersion = currentVersion
-      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('workspace:external-change')
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(CHANNELS.workspace.externalChange)
     } catch (error) {
       console.error('Could not check for external workspace changes:', error)
     }
@@ -133,7 +159,7 @@ function restoreSecretVariableValues(workspaceId: string, value: WorkspaceVariab
     rows.map((item) => {
       if (!item.secret) return item
       const key = `workspace-variable:${workspaceId}:${item.id}`
-      const row = database().prepare('SELECT value FROM secrets WHERE key = ?').get(key) as { value: Uint8Array } | undefined
+      const row = secretRowSchema.optional().parse(database().prepare('SELECT value FROM secrets WHERE key = ?').get(key))
       return row ? { ...item, value: safeStorage.decryptString(Buffer.from(row.value)) } : item
     })
   return {
@@ -151,7 +177,7 @@ function persistWorkspace(workspace: LocalWorkspace): boolean {
   const canEncrypt = safeStorage.isEncryptionAvailable()
   const prefix = `workspace-variable:${workspace.id}:`
   const activeKeys = new Set(secretRows.map((item) => `${prefix}${item.id}`))
-  const existing = db.prepare('SELECT key FROM secrets').all() as { key: string }[]
+  const existing = z.array(keyRowSchema).parse(db.prepare('SELECT key FROM secrets').all())
   for (const row of existing)
     if (row.key.startsWith(prefix) && !activeKeys.has(row.key)) db.prepare('DELETE FROM secrets WHERE key = ?').run(row.key)
   if (canEncrypt) {
@@ -179,13 +205,49 @@ function persistWorkspace(workspace: LocalWorkspace): boolean {
   return canEncrypt || secretRows.every((item) => !item.value)
 }
 
+const aiToolSchema = z.enum(['codex', 'claude-cli', 'claude-desktop'])
+const installableToolSchema = z.enum(['codex', 'claude-cli'])
+
+function cookieList(value: string | null): string[] {
+  return value ? [value] : []
+}
+
+function isWorkspaceVariables(value: unknown): value is WorkspaceVariables {
+  return isRecord(value) && Array.isArray(value.globals) && Array.isArray(value.environments)
+}
+
+function isLocalWorkspace(value: unknown): value is LocalWorkspace {
+  return isRecord(value) && typeof value.id === 'string' && Array.isArray(value.tree) && Array.isArray(value.baseTree)
+}
+
+function parseStoredRecord(text: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(text)
+  if (!isRecord(value)) throw new TypeError('Stored data is not an object.')
+  return value
+}
+
 function loadWorkspaceData(value: string): LocalWorkspace {
-  const workspace = JSON.parse(value) as LocalWorkspace
-  return { ...workspace, variables: restoreSecretVariableValues(workspace.id, workspace.variables) }
+  const parsed: unknown = JSON.parse(value)
+  if (!isLocalWorkspace(parsed)) throw new TypeError('Stored workspace is damaged.')
+  return {
+    ...parsed,
+    variables: restoreSecretVariableValues(parsed.id, isWorkspaceVariables(parsed.variables) ? parsed.variables : undefined),
+  }
+}
+
+function isExternalLink(url: string): boolean {
+  try {
+    const protocol = new URL(url).protocol
+    return protocol === 'https:' || protocol === 'mailto:'
+  } catch {
+    return false
+  }
 }
 
 function createWindow(): void {
+  const appTitle = app.isPackaged ? 'API Documentation' : 'API Documentation (DEVELOPMENT)'
   const window = new BrowserWindow({
+    title: appTitle,
     width: 1440,
     height: 900,
     minWidth: 860,
@@ -200,14 +262,27 @@ function createWindow(): void {
     },
   })
   mainWindow = window
+  // Windows never open inside the app. Only https and mailto links leave the app, in the system browser.
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (isExternalLink(url)) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  window.webContents.on('will-navigate', (event, url) => {
+    if (!isTrustedPage(url)) event.preventDefault()
+  })
   // Check again when the user brings the app back to the front.
   window.on('focus', () => checkForUpdatesNow?.())
+  // The page title in index.html would otherwise replace the environment label.
+  window.webContents.on('page-title-updated', (event) => {
+    event.preventDefault()
+    window.setTitle(appTitle)
+  })
   window.on('closed', () => {
     if (mainWindow === window) mainWindow = undefined
   })
   window.webContents.once('did-finish-load', () => {
     if (pendingInviteToken) {
-      window.webContents.send('invite:token', pendingInviteToken)
+      window.webContents.send(CHANNELS.invite.token, pendingInviteToken)
       pendingInviteToken = undefined
     }
   })
@@ -219,7 +294,9 @@ function createWindow(): void {
   }
 }
 
-ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
+ipcMain.handle(CHANNELS.request.send, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [request] = z.tuple([apiRequestSchema]).parse(args)
   const startedAt = performance.now()
   const targetUrl = new URL(request.url)
   if (request.params !== undefined) targetUrl.search = ''
@@ -323,8 +400,8 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
     })
   } catch (error) {
     const cause = error && typeof error === 'object' && 'cause' in error ? error.cause : undefined
-    const details = cause && typeof cause === 'object' ? (cause as { code?: string; message?: string }) : undefined
-    const code = details?.code
+    const details = isRecord(cause) ? cause : undefined
+    const code = typeof details?.code === 'string' ? details.code : undefined
     const reason =
       code === 'ECONNREFUSED'
         ? 'The server refused the connection. Check that the API is running and the host and port are correct.'
@@ -334,7 +411,8 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
             ? 'The connection timed out. Check the server and network.'
             : code?.startsWith('CERT_') || code?.startsWith('ERR_TLS_')
               ? 'The TLS certificate could not be verified.'
-              : details?.message || (error instanceof Error ? error.message : 'Unknown network error.')
+              : (typeof details?.message === 'string' && details.message) ||
+                (error instanceof Error ? error.message : 'Unknown network error.')
     throw new Error(`Could not reach ${targetUrl.origin}. ${reason}${code ? ` (${code})` : ''}`)
   }
   const body = await response.text()
@@ -347,22 +425,24 @@ ipcMain.handle('request:send', async (_event, request: ApiRequest) => {
     cookies:
       typeof response.headers.getSetCookie === 'function'
         ? response.headers.getSetCookie()
-        : response.headers.get('set-cookie')
-          ? [response.headers.get('set-cookie') as string]
-          : [],
+        : cookieList(response.headers.get('set-cookie')),
     body,
   }
 })
 
-ipcMain.handle('file:select', async () => {
+ipcMain.handle(CHANNELS.file.select, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
   const result = await dialog.showOpenDialog({ properties: ['openFile'] })
   const path = result.filePaths[0]
   return result.canceled || !path ? null : { path, name: basename(path) }
 })
 
-ipcMain.handle('workspace:load', (_event, legacyTree: unknown[]) => {
+ipcMain.handle(CHANNELS.workspace.load, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [legacyTree] = z.tuple([z.unknown()]).parse(args)
   const db = database()
-  const saved = db.prepare('SELECT data FROM workspaces WHERE id = ?').get('local-default') as { data: string } | undefined
+  const saved = dataRowSchema.optional().parse(db.prepare('SELECT data FROM workspaces WHERE id = ?').get('local-default'))
   if (saved) return loadWorkspaceData(saved.data)
   const tree = Array.isArray(legacyTree) ? legacyTree : []
   const variables = { globals: [], environments: [] }
@@ -382,44 +462,56 @@ ipcMain.handle('workspace:load', (_event, legacyTree: unknown[]) => {
   return workspace
 })
 
-ipcMain.handle('workspace:save', (_event, workspace: LocalWorkspace) => {
-  if (!workspace || typeof workspace.id !== 'string' || !Array.isArray(workspace.tree) || !Array.isArray(workspace.baseTree)) {
-    throw new TypeError('Invalid workspace data.')
-  }
+ipcMain.handle(CHANNELS.workspace.save, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [workspace] = z.tuple([z.custom<LocalWorkspace>(isLocalWorkspace)]).parse(args)
   return persistWorkspace(workspace)
 })
 
-ipcMain.handle('workspace:list', () => {
-  return (database().prepare('SELECT data FROM workspaces ORDER BY rowid').all() as { data: string }[]).map((row) =>
-    loadWorkspaceData(row.data),
-  )
+ipcMain.handle(CHANNELS.workspace.list, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
+  return z
+    .array(dataRowSchema)
+    .parse(database().prepare('SELECT data FROM workspaces ORDER BY rowid').all())
+    .map((row) => loadWorkspaceData(row.data))
 })
 
-ipcMain.handle('commit:save', (_event, workspaceId: string, commit: unknown) => {
-  if (typeof workspaceId !== 'string' || !commit || typeof commit !== 'object') throw new TypeError('Invalid commit data.')
-  const id = (commit as { id?: unknown }).id
+ipcMain.handle(CHANNELS.commit.save, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [workspaceId, commit] = z.tuple([z.string(), z.custom<Record<string, unknown>>(isRecord)]).parse(args)
+  const id = commit.id
   if (typeof id !== 'string') throw new TypeError('Commit id is required.')
   const safeCommit = {
-    ...(commit as Record<string, unknown>),
-    variables: stripSecretVariableValues((commit as { variables?: WorkspaceVariables }).variables),
+    ...commit,
+    variables: stripSecretVariableValues(isWorkspaceVariables(commit.variables) ? commit.variables : undefined),
   }
   database()
     .prepare('INSERT OR REPLACE INTO commits (id, workspace_id, data) VALUES (?, ?, ?)')
     .run(id, workspaceId, JSON.stringify(safeCommit))
 })
 
-ipcMain.handle('commit:list', (_event, workspaceId: string) => {
-  return (database().prepare('SELECT data FROM commits WHERE workspace_id = ? ORDER BY rowid').all(workspaceId) as { data: string }[]).map(
-    (row) => {
-      const commit = JSON.parse(row.data) as Record<string, unknown>
-      return { ...commit, variables: stripSecretVariableValues(commit.variables as WorkspaceVariables | undefined) }
-    },
-  )
+ipcMain.handle(CHANNELS.commit.list, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [id] = z.tuple([z.string()]).parse(args)
+  return z
+    .array(dataRowSchema)
+    .parse(database().prepare('SELECT data FROM commits WHERE workspace_id = ? ORDER BY rowid').all(id))
+    .map((row) => {
+      const commit = parseStoredRecord(row.data)
+      return { ...commit, variables: stripSecretVariableValues(isWorkspaceVariables(commit.variables) ? commit.variables : undefined) }
+    })
 })
 
-ipcMain.handle('secret:available', () => safeStorage.isEncryptionAvailable())
+ipcMain.handle(CHANNELS.secret.available, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
+  return safeStorage.isEncryptionAvailable()
+})
 
-ipcMain.handle('auth:begin', async (_event, cloudUrl: string) => {
+ipcMain.handle(CHANNELS.auth.begin, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [cloudUrl] = z.tuple([z.string()]).parse(args)
   let base: URL
   try {
     base = new URL(cloudUrl)
@@ -431,7 +523,7 @@ ipcMain.handle('auth:begin', async (_event, cloudUrl: string) => {
   activeSignIn = await startLoopbackSignIn((code) => {
     activeSignIn = undefined
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('auth:code', code)
+      mainWindow.webContents.send(CHANNELS.auth.code, code)
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()
     }
@@ -442,13 +534,17 @@ ipcMain.handle('auth:begin', async (_event, cloudUrl: string) => {
   await shell.openExternal(target.toString())
 })
 
-ipcMain.handle('session:load', () => {
+ipcMain.handle(CHANNELS.session.load, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
   if (!safeStorage.isEncryptionAvailable()) return null
-  const row = database().prepare('SELECT value FROM secrets WHERE key = ?').get('api-session') as { value: Uint8Array } | undefined
+  const row = secretRowSchema.optional().parse(database().prepare('SELECT value FROM secrets WHERE key = ?').get('api-session'))
   return row ? safeStorage.decryptString(Buffer.from(row.value)) : null
 })
 
-ipcMain.handle('session:save', (_event, token: string) => {
+ipcMain.handle(CHANNELS.session.save, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [token] = z.tuple([z.string()]).parse(args)
   if (!safeStorage.isEncryptionAvailable()) return false
   const encrypted = safeStorage.encryptString(token)
   database()
@@ -457,7 +553,9 @@ ipcMain.handle('session:save', (_event, token: string) => {
   return true
 })
 
-ipcMain.handle('session:clear', () => {
+ipcMain.handle(CHANNELS.session.clear, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
   database().prepare('DELETE FROM secrets WHERE key = ?').run('api-session')
 })
 
@@ -476,7 +574,7 @@ function setupAutoUpdate(): void {
   autoUpdater.autoInstallOnAppQuit = false
   const sendUpdateStatus = (status: UpdateStatus) => {
     latestUpdateStatus = status
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update:status', status)
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(CHANNELS.update.status, status)
   }
   autoUpdater.on('update-available', (info) => sendUpdateStatus({ state: 'available', version: info.version }))
   autoUpdater.on('download-progress', (progress) => {
@@ -507,13 +605,19 @@ function setupAutoUpdate(): void {
   setInterval(() => checkForUpdatesNow?.(), updateCheckIntervalMs).unref()
 }
 
-ipcMain.handle('update:download', (_event, version: string) => {
+ipcMain.handle(CHANNELS.update.download, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [version] = z.tuple([z.string()]).parse(args)
   // Show the progress dialog immediately, before the first progress event arrives.
   latestUpdateStatus = { state: 'downloading', version, percent: 0 }
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update:status', latestUpdateStatus)
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(CHANNELS.update.status, latestUpdateStatus)
   void autoUpdater.downloadUpdate().catch((error: Error) => console.error('Auto-update download failed:', error))
 })
-ipcMain.handle('update:latest', () => latestUpdateStatus ?? null)
+ipcMain.handle(CHANNELS.update.latest, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
+  return latestUpdateStatus ?? null
+})
 function sendToWindow(channel: string, payload?: unknown): void {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload)
 }
@@ -524,20 +628,30 @@ async function requireNodeRuntime(): Promise<NodeRuntimePaths> {
   return status
 }
 
-ipcMain.handle('ai:status', () => getAiConnectStatus(app.getPath('userData')))
-ipcMain.handle('ai:install-node', async () => {
+ipcMain.handle(CHANNELS.ai.status, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
+  return getAiConnectStatus(app.getPath('userData'))
+})
+ipcMain.handle(CHANNELS.ai.installNode, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  z.tuple([]).parse(args)
   const status = await installNodeRuntime(join(app.getPath('userData'), 'runtime'), (progress) =>
-    sendToWindow('ai:node-progress', progress),
+    sendToWindow(CHANNELS.ai.nodeProgress, progress),
   )
   return status.installed ? status.version : null
 })
-ipcMain.handle('ai:install-tool', async (_event, id: 'codex' | 'claude-cli') => {
+ipcMain.handle(CHANNELS.ai.installTool, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [id] = z.tuple([installableToolSchema]).parse(args)
   const runtime = await requireNodeRuntime()
-  await installCli(app.getPath('userData'), runtime, id, (line) => sendToWindow('ai:log', line))
+  await installCli(app.getPath('userData'), runtime, id, (line) => sendToWindow(CHANNELS.ai.log, line))
 })
-ipcMain.handle('ai:connect', async (_event, id: AiToolId) => {
+ipcMain.handle(CHANNELS.ai.connect, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [id] = z.tuple([aiToolSchema]).parse(args)
   const runtime = await requireNodeRuntime()
-  await connectAiTool(app.getPath('userData'), runtime, id, (line) => sendToWindow('ai:log', line))
+  await connectAiTool(app.getPath('userData'), runtime, id, (line) => sendToWindow(CHANNELS.ai.log, line))
 })
 
 function showAbout(): void {
@@ -561,7 +675,7 @@ function buildApplicationMenu(): Menu {
     {
       role: 'help',
       submenu: [
-        { label: 'Connect AI assistant…', click: () => sendToWindow('menu:connect-ai') },
+        { label: 'Connect AI assistant…', click: () => sendToWindow(CHANNELS.menu.connectAi) },
         { type: 'separator' },
         { label: 'About API Documentation', click: showAbout },
       ],

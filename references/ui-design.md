@@ -1,92 +1,62 @@
 # UI, design, and styles
 
-Read this before any UI, design, or styling change in `src/`.
+Read this before any UI, design, or styling change in the renderer.
 
-## Required skill
+## Required skills
 
-Use the **impeccable** skill for all UI work. It is installed in this folder at `.agents/skills/impeccable/SKILL.md`.
+**impeccable** (`.agents/skills/impeccable/SKILL.md`), for all UI work:
 
-1. Read `.agents/skills/impeccable/SKILL.md`.
-2. Run its `scripts/impeccable context` setup step with the cwd set to this folder.
-3. Load the reference for the request, for example `reference/audit.md` for reviews, or `reference/craft-floor.md` before editing.
-4. When the change is finished, run the detector on the changed files:
-   `./.agents/skills/impeccable/scripts/impeccable detect --json <changed files>`
+1. Read `SKILL.md` and run `scripts/impeccable context` from this folder.
+2. Load the reference for the task: `reference/craft-floor.md` before editing, `reference/audit.md` for reviews.
+3. When done: `./.agents/skills/impeccable/scripts/impeccable detect --json <changed files>`.
 
-## Required skill: shadcn
+If it is missing: `bunx impeccable install -y --project --providers=codex --no-hooks`. Do not copy it by hand. `scripts/bin/` is gitignored.
 
-Use the **shadcn** skill for every component change. It is installed at `.agents/skills/shadcn/SKILL.md`.
+**shadcn** (`.agents/skills/shadcn/SKILL.md`), for every component change:
 
-1. Read `.agents/skills/shadcn/SKILL.md` and its `rules/` files that match the change (`composition.md`, `forms.md`, `styling.md`, `icons.md`).
-2. Check what is installed with `npx shadcn@latest info --json` before adding anything.
-3. Fetch the component docs with `npx shadcn@latest docs <component>` before writing code that uses it.
+1. Read `SKILL.md` and the matching `rules/` files (`composition.md`, `forms.md`, `styling.md`, `icons.md`).
+2. Check what is installed: `npx shadcn@latest info --json`.
+3. Read the docs before use: `npx shadcn@latest docs <component>`.
 
-## Components: shadcn/ui only (mandatory)
+## Components: shadcn/ui only
 
-This rule is mandatory. Every interactive or structural UI element in a view uses a shadcn component.
+- Views and pages never contain raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, or `a`. Use `Button`, `Input`, `Select`, `Textarea`, `Label`, `Table`, `Separator`, and `Button variant="link"`.
+- Notices and errors use `Alert`. Empty states use `Empty`. Panels use `Card`. Status labels use `Badge`. Loading uses `Skeleton`.
+- Add components only with `npx shadcn@latest add <name> -y`. They go in `shared/components/ui/`. Never hand-edit them. Wrap one in `shared/components/` if it needs a different look.
+- After every `add`, fix the `cn` import to `@/shared/utils/cn`.
+- A custom element is allowed only when no shadcn component fits. Say so in the handoff.
+- No other UI library.
 
-- Views in `features/**/views` and `features/**/pages` never contain raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, or `a` elements. Use `Button`, `Input`, `Select`, `Textarea`, `Label`, `Table`, `Separator`, or the shadcn link pattern (`Button` with `variant="link"`).
-- Callouts, errors, and notices use `Alert`. Empty states use `Empty`. Stat tiles and panels use `Card`. Status labels use `Badge`. Loading placeholders use `Skeleton`. Dividers use `Separator`.
-- Components are added only with the shadcn CLI: `npx shadcn@latest add <component> -y`. The generated files go in `src/renderer/src/shared/components/ui/`. Do not hand-edit them. If a component needs a different look, wrap it in an atom or molecule.
-- Import the generated `cn` helper through `@/shared/utils/cn`. The CLI writes `from "cn"` by default, so fix it after every `add`.
-- Before writing a custom element, search for a shadcn component. A custom element is allowed only when no shadcn component fits, such as a decorative mark. Say so in the code review.
-- Do not add a third-party UI library next to shadcn.
-- `src/renderer/src/app/ui-rules.test.ts` enforces the raw-element rule for views and pages. Run `bun run test` before handoff.
+Enforced by `app/ui-rules.test.ts`.
 
-## Tailwind CSS
+## Styling
 
-shadcn/ui is built on Tailwind CSS. Tailwind is required, and it is the only styling system.
-
-- Tailwind v4 is set up through the Vite plugin (`@tailwindcss/vite`) and one global entry stylesheet, `src/index.css`.
-- `index.css` holds only three things: the `@import "tailwindcss"` line, the shadcn theme tokens (`:root` and `.dark` variables), and the base layer that shadcn generates. Nothing else goes there.
-- The entry stylesheet is the only `.css` file in the app. It is imported once in `app/providers.tsx` or `main.tsx`.
-- No `.css`, `.scss`, or `.module.css` files for components. Style with Tailwind utility classes.
-- Use the `cn()` helper from `@/shared/utils/cn` to merge class names. It is the shadcn default.
-
-## Styling rules
-
-- Tailwind utilities are the only way to style components.
-- No inline `style={{}}` for layout or color. Use utility classes. Inline style is allowed only for values computed at runtime, such as a dynamic width.
-- Colors come from the theme tokens (`bg-background`, `text-muted-foreground`, `border-border`, and so on). No hex values in components.
-- `graphite.css` and `styles.css` are removed. Views never depend on a legacy stylesheet.
-
-## Theme
-
-- Dark and light themes both come from the same token set. Define the tokens once, in the global entry.
-- Keep the look close to the current design when you migrate. Map the current colors to tokens, then check the screenshot.
+- Tailwind v4 through `@tailwindcss/vite`. The only stylesheet is `src/renderer/src/index.css`, imported once in `main.tsx`.
+- `index.css` holds only `@import "tailwindcss"`, the theme tokens (`:root` and `.dark`), the shadcn base layer, and `@font-face` rules.
+- No other `.css`, `.scss`, or `.module.css` files.
+- Colors come from theme tokens (`bg-background`, `text-muted-foreground`). No hex values in components.
+- No inline `style` except for values computed at runtime, such as a resizable panel width.
+- Merge classes with `cn()`.
+- Light and dark themes share one token set.
 
 ## Scrolling
 
-- Use shadcn `ScrollArea` for any scrollable region. Set `type="auto"`, so the scrollbar appears only when the content overflows.
-- When there is nothing to scroll, the scrollbar stays hidden.
-- When the user scrolls, show a thin indicator. Hide it again after the scroll stops.
-- Scrolling should feel smooth. Do not set `scroll-behavior` on the whole page to get this.
-- Do not show a horizontal scrollbar on the page. A wide table scrolls inside its own `ScrollArea`.
+- Every scrollable region uses `ScrollArea` with `type="auto"`, so the scrollbar shows only when content overflows.
+- The window never scrolls horizontally. Wide content scrolls inside its own `ScrollArea`.
+- Do not set `scroll-behavior` on the whole page.
 
 ## Loading
 
-Loading must not look broken or jump:
+- Skeletons match the final layout. Never a full-screen spinner.
+- Do not show a skeleton for requests under about 150 ms. Serve cached data or delay it.
+- When a key changes, keep previous data with `keepPreviousData` and show a small inline pending indicator.
+- Fade content in over 150 to 200 ms. Respect `prefers-reduced-motion`.
+- The ViewModel returns `status`. The View renders the skeleton.
 
-- Show a skeleton with the same shape and size as the final content. Use shadcn `Skeleton`.
-- Do not show a spinner that replaces the whole screen. Keep the layout and fill only the content area.
-- Avoid flicker. Do not show the skeleton for requests that finish in under about 150ms. Delay it, or let the query serve cached data.
-- When a query changes its key, keep the previous data on screen with `keepPreviousData`, and show a small inline pending indicator.
-- Animate content in with a short fade, about 150 to 200ms. Respect `prefers-reduced-motion`.
-- Put loading state in the ViewModel (`status`) and render the skeleton in the View (see `architecture.md`).
+## Errors
 
-## Error states
+A view-level error state has a retry button. Crashes go to an error boundary. See `error-handling.md`.
 
-Show a view-level error state with a retry button. Route-level crashes go to an error boundary. See `error-handling.md`.
+## Window size check
 
-## Accessibility and testing attributes
-
-Every interactive element needs a `data-testid`. See `testing.md`. Do not query tests by class names, since class names come from Tailwind now.
-
-## Reinstall
-
-If the impeccable skill is missing, reinstall it in this folder:
-
-```
-bunx impeccable install -y --project --providers=codex --no-hooks
-```
-
-Do not copy it from another folder by hand. Do not commit `.agents/skills/impeccable/scripts/bin/`. It is gitignored.
+Check every UI change at the minimum window width set in `src/main/` and at a wide window. No horizontal scroll, no clipped text, in both `id` and `en`.

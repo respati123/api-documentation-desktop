@@ -1,10 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
+import { CHANNELS } from '../shared/ipc/channels'
 
 let pendingInviteToken: string | null = null
 const inviteHandlers = new Set<(token: string) => void>()
 
-ipcRenderer.on('invite:token', (_event, token: string) => {
+ipcRenderer.on(CHANNELS.invite.token, (_event, token: string) => {
   pendingInviteToken = token
   inviteHandlers.forEach((handler) => {
     handler(token)
@@ -25,7 +26,7 @@ type UpdateStatus =
   | { state: 'downloaded'; version: string }
   | { state: 'error'; version: string; message: string }
 const updateHandlers = new Set<(status: UpdateStatus) => void>()
-ipcRenderer.on('update:status', (_event, status: UpdateStatus) =>
+ipcRenderer.on(CHANNELS.update.status, (_event, status: UpdateStatus) =>
   updateHandlers.forEach((handler) => {
     handler(status)
   }),
@@ -34,7 +35,7 @@ ipcRenderer.on('update:status', (_event, status: UpdateStatus) =>
 let pendingAuthCode: string | null = null
 const authCodeHandlers = new Set<(code: string) => void>()
 
-ipcRenderer.on('auth:code', (_event, code: string) => {
+ipcRenderer.on(CHANNELS.auth.code, (_event, code: string) => {
   pendingAuthCode = code
   authCodeHandlers.forEach((handler) => {
     handler(code)
@@ -43,22 +44,22 @@ ipcRenderer.on('auth:code', (_event, code: string) => {
 })
 
 contextBridge.exposeInMainWorld('apiDesktop', {
-  sendRequest: (request: ApiRequest) => ipcRenderer.invoke('request:send', request),
-  selectFile: () => ipcRenderer.invoke('file:select') as Promise<{ path: string; name: string } | null>,
-  loadWorkspace: (legacyTree: unknown[]) => ipcRenderer.invoke('workspace:load', legacyTree),
-  saveWorkspace: (workspace: LocalWorkspace) => ipcRenderer.invoke('workspace:save', workspace) as Promise<boolean>,
-  listWorkspaces: () => ipcRenderer.invoke('workspace:list'),
+  sendRequest: (request: ApiRequest) => ipcRenderer.invoke(CHANNELS.request.send, request),
+  selectFile: (): Promise<{ path: string; name: string } | null> => ipcRenderer.invoke(CHANNELS.file.select),
+  loadWorkspace: (legacyTree: unknown[]) => ipcRenderer.invoke(CHANNELS.workspace.load, legacyTree),
+  saveWorkspace: (workspace: LocalWorkspace): Promise<boolean> => ipcRenderer.invoke(CHANNELS.workspace.save, workspace),
+  listWorkspaces: () => ipcRenderer.invoke(CHANNELS.workspace.list),
   onExternalWorkspaceChange: (handler: () => void) => {
     const listener = () => handler()
-    ipcRenderer.on('workspace:external-change', listener)
-    return () => ipcRenderer.removeListener('workspace:external-change', listener)
+    ipcRenderer.on(CHANNELS.workspace.externalChange, listener)
+    return () => ipcRenderer.removeListener(CHANNELS.workspace.externalChange, listener)
   },
-  secureStorageAvailable: () => ipcRenderer.invoke('secret:available') as Promise<boolean>,
-  saveCommit: (workspaceId: string, commit: LocalCommit) => ipcRenderer.invoke('commit:save', workspaceId, commit),
-  listCommits: (workspaceId: string) => ipcRenderer.invoke('commit:list', workspaceId),
-  loadSession: () => ipcRenderer.invoke('session:load'),
-  saveSession: (token: string) => ipcRenderer.invoke('session:save', token),
-  clearSession: () => ipcRenderer.invoke('session:clear'),
+  secureStorageAvailable: (): Promise<boolean> => ipcRenderer.invoke(CHANNELS.secret.available),
+  saveCommit: (workspaceId: string, commit: LocalCommit) => ipcRenderer.invoke(CHANNELS.commit.save, workspaceId, commit),
+  listCommits: (workspaceId: string) => ipcRenderer.invoke(CHANNELS.commit.list, workspaceId),
+  loadSession: () => ipcRenderer.invoke(CHANNELS.session.load),
+  saveSession: (token: string) => ipcRenderer.invoke(CHANNELS.session.save, token),
+  clearSession: () => ipcRenderer.invoke(CHANNELS.session.clear),
   onInviteToken: (handler: (token: string) => void) => {
     inviteHandlers.add(handler)
     if (pendingInviteToken) {
@@ -67,34 +68,34 @@ contextBridge.exposeInMainWorld('apiDesktop', {
     }
     return () => inviteHandlers.delete(handler)
   },
-  downloadUpdate: (version: string) => ipcRenderer.invoke('update:download', version) as Promise<void>,
-  aiStatus: () => ipcRenderer.invoke('ai:status') as Promise<AiConnectStatus>,
-  installNodeRuntime: () => ipcRenderer.invoke('ai:install-node') as Promise<string | null>,
-  installAiTool: (id: 'codex' | 'claude-cli') => ipcRenderer.invoke('ai:install-tool', id) as Promise<void>,
-  connectAiTool: (id: AiToolId) => ipcRenderer.invoke('ai:connect', id) as Promise<void>,
+  downloadUpdate: (version: string): Promise<void> => ipcRenderer.invoke(CHANNELS.update.download, version),
+  aiStatus: (): Promise<AiConnectStatus> => ipcRenderer.invoke(CHANNELS.ai.status),
+  installNodeRuntime: (): Promise<string | null> => ipcRenderer.invoke(CHANNELS.ai.installNode),
+  installAiTool: (id: 'codex' | 'claude-cli'): Promise<void> => ipcRenderer.invoke(CHANNELS.ai.installTool, id),
+  connectAiTool: (id: AiToolId): Promise<void> => ipcRenderer.invoke(CHANNELS.ai.connect, id),
   onNodeProgress: (handler: (progress: NodeInstallProgress) => void) => {
     const listener = (_event: unknown, progress: NodeInstallProgress) => handler(progress)
-    ipcRenderer.on('ai:node-progress', listener)
-    return () => ipcRenderer.removeListener('ai:node-progress', listener)
+    ipcRenderer.on(CHANNELS.ai.nodeProgress, listener)
+    return () => ipcRenderer.removeListener(CHANNELS.ai.nodeProgress, listener)
   },
   onAiLog: (handler: (line: string) => void) => {
     const listener = (_event: unknown, line: string) => handler(line)
-    ipcRenderer.on('ai:log', listener)
-    return () => ipcRenderer.removeListener('ai:log', listener)
+    ipcRenderer.on(CHANNELS.ai.log, listener)
+    return () => ipcRenderer.removeListener(CHANNELS.ai.log, listener)
   },
   onConnectAiMenu: (handler: () => void) => {
     const listener = () => handler()
-    ipcRenderer.on('menu:connect-ai', listener)
-    return () => ipcRenderer.removeListener('menu:connect-ai', listener)
+    ipcRenderer.on(CHANNELS.menu.connectAi, listener)
+    return () => ipcRenderer.removeListener(CHANNELS.menu.connectAi, listener)
   },
   onUpdateStatus: (handler: (status: UpdateStatus) => void) => {
     updateHandlers.add(handler)
-    void ipcRenderer.invoke('update:latest').then((status: UpdateStatus | null) => {
+    void ipcRenderer.invoke(CHANNELS.update.latest).then((status: UpdateStatus | null) => {
       if (status) handler(status)
     })
     return () => updateHandlers.delete(handler)
   },
-  beginBrowserSignIn: (cloudUrl: string) => ipcRenderer.invoke('auth:begin', cloudUrl) as Promise<void>,
+  beginBrowserSignIn: (cloudUrl: string): Promise<void> => ipcRenderer.invoke(CHANNELS.auth.begin, cloudUrl),
   onAuthCode: (handler: (code: string) => void) => {
     authCodeHandlers.add(handler)
     if (pendingAuthCode) {

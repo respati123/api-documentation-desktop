@@ -1,0 +1,21 @@
+// Every IPC channel name. The main process and the preload read names from here, so no channel is typed twice.
+export const CHANNELS = {
+  request: { send: 'request:send' },
+  file: { select: 'file:select' },
+  workspace: { load: 'workspace:load', save: 'workspace:save', list: 'workspace:list', externalChange: 'workspace:external-change' },
+  commit: { save: 'commit:save', list: 'commit:list' },
+  secret: { available: 'secret:available' },
+  auth: { begin: 'auth:begin', code: 'auth:code' },
+  session: { load: 'session:load', save: 'session:save', clear: 'session:clear' },
+  invite: { token: 'invite:token' },
+  update: { status: 'update:status', download: 'update:download', latest: 'update:latest' },
+  ai: {
+    status: 'ai:status',
+    installNode: 'ai:install-node',
+    nodeProgress: 'ai:node-progress',
+    installTool: 'ai:install-tool',
+    connect: 'ai:connect',
+    log: 'ai:log',
+  },
+  menu: { connectAi: 'menu:connect-ai' },
+} as const

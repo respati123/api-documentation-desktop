@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { delimiter, dirname, join } from 'node:path'
+import { isRecord } from '../renderer/src/shared/utils/record'
 import { findOnPath, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
 
 // Connects the local API Documentation MCP server to AI clients. The MCP server is
@@ -60,8 +61,8 @@ function claudeDesktopConfigPath(): string | null {
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
   try {
-    const parsed = JSON.parse(await readFile(path, 'utf8'))
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {}
+    const parsed: unknown = JSON.parse(await readFile(path, 'utf8'))
+    return isRecord(parsed) ? parsed : {}
   } catch {
     return {}
   }
@@ -79,8 +80,8 @@ export async function getAiConnectStatus(userDataDir: string): Promise<AiConnect
   const claudeCli = await readJson(claudeCliConfigPath())
   const desktopPath = claudeDesktopConfigPath()
   const desktop = desktopPath ? await readJson(desktopPath) : {}
-  const desktopServers = (desktop.mcpServers ?? {}) as Record<string, unknown>
-  const cliServers = (claudeCli.mcpServers ?? {}) as Record<string, unknown>
+  const desktopServers = isRecord(desktop.mcpServers) ? desktop.mcpServers : {}
+  const cliServers = isRecord(claudeCli.mcpServers) ? claudeCli.mcpServers : {}
 
   return {
     node: runtime.installed ? { installed: true, version: runtime.version, source: runtime.source } : { installed: false },
@@ -173,7 +174,7 @@ async function connectClaudeDesktop(runtime: NodeRuntimePaths, onLine: AiLogLine
   const path = claudeDesktopConfigPath()
   if (!path) throw new Error('Claude Desktop is not available on this operating system.')
   const config = await readJson(path)
-  const servers = (config.mcpServers ?? {}) as Record<string, unknown>
+  const servers = isRecord(config.mcpServers) ? config.mcpServers : {}
   const [command, ...args] = mcpCommand(runtime)
   servers[mcpServerName] = { command, args }
   config.mcpServers = servers

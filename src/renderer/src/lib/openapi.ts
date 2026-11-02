@@ -1,23 +1,24 @@
 import { parse, stringify } from 'yaml'
 import type {
+  ApiNode,
   BodyField,
   BodyMode,
   HeaderField,
   ParamField,
   RequestAuth,
+  RequestNode,
   ResponseContent,
   ResponseDefinition,
-  SyncRequest,
-  SyncTreeNode,
-} from './merge'
+} from '@/shared/models/api-node.model'
+import { isRecord } from '@/shared/utils/record'
 
 type OpenApiObject = Record<string, unknown>
-type ParsedRequest = { request: SyncRequest; tags: string[] }
+type ParsedRequest = { request: RequestNode; tags: string[] }
 
 const methods = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'] as const
 
 function record(value: unknown): OpenApiObject | null {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as OpenApiObject) : null
+  return isRecord(value) ? value : null
 }
 
 function asString(value: unknown, fallback = ''): string {
@@ -111,7 +112,7 @@ function parameterFields(
   return { params, pathParams, headers }
 }
 
-function bodyFromRequest(spec: OpenApiObject, raw: unknown): Pick<SyncRequest, 'body' | 'bodyMode' | 'bodyFields' | 'bodyMimeType'> {
+function bodyFromRequest(spec: OpenApiObject, raw: unknown): Pick<RequestNode, 'body' | 'bodyMode' | 'bodyFields' | 'bodyMimeType'> {
   const requestBody = resolveReference(spec, raw)
   const content = record(requestBody?.content)
   if (!content) return { body: '', bodyMode: 'none' }
@@ -230,8 +231,8 @@ function referencedResponseSchemas(spec: OpenApiObject, responses: ResponseDefin
       }
     }
   while (pending.length) {
-    const name = pending.pop() as string
-    if (Object.hasOwn(included, name) || !Object.hasOwn(available, name)) continue
+    const name = pending.pop()
+    if (name === undefined || Object.hasOwn(included, name) || !Object.hasOwn(available, name)) continue
     const schema = available[name]
     included[name] = schema
     findReferences(schema)
@@ -259,7 +260,7 @@ function rewriteSchemaReferences(value: unknown, mapping: Map<string, string>): 
 
 type ComponentSchemaRegistry = { schemas: Record<string, unknown>; mappings: Map<string, Map<string, string>> }
 
-function componentSchemaRegistry(requests: SyncRequest[]): ComponentSchemaRegistry {
+function componentSchemaRegistry(requests: RequestNode[]): ComponentSchemaRegistry {
   const schemas: Record<string, unknown> = {}
   const sourceMappings = new Map<string, Map<string, string>>()
   const mappings = new Map<string, Map<string, string>>()
@@ -267,8 +268,9 @@ function componentSchemaRegistry(requests: SyncRequest[]): ComponentSchemaRegist
     const source = request.openApiSchemas
     if (!source || !Object.keys(source).length) continue
     const sourceKey = JSON.stringify(source)
-    if (sourceMappings.has(sourceKey)) {
-      mappings.set(request.id, sourceMappings.get(sourceKey) as Map<string, string>)
+    const existing = sourceMappings.get(sourceKey)
+    if (existing) {
+      mappings.set(request.id, existing)
       continue
     }
     const mapping = new Map<string, string>()
@@ -279,7 +281,8 @@ function componentSchemaRegistry(requests: SyncRequest[]): ComponentSchemaRegist
       mapping.set(name, candidate)
     }
     for (const [name, schema] of Object.entries(source)) {
-      const target = mapping.get(name) as string
+      const target = mapping.get(name)
+      if (target === undefined) continue
       schemas[target] = rewriteSchemaReferences(schema, mapping)
     }
     sourceMappings.set(sourceKey, mapping)
@@ -289,7 +292,7 @@ function componentSchemaRegistry(requests: SyncRequest[]): ComponentSchemaRegist
 }
 
 function exportedResponseContent(
-  request: SyncRequest,
+  request: RequestNode,
   response: ResponseDefinition,
   registry: ComponentSchemaRegistry,
 ): Record<string, unknown> | undefined {
@@ -327,7 +330,7 @@ function exportedResponseContent(
   return Object.keys(content).length ? content : undefined
 }
 
-function exportedResponses(request: SyncRequest, registry: ComponentSchemaRegistry): Record<string, unknown> {
+function exportedResponses(request: RequestNode, registry: ComponentSchemaRegistry): Record<string, unknown> {
   const defined = request.responses ?? []
   if (!defined.length) return { '200': { description: 'Successful response' } }
   const responses: Record<string, unknown> = {}
@@ -367,7 +370,7 @@ function uniqueRequestName(operation: OpenApiObject, method: string, path: strin
   return asString(operation.summary) || asString(operation.operationId) || `${method.toUpperCase()} ${path}`
 }
 
-export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: string; requestCount: number } {
+export function importOpenApi(text: string): { tree: ApiNode[]; title: string; requestCount: number } {
   let parsed: unknown
   try {
     parsed = parse(text)
@@ -400,7 +403,7 @@ export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: stri
       const documentation = asString(operation.description)
       const responses = responsesFromOperation(spec, operation.responses)
       const openApiSchemas = referencedResponseSchemas(spec, responses)
-      const request: SyncRequest = {
+      const request: RequestNode = {
         id: crypto.randomUUID(),
         kind: 'request',
         name: uniqueRequestName(operation, method, path),
@@ -427,8 +430,8 @@ export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: stri
     }
   }
   if (!parsedRequests.length) throw new Error('No supported HTTP operations were found in the OpenAPI paths.')
-  const tree: SyncTreeNode[] = []
-  const folders = new Map<string, Extract<SyncTreeNode, { kind: 'folder' }>>()
+  const tree: ApiNode[] = []
+  const folders = new Map<string, Extract<ApiNode, { kind: 'folder' }>>()
   for (const { request, tags } of parsedRequests) {
     const tag = tags[0]
     if (!tag) tree.push(request)
@@ -445,7 +448,7 @@ export function importOpenApi(text: string): { tree: SyncTreeNode[]; title: stri
   return { tree, title: asString(info?.title, 'Imported OpenAPI'), requestCount: parsedRequests.length }
 }
 
-function flattenRequests(tree: SyncTreeNode[], parentFolders: string[] = []): Array<{ request: SyncRequest; tags: string[] }> {
+function flattenRequests(tree: ApiNode[], parentFolders: string[] = []): Array<{ request: RequestNode; tags: string[] }> {
   return tree.flatMap((node) =>
     node.kind === 'folder'
       ? flattenRequests(node.children, [...parentFolders, node.name])
@@ -460,7 +463,7 @@ function requestRoute(url: string): { path: string; server?: string } {
   return { path: variableSyntax(path.startsWith('/') ? path : `/${path}`, true) }
 }
 
-function queryParams(request: SyncRequest): ParamField[] {
+function queryParams(request: RequestNode): ParamField[] {
   const explicit = [...(request.params ?? [])]
   const query = request.url.match(/[?]([^#]*)/)
   if (!query) return explicit
@@ -471,7 +474,7 @@ function queryParams(request: SyncRequest): ParamField[] {
   return explicit
 }
 
-function bodyContent(request: SyncRequest): Record<string, unknown> | undefined {
+function bodyContent(request: RequestNode): Record<string, unknown> | undefined {
   const mode = request.bodyMode ?? (request.body.trim() ? 'json' : 'none')
   if (mode === 'none') return undefined
   if (mode === 'file') {
@@ -518,7 +521,7 @@ function bodyContent(request: SyncRequest): Record<string, unknown> | undefined 
   return { [mediaType]: { ...(mode === 'json' || mode === 'graphql' ? { schema: { type: 'object' } } : {}), example } }
 }
 
-function exportedAuth(request: SyncRequest, schemes: Record<string, unknown>): Record<string, unknown> | undefined {
+function exportedAuth(request: RequestNode, schemes: Record<string, unknown>): Record<string, unknown> | undefined {
   const auth = request.auth ?? { type: 'none' as const }
   if (auth.type === 'none') return undefined
   const keySuffix =
@@ -557,7 +560,7 @@ function toOperationId(value: string, used: Set<string>): string {
   return candidate
 }
 
-export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObject {
+export function exportOpenApi(tree: ApiNode[], title: string): OpenApiObject {
   const requests = flattenRequests(tree)
   const paths: Record<string, Record<string, unknown>> = {}
   const schemes: Record<string, unknown> = {}
@@ -576,7 +579,8 @@ export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObjec
   for (const { request, tags } of requests) {
     const route = requestRoute(request.url)
     const path = route.path.split('?')[0] || '/'
-    const pathItem = paths[path] ?? (paths[path] = {})
+    const pathItem = paths[path] ?? {}
+    paths[path] = pathItem
     const method = request.method.toLowerCase()
     const operation: Record<string, unknown> = {
       operationId: toOperationId(request.name, operationIds),
@@ -645,7 +649,7 @@ export function exportOpenApi(tree: SyncTreeNode[], title: string): OpenApiObjec
   return spec
 }
 
-export function serializeOpenApi(tree: SyncTreeNode[], title: string, format: 'json' | 'yaml'): string {
+export function serializeOpenApi(tree: ApiNode[], title: string, format: 'json' | 'yaml'): string {
   const spec = exportOpenApi(tree, title)
   return format === 'yaml' ? stringify(spec) : JSON.stringify(spec, null, 2)
 }

@@ -1,4 +1,5 @@
-import type { SyncRequest } from './merge'
+import type { RequestAuth, RequestNode } from '@/shared/models/api-node.model'
+import { isRecord } from '@/shared/utils/record'
 
 export type WorkspaceVariable = {
   id: string
@@ -25,21 +26,21 @@ export function emptyWorkspaceVariables(): WorkspaceVariables {
 }
 
 export function normalizeWorkspaceVariables(value: unknown): WorkspaceVariables {
-  if (!value || typeof value !== 'object') return emptyWorkspaceVariables()
-  const candidate = value as Record<string, unknown>
+  if (!isRecord(value)) return emptyWorkspaceVariables()
+  const candidate = value
   const normalizeRows = (rows: unknown): WorkspaceVariable[] =>
     Array.isArray(rows)
       ? rows.flatMap((row) => {
-          if (!row || typeof row !== 'object') return []
-          const item = row as Record<string, unknown>
+          if (!isRecord(row)) return []
+          const item = row
           if (typeof item.id !== 'string' || typeof item.name !== 'string' || typeof item.value !== 'string') return []
           return [{ id: item.id, name: item.name, value: item.value, secret: item.secret === true }]
         })
       : []
   const environments = Array.isArray(candidate.environments)
     ? candidate.environments.flatMap((entry) => {
-        if (!entry || typeof entry !== 'object') return []
-        const item = entry as Record<string, unknown>
+        if (!isRecord(entry)) return []
+        const item = entry
         if (typeof item.id !== 'string' || typeof item.name !== 'string') return []
         return [{ id: item.id, name: item.name, variables: normalizeRows(item.variables) }]
       })
@@ -78,22 +79,28 @@ export function activeVariableValues(value: WorkspaceVariables, environmentId: s
   return values
 }
 
-export function resolveRequestVariables<T extends SyncRequest>(request: T, values: Record<string, string>): T {
+// Replaces variables in the text fields of each auth shape. Type and location are fixed values, so they are left alone.
+function replaceAuthVariables(auth: RequestAuth, replace: (value: string) => string): RequestAuth {
+  switch (auth.type) {
+    case 'none':
+      return auth
+    case 'bearer':
+      return { ...auth, token: replace(auth.token) }
+    case 'basic':
+      return { ...auth, username: replace(auth.username), password: replace(auth.password) }
+    case 'api-key':
+      return { ...auth, name: replace(auth.name), value: replace(auth.value) }
+  }
+}
+
+export function resolveRequestVariables<T extends RequestNode>(request: T, values: Record<string, string>): T {
   const replace = (value: string) =>
     value.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, rawName: string) => {
       const name = rawName.trim()
       if (!Object.hasOwn(values, name)) throw new Error(`Variable "{{${name}}}" is not defined in the global scope or active environment.`)
       return values[name]
     })
-  const auth =
-    request.auth && request.auth.type !== 'none'
-      ? (Object.fromEntries(
-          Object.entries(request.auth).map(([key, value]) => [
-            key,
-            typeof value === 'string' && key !== 'type' && key !== 'location' ? replace(value) : value,
-          ]),
-        ) as T['auth'])
-      : request.auth
+  const auth = request.auth ? replaceAuthVariables(request.auth, replace) : request.auth
   const bodyMode = request.bodyMode ?? (request.body.trim() ? 'json' : 'none')
   const sendsBody = !['GET', 'HEAD'].includes(request.method.toUpperCase()) && bodyMode !== 'none'
   return {

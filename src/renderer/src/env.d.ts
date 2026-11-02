@@ -40,8 +40,8 @@ type LocalWorkspace = {
   id: string
   cloudId: string | null
   name: string
-  tree: unknown[]
-  baseTree: unknown[]
+  tree: import('./shared/models/api-node.model').ApiNode[]
+  baseTree: import('./shared/models/api-node.model').ApiNode[]
   variables?: import('./lib/workspace-variables').WorkspaceVariables
   baseVariables?: import('./lib/workspace-variables').WorkspaceVariables
   activeEnvironmentId?: string | null
@@ -54,7 +54,7 @@ type LocalCommit = {
   id: string
   parentIds: string[]
   message: string
-  tree: unknown[]
+  tree: import('./shared/models/api-node.model').ApiNode[]
   variables?: import('./lib/workspace-variables').WorkspaceVariables
   createdAt: string
   pushed: boolean
