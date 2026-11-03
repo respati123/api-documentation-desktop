@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { needsPull, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 
 function workspace(id: string, patch: Partial<LocalWorkspace> = {}): LocalWorkspace {
   return {
@@ -56,22 +56,5 @@ describe('workspacesForAccount', () => {
     const result = workspacesForAccount(stored, 'account-a', [], newVault('vault-a'))
     expect(result.workspaces.map((item) => item.id)).toEqual(['vault'])
     expect(result.changed).toEqual([])
-  })
-})
-
-describe('needsPull', () => {
-  const base = workspace('w', { cloudId: 'cloud-1', baseCommitId: 'h1', localHeadId: 'h1' })
-
-  it('is true when the server is ahead and there are no local changes', () => {
-    expect(needsPull(base, 'h2')).toBe(true)
-  })
-
-  it('is false when the copy is already at the server head', () => {
-    expect(needsPull(base, 'h1')).toBe(false)
-  })
-
-  it('is false when the copy has unpushed commits or edits, so they are not overwritten', () => {
-    expect(needsPull({ ...base, localHeadId: 'local-1' }, 'h2')).toBe(false)
-    expect(needsPull({ ...base, tree: [{ id: 'f', kind: 'folder', name: 'Edited', children: [] }] }, 'h2')).toBe(false)
   })
 })

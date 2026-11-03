@@ -38,11 +38,3 @@ export function workspacesForAccount(
 
   return { workspaces: mine(), changed }
 }
-
-// A copy needs a pull when the server has a newer head and the copy has no unpushed commits or edits.
-export function needsPull(copy: LocalWorkspace, headCommitId: string | null): boolean {
-  if (!headCommitId || copy.baseCommitId === headCommitId) return false
-  const hasUnpushedCommits = copy.localHeadId !== copy.baseCommitId
-  const hasEdits = JSON.stringify(copy.tree) !== JSON.stringify(copy.baseTree)
-  return !hasUnpushedCommits && !hasEdits
-}

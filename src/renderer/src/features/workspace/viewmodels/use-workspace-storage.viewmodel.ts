@@ -1,9 +1,9 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
-import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
+import { isFolder, normalizeSharedVariables, normalizeTree } from '@/features/collection'
+import { type CloudWorkspace, cloudWorkspaceService } from '@/features/sync'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
-import { needsPull, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
@@ -38,7 +38,6 @@ export type StorageInput = {
 type AccountSnapshot = {
   workspaces: LocalWorkspace[]
   listed: CloudWorkspace[] | null
-  refreshedIds: string[]
 }
 
 // Stored records are migrated on read, so every node and variable the app uses has the current shape.
@@ -67,45 +66,6 @@ function newLocalVault(name: string): LocalWorkspace {
     localHeadId: null,
     role: null,
     accountId: null,
-  }
-}
-
-// A new local copy of a cloud workspace, built from the server's current head.
-async function pullCopy(token: string, cloud: CloudWorkspace, accountId: string | null): Promise<LocalWorkspace> {
-  const result = await syncService.pull({ token, cloudId: cloud.id })
-  const tree = normalizeSharedTree(result.tree)
-  const variables = normalizeSharedVariables(result.variables)
-  return {
-    id: crypto.randomUUID(),
-    cloudId: cloud.id,
-    name: cloud.name,
-    tree,
-    baseTree: tree,
-    variables,
-    baseVariables: variables,
-    activeEnvironmentId: variables.environments[0]?.id ?? null,
-    baseCommitId: result.headCommitId,
-    localHeadId: result.headCommitId,
-    role: cloud.role,
-    accountId,
-  }
-}
-
-// Replaces an existing copy's tree with the server's head. The copy keeps its id, its account, and its active environment when that still exists.
-async function refreshCopy(token: string, copy: LocalWorkspace, cloud: CloudWorkspace): Promise<LocalWorkspace> {
-  const fresh = await pullCopy(token, cloud, copy.accountId ?? null)
-  const keptEnvironment = copy.activeEnvironmentId && fresh.variables?.environments.some((item) => item.id === copy.activeEnvironmentId)
-  return {
-    ...copy,
-    name: cloud.name,
-    role: cloud.role,
-    tree: fresh.tree,
-    baseTree: fresh.tree,
-    variables: fresh.variables,
-    baseVariables: fresh.variables,
-    activeEnvironmentId: keptEnvironment ? copy.activeEnvironmentId : fresh.activeEnvironmentId,
-    baseCommitId: fresh.baseCommitId,
-    localHeadId: fresh.localHeadId,
   }
 }
 
@@ -166,7 +126,8 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     if (fallback) activateStoredWorkspace(fallback)
   })
 
-  // Sign-in: this account gets its own workspaces. Device copies are claimed, cloud copies are pulled when behind, and copies the server no longer lists are dropped.
+  // Sign-in: this account gets its own workspaces. Device copies are claimed, and copies the server no longer lists are dropped.
+  // Nothing is pulled from the server here. Pulling the head into a local copy, and merging, is always a manual step.
   // If the server cannot be reached, the account keeps its copies and only its local vault is claimed.
   const syncAccountWorkspaces = useEffectEvent(async (token: string, accountId: string): Promise<AccountSnapshot> => {
     const stored = (await workspaceStorageService.listWorkspaces()).map(normalizeStoredWorkspace)
@@ -181,37 +142,17 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       accountId,
     }))
 
-    const workspaces = [...plan.workspaces]
-    const changed = new Map(plan.changed.map((item) => [item.id, item]))
-    const refreshedIds: string[] = []
-    if (listed) {
-      for (const cloud of listed) {
-        const index = workspaces.findIndex((item) => item.cloudId === cloud.id)
-        try {
-          if (index === -1) {
-            const created = await pullCopy(token, cloud, accountId)
-            workspaces.push(created)
-            changed.set(created.id, created)
-          } else if (needsPull(workspaces[index], cloud.headCommitId)) {
-            const refreshed = await refreshCopy(token, workspaces[index], cloud)
-            workspaces[index] = refreshed
-            changed.set(refreshed.id, refreshed)
-            refreshedIds.push(refreshed.id)
-          } else {
-            const renamed = { ...workspaces[index], name: cloud.name, role: cloud.role }
-            workspaces[index] = renamed
-            changed.set(renamed.id, renamed)
-          }
-        } catch {
-          // A failed pull keeps the copy as it is. The next sign-in or event tries again.
-        }
-      }
-    }
-
+    // Only the name and role come from the server here. The tree stays as it is until the user pulls.
+    const workspaces = plan.workspaces.map((item) => {
+      const cloud = listed?.find((entry) => entry.id === item.cloudId)
+      return cloud ? { ...item, name: cloud.name, role: cloud.role } : item
+    })
     const listedIds = new Set(listed?.map((cloud) => cloud.id))
     const visible = listed ? workspaces.filter((item) => !item.cloudId || listedIds.has(item.cloudId)) : workspaces
+    const changed = new Map(plan.changed.map((item) => [item.id, item]))
+    for (const item of visible) if (changed.has(item.id) || item.cloudId) changed.set(item.id, item)
     await Promise.all([...changed.values()].map((item) => workspaceStorageService.saveWorkspace(item)))
-    return { workspaces: visible, listed, refreshedIds }
+    return { workspaces: visible, listed }
   })
 
   const applyAccountSnapshot = useEffectEvent((result: AccountSnapshot) => {
@@ -221,12 +162,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     }
     setLocalWorkspaces(result.workspaces)
     const current = result.workspaces.find((item) => item.id === currentWorkspaceId)
-    if (!current) {
-      const fallback = result.workspaces.find((item) => !item.cloudId) ?? result.workspaces[0]
-      if (fallback) activateStoredWorkspace(fallback)
-      return
-    }
-    if (result.refreshedIds.includes(current.id)) activateStoredWorkspace(current)
+    if (current) return
+    const fallback = result.workspaces.find((item) => !item.cloudId) ?? result.workspaces[0]
+    if (fallback) activateStoredWorkspace(fallback)
   })
 
   // While signed in, a workspace another account saved on this device is not shown.
