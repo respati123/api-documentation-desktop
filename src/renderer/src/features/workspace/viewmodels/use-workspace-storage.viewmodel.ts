@@ -253,6 +253,14 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     [currentWorkspaceId, setLocalWorkspaces, setTree, setWorkspaceVariables, setActiveEnvironmentId, setSyncStatus],
   )
 
+  // The MCP server tags workspaces it creates with the signed-in account, so the account id is written where it can read it.
+  useEffect(() => {
+    if (!storageLoaded) return
+    workspaceStorageService.setActiveAccount(user?.id ?? null).catch((error) => {
+      setSyncStatus(error instanceof Error ? error.message : 'Could not record the signed-in account.')
+    })
+  }, [storageLoaded, user?.id, setSyncStatus])
+
   useEffect(() => {
     if (!sessionToken || !user || !storageLoaded) return
     let active = true

@@ -60,6 +60,7 @@ contextBridge.exposeInMainWorld('apiDesktop', {
   loadSession: () => ipcRenderer.invoke(CHANNELS.session.load),
   saveSession: (token: string) => ipcRenderer.invoke(CHANNELS.session.save, token),
   clearSession: () => ipcRenderer.invoke(CHANNELS.session.clear),
+  setActiveAccount: (userId: string | null) => ipcRenderer.invoke(CHANNELS.account.setActive, userId),
   onInviteToken: (handler: (token: string) => void) => {
     inviteHandlers.add(handler)
     if (pendingInviteToken) {

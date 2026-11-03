@@ -83,6 +83,7 @@ interface Window {
     loadSession(): Promise<string | null>
     saveSession(token: string): Promise<boolean>
     clearSession(): Promise<void>
+    setActiveAccount(userId: string | null): Promise<void>
     onInviteToken(handler: (token: string) => void): () => void
     beginBrowserSignIn(cloudUrl: string): Promise<void>
     downloadUpdate(version: string): Promise<void>

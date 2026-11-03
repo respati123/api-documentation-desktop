@@ -120,6 +120,7 @@ function database(): DatabaseSync {
       CREATE TABLE IF NOT EXISTS workspaces (id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS commits (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS secrets (key TEXT PRIMARY KEY, value BLOB NOT NULL);
+      CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
     `)
   }
   return localDatabase
@@ -557,6 +558,19 @@ ipcMain.handle(CHANNELS.session.clear, (event, ...args: unknown[]) => {
   assertTrustedSender(event)
   z.tuple([]).parse(args)
   database().prepare('DELETE FROM secrets WHERE key = ?').run('api-session')
+})
+
+// The signed-in account id is not a secret. The MCP server reads it to tag workspaces it creates.
+ipcMain.handle(CHANNELS.account.setActive, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [userId] = z.tuple([z.string().min(1).max(200).nullable()]).parse(args)
+  const db = database()
+  if (userId === null) db.prepare('DELETE FROM app_settings WHERE key = ?').run('active-account')
+  else
+    db.prepare('INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(
+      'active-account',
+      userId,
+    )
 })
 
 let latestUpdateStatus: UpdateStatus | undefined

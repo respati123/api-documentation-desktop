@@ -7,6 +7,7 @@ export const CHANNELS = {
   secret: { available: 'secret:available' },
   auth: { begin: 'auth:begin', code: 'auth:code' },
   session: { load: 'session:load', save: 'session:save', clear: 'session:clear' },
+  account: { setActive: 'account:set-active' },
   invite: { token: 'invite:token' },
   update: { status: 'update:status', download: 'update:download', latest: 'update:latest' },
   ai: {
