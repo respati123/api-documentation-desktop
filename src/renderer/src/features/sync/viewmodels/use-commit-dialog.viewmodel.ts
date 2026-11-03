@@ -52,6 +52,7 @@ export type CommitDialogInput = {
     onUnstageAll: () => void
     onSelectHistoryCommit: (commitId: string) => void
     onSelectHistoryChange: (changeId: string) => void
+    onRevertHistoryCommit: (commitId: string) => void
     onOpenHistory: () => void
     onOpenChanges: () => void
   }
@@ -216,6 +217,11 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
       diffScrollLabel: history.selectedChange ? t(SYNC_TEXT.history.diffLabelFor, { name: history.selectedChange.name }) : '',
       diffRows: history.diffRows,
       diffEmpty: historyDiffEmpty,
+      revert: {
+        label: t(SYNC_TEXT.history.revert),
+        disabled: input.readOnly || !input.cloudConnected || history.selectedCommit?.source !== 'cloud',
+        onRevert: () => actions.onRevertHistoryCommit(history.selectedCommit?.id ?? ''),
+      },
     },
   }
 }
