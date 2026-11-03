@@ -1,6 +1,7 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent } from 'react'
+import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef } from 'react'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
+import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
@@ -16,6 +17,7 @@ export type StorageInput = {
   setCurrentWorkspaceId: Dispatch<SetStateAction<string>>
   localWorkspaces: LocalWorkspace[]
   setLocalWorkspaces: Dispatch<SetStateAction<LocalWorkspace[]>>
+  cloudWorkspaces: CloudWorkspace[]
   setCloudWorkspaces: Dispatch<SetStateAction<CloudWorkspace[]>>
   setSecureStorageAvailable: Dispatch<SetStateAction<boolean>>
   setTree: Dispatch<SetStateAction<ApiNode[]>>
@@ -41,6 +43,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     setCurrentWorkspaceId,
     localWorkspaces,
     setLocalWorkspaces,
+    cloudWorkspaces,
     setCloudWorkspaces,
     setSecureStorageAvailable,
     setTree,
@@ -57,6 +60,33 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   const restoreTabsEvent = useEffectEvent((workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) =>
     restoreTabs(workspaceId, nextTree, variables),
   )
+  // Set once the cloud list has loaded. Before that, the local list cannot be checked against the server.
+  const cloudListReadyRef = useRef(false)
+
+  // Opens a stored workspace the same way startup does.
+  const activateStoredWorkspace = useEffectEvent((workspace: LocalWorkspace) => {
+    const nextVariables = workspace.variables ?? emptyWorkspaceVariables()
+    const environmentId = workspace.activeEnvironmentId ?? null
+    const nextTree = workspace.tree
+    stagedWorkspaceIdRef.current = workspace.id
+    setStagedSnapshot(readStagedSnapshot(workspace.id))
+    setStagedVariables(readStagedVariables(workspace.id))
+    setCurrentWorkspaceId(workspace.id)
+    setTree(nextTree)
+    setWorkspaceVariables(nextVariables)
+    setActiveEnvironmentId(environmentId && nextVariables.environments.some((item) => item.id === environmentId) ? environmentId : null)
+    restoreTabsEvent(workspace.id, nextTree, nextVariables)
+    setExpandedFolders(new Set(nextTree.filter(isFolder).map((folder) => folder.id)))
+  })
+
+  // Brings the local list in line with the server's cloud list. If the open workspace is dropped, another one is opened.
+  const applyCloudSnapshot = useEffectEvent((cloudRecords: LocalWorkspace[]) => {
+    const next = applyCloudList(localWorkspaces, cloudRecords, currentWorkspaceId)
+    setLocalWorkspaces(next.workspaces)
+    if (next.currentId === currentWorkspaceId) return
+    const fallback = next.workspaces.find((item) => item.id === next.currentId)
+    if (fallback) activateStoredWorkspace(fallback)
+  })
   useEffect(() => {
     let active = true
     const legacyTree = readTree()
@@ -188,14 +218,10 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
           }
         }
         if (!active) return
+        cloudListReadyRef.current = true
         setCloudWorkspaces(workspaces)
-        if (records.length) {
-          await Promise.all(records.map((record) => workspaceStorageService.saveWorkspace(record)))
-          setLocalWorkspaces((current) => {
-            const localOnly = current.filter((item) => !item.cloudId)
-            return [...localOnly, ...records]
-          })
-        }
+        await Promise.all(records.map((record) => workspaceStorageService.saveWorkspace(record)))
+        if (active) applyCloudSnapshot(records)
       })
       .catch((error) => {
         if (active) setSyncStatus(error instanceof Error ? error.message : 'Could not load cloud workspaces.')
@@ -203,5 +229,15 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     return () => {
       active = false
     }
-  }, [sessionToken, user, storageLoaded, setCloudWorkspaces, setLocalWorkspaces, setSyncStatus])
+  }, [sessionToken, user, storageLoaded, setCloudWorkspaces, setSyncStatus])
+
+  // The cloud list is refreshed while the app runs. A workspace the server stops listing (deleted or access removed) is dropped here too.
+  const dropUnlistedCloudWorkspaces = useEffectEvent((listedIds: string[]) => {
+    const listed = new Set(listedIds)
+    if (!localWorkspaces.some((item) => item.cloudId && !listed.has(item.cloudId))) return
+    applyCloudSnapshot(localWorkspaces.filter((item) => item.cloudId && listed.has(item.cloudId)))
+  })
+  useEffect(() => {
+    if (cloudListReadyRef.current) dropUnlistedCloudWorkspaces(cloudWorkspaces.map((item) => item.id))
+  }, [cloudWorkspaces])
 }

@@ -137,6 +137,7 @@ export function useWorkspaceViewModel() {
     setCurrentWorkspaceId,
     localWorkspaces,
     setLocalWorkspaces,
+    cloudWorkspaces,
     setCloudWorkspaces,
     setSecureStorageAvailable,
     setTree,
