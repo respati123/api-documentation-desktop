@@ -83,6 +83,8 @@ export const REQUEST_TEST_IDS = {
     help: 'request-body-help',
     add: 'request-body-add-field-button',
     error: 'request-body-error',
+    formatJson: 'request-body-format-json-button',
+    jsonStatus: 'request-body-json-status',
     chooseFile: 'request-body-choose-file-button',
     query: 'request-body-graphql-query-input',
     variables: 'request-body-graphql-variables-input',

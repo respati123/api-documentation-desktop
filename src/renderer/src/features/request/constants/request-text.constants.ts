@@ -179,6 +179,9 @@ export const REQUEST_TEXT = {
     fileContentTypeAria: 'body.fileContentTypeAria',
     fileNote: 'body.fileNote',
     fileErrorFallback: 'body.fileErrorFallback',
+    formatJson: 'body.formatJson',
+    jsonValid: 'body.jsonValid',
+    jsonInvalid: 'body.jsonInvalid',
   },
   contract: {
     title: 'contract.title',

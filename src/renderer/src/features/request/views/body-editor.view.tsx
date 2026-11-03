@@ -50,6 +50,12 @@ export function BodyEditorView({
   onVariablesChange,
   onRawChange,
   onContentTypeChange,
+  isJson,
+  jsonInvalid,
+  jsonMessage,
+  formatJsonDisabled,
+  onFormatJson,
+  onRawBlur,
 }: BodyEditorViewProps): ReactElement {
   const { t } = useTranslation('request')
 
@@ -223,6 +229,29 @@ export function BodyEditorView({
               />
             </div>
           )}
+          {isJson && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid={REQUEST_TEST_IDS.body.formatJson}
+                disabled={readOnly || formatJsonDisabled}
+                onClick={onFormatJson}
+              >
+                {t(REQUEST_TEXT.body.formatJson)}
+              </Button>
+              {jsonMessage && (
+                <span
+                  role="status"
+                  data-testid={REQUEST_TEST_IDS.body.jsonStatus}
+                  className={cn('text-[12px]', jsonInvalid ? 'text-destructive' : 'text-muted-foreground')}
+                >
+                  {jsonMessage}
+                </span>
+              )}
+            </div>
+          )}
           <VariableTextarea
             data-testid={REQUEST_TEST_IDS.body.raw}
             className="code-field"
@@ -232,6 +261,7 @@ export function BodyEditorView({
             onVariableClick={onVariableClick}
             readOnly={readOnly}
             onValueChange={onRawChange}
+            onBlur={(event) => onRawBlur(event.currentTarget.value)}
             placeholder={rawPlaceholder}
           />
         </div>

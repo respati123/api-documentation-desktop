@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import { bodyContentType } from '@/features/request/lib/body-content-type'
 import { effectiveBodyMode } from '@/features/request/lib/body-mode'
+import { checkJsonBody } from '@/features/request/lib/json-body'
 import type { PickedFile } from '@/features/request/models/request.model'
 import { requestService } from '@/features/request/services/request.service'
 import type { EditorInput } from '@/features/request/viewmodels/editor.types'
@@ -43,6 +44,14 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
     none: t(REQUEST_TEXT.body.helpNone),
   }
   const contentType = mode === 'other' ? request.bodyMimeType || 'text/plain' : bodyContentType(mode)
+  const isJson = mode === 'json'
+  const jsonCheck = isJson ? checkJsonBody(request.body ?? '') : null
+  const jsonMessage =
+    jsonCheck?.status === 'valid'
+      ? t(REQUEST_TEXT.body.jsonValid)
+      : jsonCheck?.status === 'invalid'
+        ? t(REQUEST_TEXT.body.jsonInvalid, { line: jsonCheck.line, column: jsonCheck.column })
+        : null
 
   return {
     readOnly,
@@ -57,6 +66,19 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
     isRaw: rawModes.includes(mode),
     isOther: mode === 'other',
     isFile: mode === 'file',
+    isJson,
+    jsonInvalid: jsonCheck?.status === 'invalid',
+    jsonMessage,
+    formatJsonDisabled: jsonCheck?.status !== 'valid',
+    onFormatJson: () => {
+      if (jsonCheck?.status === 'valid') onChange({ body: jsonCheck.formatted })
+    },
+    // The editor flushes its draft before blur, so the text is read from the element, not from the request.
+    onRawBlur: (text: string) => {
+      if (!isJson) return
+      const check = checkJsonBody(text)
+      if (check.status === 'valid' && check.formatted !== text) onChange({ body: check.formatted })
+    },
     rows: fields.map((field, index) => ({
       id: field.id,
       name: field.name,

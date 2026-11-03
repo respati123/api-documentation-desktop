@@ -182,7 +182,10 @@
     "fileContentTypeAria": "File content type",
     "fileNote": "The file stays on this device. Teammates need to select their own copy after pulling the request.",
     "fileErrorFallback": "Could not select a file.",
-    "rawPlaceholderJson": "{\n  \n}"
+    "rawPlaceholderJson": "{\n  \n}",
+    "formatJson": "Format",
+    "jsonValid": "Valid JSON",
+    "jsonInvalid": "Invalid JSON at line {{line}}, column {{column}}"
   },
   "contract": {
     "title": "Response contract",
