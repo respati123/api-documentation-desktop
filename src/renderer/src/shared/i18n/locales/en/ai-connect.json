@@ -1,0 +1,33 @@
+{
+  "dialog": {
+    "title": "Connect AI assistant",
+    "description": "Let Codex, Claude Desktop, or Claude CLI read and edit your local API collections through the API Documentation MCP server.",
+    "note": "Connecting replaces any existing \"api-documentation\" entry in that tool's settings. Restart Claude Desktop after connecting.",
+    "logLabel": "Setup log",
+    "errorFallback": "Something went wrong."
+  },
+  "node": {
+    "title": "Node.js",
+    "installed": "Already installed: {{version}} ({{source}})",
+    "sourceSystem": "this computer",
+    "sourceApp": "app folder",
+    "needed": "Needed to run the MCP server. Installed into the app folder, no admin rights needed.",
+    "install": "Install Node.js",
+    "installing": "Installing…",
+    "downloading": "Downloading {{percent}}%"
+  },
+  "tools": {
+    "codex": "Codex",
+    "claudeCli": "Claude CLI",
+    "claudeDesktop": "Claude Desktop",
+    "unsupported": "Not available on this operating system.",
+    "connected": "Connected",
+    "notConnected": "Not connected yet",
+    "notInstalled": "Not installed",
+    "install": "Install",
+    "installing": "Installing…",
+    "connect": "Connect",
+    "connecting": "Connecting…",
+    "reconnect": "Reconnect"
+  }
+}

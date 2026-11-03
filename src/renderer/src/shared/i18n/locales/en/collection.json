@@ -1,0 +1,38 @@
+{
+  "tree": {
+    "empty": "Workspace is empty. Add a folder or request to get started.",
+    "emptyFolder": "Empty folder",
+    "actionsFor": "Actions for {{name}}",
+    "folderNameLabel": "Folder name",
+    "menuLabel": "Collection item actions",
+    "workspaceActions": "Workspace actions",
+    "newRequestIn": "New request in {{name}}"
+  },
+  "menu": {
+    "createFolder": "Create folder",
+    "createRequest": "Create request",
+    "renameFolder": "Rename folder",
+    "deleteFolder": "Delete folder",
+    "deleteRequest": "Delete request"
+  },
+  "createDialog": {
+    "title": "Create folder",
+    "description": "Create a folder inside {{parent}}.",
+    "workspaceName": "Workspace",
+    "selectedFolder": "the selected folder",
+    "label": "Folder name",
+    "placeholder": "e.g. Payments API",
+    "submit": "Create folder"
+  },
+  "deleteDialog": {
+    "folderTitle": "Delete folder?",
+    "requestTitle": "Delete request?",
+    "folderDescription_one": "Delete “{{name}}” and all of its contents ({{count}} request)? This appears in Changes and will only be shared after you commit and push.",
+    "folderDescription_other": "Delete “{{name}}” and all of its contents ({{count}} requests)? This appears in Changes and will only be shared after you commit and push.",
+    "requestDescription": "Delete “{{name}}”? This appears in Changes and will only be shared after you commit and push.",
+    "requestFallbackName": "this request",
+    "cancel": "Cancel",
+    "confirmFolder": "Delete folder",
+    "confirmRequest": "Delete request"
+  }
+}

@@ -5,10 +5,22 @@ type ApiRequest = {
   url: string
   headers: Array<{ name: string; value: string; enabled: boolean }>
   params?: Array<{ id: string; name: string; value: string; enabled: boolean; description?: string }>
-  auth?: { type: 'none' } | { type: 'bearer'; token: string } | { type: 'basic'; username: string; password: string } | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
+  auth?:
+    | { type: 'none' }
+    | { type: 'bearer'; token: string }
+    | { type: 'basic'; username: string; password: string }
+    | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
   body?: string
   bodyMode?: 'form-data' | 'urlencoded' | 'graphql' | 'json' | 'xml' | 'yaml' | 'edn' | 'text' | 'other' | 'file' | 'none'
-  bodyFields?: Array<{ id: string; name: string; value: string; enabled: boolean; type: 'text' | 'file'; filePath?: string; fileName?: string }>
+  bodyFields?: Array<{
+    id: string
+    name: string
+    value: string
+    enabled: boolean
+    type: 'text' | 'file'
+    filePath?: string
+    fileName?: string
+  }>
   bodyVariables?: string
   bodyMimeType?: string
   bodyPath?: string
@@ -28,21 +40,23 @@ type LocalWorkspace = {
   id: string
   cloudId: string | null
   name: string
-  tree: unknown[]
-  baseTree: unknown[]
+  tree: import('./shared/models/api-node.model').ApiNode[]
+  baseTree: import('./shared/models/api-node.model').ApiNode[]
   variables?: import('./lib/workspace-variables').WorkspaceVariables
   baseVariables?: import('./lib/workspace-variables').WorkspaceVariables
   activeEnvironmentId?: string | null
   baseCommitId: string | null
   localHeadId: string | null
   role?: 'owner' | 'editor' | 'viewer' | null
+  // The account that owns this copy on this device. Missing on copies saved before accounts existed.
+  accountId?: string | null
 }
 
 type LocalCommit = {
   id: string
   parentIds: string[]
   message: string
-  tree: unknown[]
+  tree: import('./shared/models/api-node.model').ApiNode[]
   variables?: import('./lib/workspace-variables').WorkspaceVariables
   createdAt: string
   pushed: boolean
@@ -63,12 +77,14 @@ interface Window {
     saveWorkspace(workspace: LocalWorkspace): Promise<boolean>
     listWorkspaces(): Promise<LocalWorkspace[]>
     onExternalWorkspaceChange(handler: () => void): () => void
+    onWorkspaceConflict(handler: (workspaceId: string) => void): () => void
     secureStorageAvailable(): Promise<boolean>
     saveCommit(workspaceId: string, commit: LocalCommit): Promise<void>
     listCommits(workspaceId: string): Promise<LocalCommit[]>
     loadSession(): Promise<string | null>
     saveSession(token: string): Promise<boolean>
     clearSession(): Promise<void>
+    setActiveAccount(userId: string | null): Promise<void>
     onInviteToken(handler: (token: string) => void): () => void
     beginBrowserSignIn(cloudUrl: string): Promise<void>
     downloadUpdate(version: string): Promise<void>
@@ -79,7 +95,15 @@ interface Window {
     onNodeProgress(handler: (progress: NodeInstallProgress) => void): () => void
     onAiLog(handler: (line: string) => void): () => void
     onConnectAiMenu(handler: () => void): () => void
-    onUpdateStatus(handler: (status: { state: 'available'; version: string } | { state: 'downloading'; version: string; percent: number } | { state: 'downloaded'; version: string } | { state: 'error'; version: string; message: string }) => void): () => void
+    onUpdateStatus(
+      handler: (
+        status:
+          | { state: 'available'; version: string }
+          | { state: 'downloading'; version: string; percent: number }
+          | { state: 'downloaded'; version: string }
+          | { state: 'error'; version: string; message: string },
+      ) => void,
+    ): () => void
     onAuthCode(handler: (code: string) => void): () => void
   }
 }

@@ -1,0 +1,33 @@
+{
+  "dialog": {
+    "title": "Hubungkan asisten AI",
+    "description": "Izinkan Codex, Claude Desktop, atau Claude CLI membaca dan mengedit koleksi API lokal kamu lewat server MCP API Documentation.",
+    "note": "Menghubungkan akan mengganti entri \"api-documentation\" yang sudah ada di pengaturan alat itu. Restart Claude Desktop setelah terhubung.",
+    "logLabel": "Log penyiapan",
+    "errorFallback": "Terjadi kesalahan."
+  },
+  "node": {
+    "title": "Node.js",
+    "installed": "Sudah terpasang: {{version}} ({{source}})",
+    "sourceSystem": "komputer ini",
+    "sourceApp": "folder aplikasi",
+    "needed": "Dibutuhkan untuk menjalankan server MCP. Dipasang di folder aplikasi, tanpa hak admin.",
+    "install": "Pasang Node.js",
+    "installing": "Memasang…",
+    "downloading": "Mengunduh {{percent}}%"
+  },
+  "tools": {
+    "codex": "Codex",
+    "claudeCli": "Claude CLI",
+    "claudeDesktop": "Claude Desktop",
+    "unsupported": "Tidak tersedia di sistem operasi ini.",
+    "connected": "Terhubung",
+    "notConnected": "Belum terhubung",
+    "notInstalled": "Belum terpasang",
+    "install": "Pasang",
+    "installing": "Memasang…",
+    "connect": "Hubungkan",
+    "connecting": "Menghubungkan…",
+    "reconnect": "Hubungkan ulang"
+  }
+}

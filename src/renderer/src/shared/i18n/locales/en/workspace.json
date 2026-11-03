@@ -1,0 +1,83 @@
+{
+  "storage": {
+    "conflict": "This workspace changed outside the app, so your last edit was not saved. The latest saved version is shown."
+  },
+  "topbar": {
+    "wordmark": "API Documentation",
+    "account": "Account",
+    "newCloudWorkspace": "New cloud workspace",
+    "team": "Team",
+    "joinWorkspace": "Join workspace",
+    "signOut": "Sign out",
+    "updateTo": "Update to v{{version}}"
+  },
+  "update": {
+    "failed": "Update failed",
+    "updatingTo": "Updating to v{{version}}",
+    "downloadComplete": "Download complete. Restarting to finish the update…",
+    "downloading": "Downloading the update. The app will restart when it is ready.",
+    "close": "Close"
+  },
+  "sidebar": {
+    "label": "Workspace",
+    "kicker": "Workspace",
+    "heading": "Collections",
+    "openApi": "OpenAPI",
+    "foldersAndRequests": "Workspace folders and requests",
+    "selectWorkspace": "Select workspace",
+    "choose": "Choose workspace",
+    "actions": "Workspace actions",
+    "cloudLabel": "Cloud",
+    "cloudRole": "Cloud · {{role}}",
+    "localVault": "Local vault",
+    "defaultVaultName": "My workspace",
+    "resize": "Resize collections panel",
+    "pixels": "{{value}} pixels",
+    "myWorkspace": "My workspace",
+    "fallbackName": "Workspace",
+    "collectionsTab": "Collections",
+    "environmentsTab": "Environments",
+    "environmentsHeading": "Environments",
+    "manageVariables": "Manage variables",
+    "noEnvironments": "No environments yet. Create one in Manage variables.",
+    "newEnvironmentName": "New environment",
+    "environmentActions": "Environment actions",
+    "setActive": "Set active",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "remove": "Delete"
+  },
+  "tabs": {
+    "list": "Open workspace tabs",
+    "close": "Close {{title}} tab",
+    "changed": "Has uncommitted changes",
+    "docsBadge": "DOCS",
+    "docsTitle": "{{name}} · Docs",
+    "request": "Request",
+    "environment": "Environment",
+    "readDocs": "Read docs",
+    "environmentLabel": "Environment",
+    "noEnvironment": "No environment",
+    "activeEnvironment": "Active environment",
+    "variables": "Variables",
+    "menu": {
+      "newRequest": "New request",
+      "duplicate": "Duplicate tab",
+      "close": "Close tab",
+      "forceClose": "Force close tab",
+      "closeOthers": "Close other tabs",
+      "closeAll": "Close all tabs",
+      "forceCloseAll": "Force close all tabs",
+      "reveal": "Reveal in sidebar"
+    }
+  },
+  "main": {
+    "requestWorkspace": "Request workspace",
+    "docsUnavailable": "Endpoint docs unavailable",
+    "docsUnavailableDescription": "Choose an endpoint in the collection to open its documentation.",
+    "noRequest": "No request selected",
+    "noRequestDescription": "Choose a request or create one in the selected folder.",
+    "folderFallback": "Workspace",
+    "newRequest": "New request"
+  }
+}

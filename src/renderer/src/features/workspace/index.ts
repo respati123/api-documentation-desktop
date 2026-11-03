@@ -1,0 +1,6 @@
+export * from '@/features/workspace/lib/storage'
+export * from '@/features/workspace/lib/workspace-tabs'
+export * from '@/features/workspace/models/workspace.model'
+export { WorkspacePage } from '@/features/workspace/pages/workspace.page'
+export { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
+export { WorkspaceView } from '@/features/workspace/views/workspace.view'

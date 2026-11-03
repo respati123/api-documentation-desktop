@@ -1,0 +1,15 @@
+export const RESPONSE_TEST_IDS = {
+  container: 'response-view-container',
+  empty: 'response-view-empty',
+  loading: 'response-view-loading',
+  error: 'response-view-error',
+  status: 'response-view-status',
+  bodyTab: 'response-view-body-tab',
+  headersTab: 'response-view-headers-tab',
+  cookiesTab: 'response-view-cookies-tab',
+  body: 'response-view-body',
+  headersEmpty: 'response-view-headers-empty',
+  cookiesEmpty: 'response-view-cookies-empty',
+  headerRow: (name: string) => `response-view-header-row-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+  cookieRow: (index: number) => `response-view-cookie-row-${index}`,
+} as const

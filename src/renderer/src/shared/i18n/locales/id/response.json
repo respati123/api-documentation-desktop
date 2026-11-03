@@ -1,0 +1,10 @@
+{
+  "heading": { "kicker": "Inspektur", "title": "Respons", "duration": "{{ms}} md" },
+  "empty": { "title": "Belum ada respons", "description": "Kirim request untuk melihat status, header, waktu, dan body." },
+  "loading": { "title": "Mengirim request", "description": "Menunggu respons dari server." },
+  "error": { "title": "Request gagal" },
+  "tabs": { "label": "Detail respons", "body": "Body", "headers": "Header", "cookies": "Cookie" },
+  "body": { "empty": "Body respons kosong." },
+  "headers": { "empty": "Server tidak mengembalikan header." },
+  "cookies": { "empty": "Tidak ada header Set-Cookie.", "fallbackName": "Cookie {{position}}" }
+}

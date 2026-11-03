@@ -1,0 +1,83 @@
+{
+  "storage": {
+    "conflict": "Workspace ini berubah di luar app, jadi perubahan terakhir Anda tidak tersimpan. Versi tersimpan terbaru yang ditampilkan."
+  },
+  "topbar": {
+    "wordmark": "Dokumentasi API",
+    "account": "Akun",
+    "newCloudWorkspace": "Workspace cloud baru",
+    "team": "Tim",
+    "joinWorkspace": "Gabung workspace",
+    "signOut": "Keluar",
+    "updateTo": "Perbarui ke v{{version}}"
+  },
+  "update": {
+    "failed": "Pembaruan gagal",
+    "updatingTo": "Memperbarui ke v{{version}}",
+    "downloadComplete": "Unduhan selesai. Memulai ulang untuk menyelesaikan pembaruan…",
+    "downloading": "Mengunduh pembaruan. Aplikasi akan dimulai ulang saat siap.",
+    "close": "Tutup"
+  },
+  "sidebar": {
+    "label": "Workspace",
+    "kicker": "Workspace",
+    "heading": "Koleksi",
+    "openApi": "OpenAPI",
+    "foldersAndRequests": "Folder dan request workspace",
+    "selectWorkspace": "Pilih workspace",
+    "choose": "Pilih workspace",
+    "actions": "Aksi workspace",
+    "cloudLabel": "Cloud",
+    "cloudRole": "Cloud · {{role}}",
+    "localVault": "Penyimpanan lokal",
+    "defaultVaultName": "Workspace saya",
+    "resize": "Ubah lebar panel koleksi",
+    "pixels": "{{value}} piksel",
+    "myWorkspace": "Workspace saya",
+    "fallbackName": "Workspace",
+    "collectionsTab": "Koleksi",
+    "environmentsTab": "Environment",
+    "environmentsHeading": "Environment",
+    "manageVariables": "Kelola variable",
+    "noEnvironments": "Belum ada environment. Buat di Kelola variable.",
+    "newEnvironmentName": "Environment baru",
+    "environmentActions": "Aksi environment",
+    "setActive": "Jadikan aktif",
+    "rename": "Ganti nama",
+    "duplicate": "Duplikat",
+    "remove": "Hapus"
+  },
+  "tabs": {
+    "list": "Tab workspace terbuka",
+    "close": "Tutup tab {{title}}",
+    "changed": "Ada perubahan yang belum di-commit",
+    "docsBadge": "DOCS",
+    "docsTitle": "{{name}} · Docs",
+    "request": "Request",
+    "environment": "Environment",
+    "readDocs": "Baca docs",
+    "environmentLabel": "Environment",
+    "noEnvironment": "Tanpa environment",
+    "activeEnvironment": "Environment aktif",
+    "variables": "Variabel",
+    "menu": {
+      "newRequest": "Request baru",
+      "duplicate": "Duplikat tab",
+      "close": "Tutup tab",
+      "forceClose": "Paksa tutup tab",
+      "closeOthers": "Tutup tab lain",
+      "closeAll": "Tutup semua tab",
+      "forceCloseAll": "Paksa tutup semua tab",
+      "reveal": "Tampilkan di sidebar"
+    }
+  },
+  "main": {
+    "requestWorkspace": "Workspace request",
+    "docsUnavailable": "Docs endpoint tidak tersedia",
+    "docsUnavailableDescription": "Pilih endpoint di koleksi untuk membuka dokumentasinya.",
+    "noRequest": "Belum ada request yang dipilih",
+    "noRequestDescription": "Pilih request atau buat request baru di folder yang dipilih.",
+    "folderFallback": "Workspace",
+    "newRequest": "Request baru"
+  }
+}

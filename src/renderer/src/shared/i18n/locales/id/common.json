@@ -1,0 +1,34 @@
+{
+  "language": {
+    "label": "Bahasa",
+    "en": "English",
+    "id": "Bahasa Indonesia"
+  },
+  "actions": {
+    "cancel": "Batal",
+    "save": "Simpan",
+    "close": "Tutup",
+    "retry": "Coba lagi",
+    "remove": "Hapus"
+  },
+  "errors": {
+    "title": "Terjadi masalah",
+    "description": "Aplikasi mengalami masalah yang tidak terduga. Coba lagi."
+  },
+  "bodyMode": {
+    "formData": "Form Data",
+    "urlencoded": "Form URL Encoded",
+    "graphql": "GraphQL",
+    "json": "JSON",
+    "xml": "XML",
+    "yaml": "YAML",
+    "edn": "EDN",
+    "text": "Teks Biasa",
+    "other": "Lainnya",
+    "file": "File",
+    "none": "Tanpa Body"
+  },
+  "suggestions": {
+    "variables": "Saran variabel environment"
+  }
+}

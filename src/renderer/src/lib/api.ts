@@ -1,4 +1,5 @@
-import type { WorkspaceVariables } from './workspace-variables'
+import type { z } from 'zod'
+import { isRecord } from '@/shared/utils/record'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
@@ -8,17 +9,17 @@ export function apiWebSocketUrl(path: string): string {
   return url.toString()
 }
 
-export type ApiUser = { id: string; email: string }
-export type CloudWorkspace = { id: string; name: string; role: 'owner' | 'editor' | 'viewer'; headCommitId: string; tree?: unknown[]; variables?: WorkspaceVariables }
-export type CloudCommit = { id: string; parentIds: string[]; message: string; createdAt: string }
-export type CloudCommitDetail = CloudCommit & { tree: unknown[]; variables?: WorkspaceVariables }
-
 export class ApiError extends Error {
-  constructor(message: string, public status: number, public data: unknown) { super(message) }
+  constructor(
+    message: string,
+    public status: number,
+    public data: unknown,
+  ) {
+    super(message)
+  }
 }
 
 type RequestOptions = { token?: string; method?: string; body?: unknown }
-type ListResult<T> = { data?: Record<string, T[]>; meta?: { nextCursor?: unknown } }
 
 const listPageLimit = 100
 const listPageCap = 200
@@ -28,43 +29,56 @@ async function send(path: string, options: RequestOptions): Promise<unknown> {
     method: options.method || 'GET',
     headers: {
       ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {})
+      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
     },
-    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) })
+    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   })
-  const result = await response.json().catch(() => ({})) as { error?: string }
-  if (!response.ok) throw new ApiError(result.error || `API request failed (${response.status}).`, response.status, result)
+  const result: unknown = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const message = isRecord(result) && typeof result.error === 'string' ? result.error : undefined
+    throw new ApiError(message || `API request failed (${response.status}).`, response.status, result)
+  }
   return result
 }
 
-export async function apiCall<T>(path: string, options: RequestOptions = {}): Promise<T> {
+// Calls the API and returns the response's data. With a schema, the data is parsed before it is returned, so a mismatch throws.
+export async function apiCall(path: string, options?: RequestOptions): Promise<unknown>
+export async function apiCall<S extends z.ZodType>(path: string, options: RequestOptions, schema: S): Promise<z.infer<S>>
+export async function apiCall(path: string, options: RequestOptions = {}, schema?: z.ZodType): Promise<unknown> {
   const result = await send(path, options)
-  return (typeof result === 'object' && result !== null && 'data' in result ? result.data : result) as T
+  const data = isRecord(result) && 'data' in result ? result.data : result
+  return schema ? schema.parse(data) : data
 }
 
-// Follows meta.nextCursor until the list ends. A list past the page cap is an error, not a silently cut list.
-export async function apiListAll<T>(path: string, key: string, options: { token?: string } = {}): Promise<T[]> {
-  const items: T[] = []
+// Follows meta.nextCursor until the list ends. Each item is parsed with the schema. A list past the page cap is an error, not a silently cut list.
+export async function apiListAll<S extends z.ZodType>(
+  path: string,
+  key: string,
+  options: { token?: string },
+  schema: S,
+): Promise<z.infer<S>[]> {
+  const items: z.infer<S>[] = []
   let cursor: string | null = null
   for (let page = 0; page < listPageCap; page++) {
     const query = new URLSearchParams({ limit: String(listPageLimit) })
     if (cursor) query.set('cursor', cursor)
-    const result = await send(`${path}?${query}`, options) as ListResult<T>
-    items.push(...readListItems(result, key))
+    const result = await send(`${path}?${query}`, options)
+    items.push(...readListItems(result, key, schema))
     cursor = readNextCursor(result)
     if (!cursor) return items
   }
   throw new Error(`Cloud list ${path} has more than ${listPageLimit * listPageCap} items.`)
 }
 
-function readListItems<T>(result: ListResult<T>, key: string): T[] {
-  const items = result.data?.[key]
+function readListItems<S extends z.ZodType>(result: unknown, key: string, schema: S): z.infer<S>[] {
+  const data = isRecord(result) ? result.data : undefined
+  const items = isRecord(data) ? data[key] : undefined
   if (!Array.isArray(items)) throw new Error(`Cloud response has no ${key} list.`)
-  return items
+  return items.map((item) => schema.parse(item))
 }
 
-function readNextCursor(result: ListResult<unknown>): string | null {
-  const cursor = result.meta?.nextCursor
+function readNextCursor(result: unknown): string | null {
+  const meta = isRecord(result) ? result.meta : undefined
+  const cursor = isRecord(meta) ? meta.nextCursor : undefined
   return typeof cursor === 'string' ? cursor : null
 }
-

@@ -3,7 +3,8 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { delimiter, dirname, join } from 'node:path'
-import { findOnPath, readNodeRuntime, type NodeRuntimePaths } from './node-runtime'
+import { isRecord } from '../renderer/src/shared/utils/record'
+import { findOnPath, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
 
 // Connects the local API Documentation MCP server to AI clients. The MCP server is
 // started by the client with the app's own Node runtime, so it works without the
@@ -28,7 +29,7 @@ export type AiConnectStatus = {
 
 const cliPackages: Record<'codex' | 'claude-cli', { package: string; bin: string }> = {
   codex: { package: '@openai/codex', bin: 'codex' },
-  'claude-cli': { package: '@anthropic-ai/claude-code', bin: 'claude' }
+  'claude-cli': { package: '@anthropic-ai/claude-code', bin: 'claude' },
 }
 
 function toolsDir(userDataDir: string): string {
@@ -60,8 +61,8 @@ function claudeDesktopConfigPath(): string | null {
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
   try {
-    const parsed = JSON.parse(await readFile(path, 'utf8'))
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {}
+    const parsed: unknown = JSON.parse(await readFile(path, 'utf8'))
+    return isRecord(parsed) ? parsed : {}
   } catch {
     return {}
   }
@@ -79,8 +80,8 @@ export async function getAiConnectStatus(userDataDir: string): Promise<AiConnect
   const claudeCli = await readJson(claudeCliConfigPath())
   const desktopPath = claudeDesktopConfigPath()
   const desktop = desktopPath ? await readJson(desktopPath) : {}
-  const desktopServers = (desktop.mcpServers ?? {}) as Record<string, unknown>
-  const cliServers = (claudeCli.mcpServers ?? {}) as Record<string, unknown>
+  const desktopServers = isRecord(desktop.mcpServers) ? desktop.mcpServers : {}
+  const cliServers = isRecord(claudeCli.mcpServers) ? claudeCli.mcpServers : {}
 
   return {
     node: runtime.installed ? { installed: true, version: runtime.version, source: runtime.source } : { installed: false },
@@ -89,21 +90,21 @@ export async function getAiConnectStatus(userDataDir: string): Promise<AiConnect
         id: 'codex',
         supported: true,
         installed: Boolean(await resolveCli(userDataDir, 'codex')),
-        connected: codexConfig.includes(`[mcp_servers.${mcpServerName}]`)
+        connected: codexConfig.includes(`[mcp_servers.${mcpServerName}]`),
       },
       {
         id: 'claude-cli',
         supported: true,
         installed: Boolean(await resolveCli(userDataDir, 'claude-cli')),
-        connected: Boolean(cliServers[mcpServerName])
+        connected: Boolean(cliServers[mcpServerName]),
       },
       {
         id: 'claude-desktop',
         supported: desktopPath !== null,
         installed: desktopPath !== null && existsSync(dirname(desktopPath)),
-        connected: Boolean(desktopServers[mcpServerName])
-      }
-    ]
+        connected: Boolean(desktopServers[mcpServerName]),
+      },
+    ],
   }
 }
 
@@ -126,12 +127,17 @@ export async function installCli(
   userDataDir: string,
   runtime: NodeRuntimePaths,
   id: 'codex' | 'claude-cli',
-  onLine: AiLogLine
+  onLine: AiLogLine,
 ): Promise<void> {
   const dir = toolsDir(userDataDir)
   await mkdir(dir, { recursive: true })
   onLine(`Installing ${cliPackages[id].package} into the app folder…`)
-  const code = await runCommand(runtime.npm, ['install', '--prefix', dir, '--no-audit', '--no-fund', cliPackages[id].package], runtimeEnv(runtime), onLine)
+  const code = await runCommand(
+    runtime.npm,
+    ['install', '--prefix', dir, '--no-audit', '--no-fund', cliPackages[id].package],
+    runtimeEnv(runtime),
+    onLine,
+  )
   if (code !== 0) throw new Error(`npm install failed for ${cliPackages[id].package} (exit ${code}).`)
   onLine('Install finished.')
 }
@@ -144,19 +150,21 @@ async function connectWithCli(
   userDataDir: string,
   runtime: NodeRuntimePaths,
   id: 'codex' | 'claude-cli',
-  onLine: AiLogLine
+  onLine: AiLogLine,
 ): Promise<void> {
   const bin = await resolveCli(userDataDir, id)
   if (!bin) throw new Error(`${cliPackages[id].bin} is not installed yet. Install it first.`)
   const env = runtimeEnv(runtime)
   const scope = id === 'claude-cli' ? ['--scope', 'user'] : []
-  const removeArgs = id === 'codex'
-    ? ['mcp', 'remove', mcpServerName]
-    : ['mcp', 'remove', mcpServerName, '--scope', 'user']
+  const removeArgs = id === 'codex' ? ['mcp', 'remove', mcpServerName] : ['mcp', 'remove', mcpServerName, '--scope', 'user']
   // Replacing an existing entry keeps the command and args current. Removal failing is fine when none exists.
   await runCommand(bin, removeArgs, env, () => {}).catch(() => 0)
   onLine(`Registering ${mcpServerName} with ${cliPackages[id].bin}…`)
-  const addArgs = [...(id === 'codex' ? ['mcp', 'add', mcpServerName] : ['mcp', 'add', ...scope, mcpServerName]), '--', ...mcpCommand(runtime)]
+  const addArgs = [
+    ...(id === 'codex' ? ['mcp', 'add', mcpServerName] : ['mcp', 'add', ...scope, mcpServerName]),
+    '--',
+    ...mcpCommand(runtime),
+  ]
   const code = await runCommand(bin, addArgs, env, onLine)
   if (code !== 0) throw new Error(`${cliPackages[id].bin} mcp add failed (exit ${code}).`)
   onLine(`Connected. Start a new ${cliPackages[id].bin} session to use the tools.`)
@@ -166,7 +174,7 @@ async function connectClaudeDesktop(runtime: NodeRuntimePaths, onLine: AiLogLine
   const path = claudeDesktopConfigPath()
   if (!path) throw new Error('Claude Desktop is not available on this operating system.')
   const config = await readJson(path)
-  const servers = (config.mcpServers ?? {}) as Record<string, unknown>
+  const servers = isRecord(config.mcpServers) ? config.mcpServers : {}
   const [command, ...args] = mcpCommand(runtime)
   servers[mcpServerName] = { command, args }
   config.mcpServers = servers
@@ -176,12 +184,7 @@ async function connectClaudeDesktop(runtime: NodeRuntimePaths, onLine: AiLogLine
   onLine('Restart Claude Desktop to load the API Documentation tools.')
 }
 
-export async function connectAiTool(
-  userDataDir: string,
-  runtime: NodeRuntimePaths,
-  id: AiToolId,
-  onLine: AiLogLine
-): Promise<void> {
+export async function connectAiTool(userDataDir: string, runtime: NodeRuntimePaths, id: AiToolId, onLine: AiLogLine): Promise<void> {
   if (id === 'claude-desktop') return connectClaudeDesktop(runtime, onLine)
   return connectWithCli(userDataDir, runtime, id, onLine)
 }

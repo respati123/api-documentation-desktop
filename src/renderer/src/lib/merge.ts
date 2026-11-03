@@ -1,54 +1,15 @@
-export const bodyModes = ['form-data', 'urlencoded', 'graphql', 'json', 'xml', 'yaml', 'edn', 'text', 'other', 'file', 'none'] as const
-export type BodyMode = typeof bodyModes[number]
-export type BodyField = { id: string; name: string; value: string; enabled: boolean; type: 'text' | 'file'; filePath?: string; fileName?: string }
-export type HeaderField = { id: string; name: string; value: string; enabled: boolean; description?: string }
-export type ParamField = { id: string; name: string; value: string; enabled: boolean; description?: string }
-export type RequestAuth =
-  | { type: 'none' }
-  | { type: 'bearer'; token: string }
-  | { type: 'basic'; username: string; password: string }
-  | { type: 'api-key'; name: string; value: string; location: 'header' | 'query' }
-export type ResponseContent = { id: string; mediaType: string; schema: string; example: string }
-export type ResponseDefinition = { id: string; statusCode: string; description: string; content: ResponseContent[] }
-export type SyncRequest = {
-  id: string
-  kind: 'request'
-  name: string
-  method: string
-  url: string
-  body: string
-  bodyMode?: BodyMode
-  bodyFields?: BodyField[]
-  bodyVariables?: string
-  bodyMimeType?: string
-  bodyPath?: string
-  bodyFileName?: string
-  headers?: HeaderField[]
-  params?: ParamField[]
-  pathParams?: ParamField[]
-  auth?: RequestAuth
-  documentation?: string
-  responses?: ResponseDefinition[]
-  openApiSchemas?: Record<string, unknown>
-  deprecated?: boolean
-  deprecationReason?: string
-}
-export type SyncFolder = { id: string; kind: 'folder'; name: string; children: SyncTreeNode[] }
-export type SyncTreeNode = SyncRequest | SyncFolder
-export type SyncConflict = { id: string; local: SyncTreeNode | null; remote: SyncTreeNode | null }
-type FlatNode = { node: SyncRequest | Omit<SyncFolder, 'children'>; parentId: string; order: number }
+import type { ApiNode, FolderNode, RequestNode } from '@/shared/models/api-node.model'
 
-export function isBodyMode(value: unknown): value is BodyMode {
-  return typeof value === 'string' && bodyModes.includes(value as BodyMode)
-}
+export type SyncConflict = { id: string; local: ApiNode | null; remote: ApiNode | null }
+type FlatNode = { node: RequestNode | Omit<FolderNode, 'children'>; parentId: string; order: number }
 
-export function stripLocalFilePaths(tree: SyncTreeNode[]): SyncTreeNode[] {
+export function stripLocalFilePaths(tree: ApiNode[]): ApiNode[] {
   return tree.map((node) => {
     if (node.kind === 'folder') return { ...node, children: stripLocalFilePaths(node.children) }
     const { bodyPath: _bodyPath, ...request } = node
     return {
       ...request,
-      ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {})
+      ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {}),
     }
   })
 }
@@ -58,15 +19,17 @@ function comparableNode(node: FlatNode['node']): FlatNode['node'] {
   const { bodyPath: _bodyPath, ...request } = node
   return {
     ...request,
-    ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {})
+    ...(node.bodyFields ? { bodyFields: node.bodyFields.map(({ filePath: _filePath, ...field }) => field) } : {}),
   }
 }
 
-function isFolder(node: SyncTreeNode): node is SyncFolder { return node.kind === 'folder' }
+function isFolder(node: ApiNode): node is FolderNode {
+  return node.kind === 'folder'
+}
 
-function flatten(tree: SyncTreeNode[]): Map<string, FlatNode> {
+function flatten(tree: ApiNode[]): Map<string, FlatNode> {
   const result = new Map<string, FlatNode>()
-  function visit(nodes: SyncTreeNode[], parentId: string) {
+  function visit(nodes: ApiNode[], parentId: string) {
     nodes.forEach((node, order) => {
       const flatNode = isFolder(node) ? { id: node.id, kind: node.kind, name: node.name } : node
       result.set(node.id, { node: flatNode, parentId, order })
@@ -83,11 +46,11 @@ function sameState(left: FlatNode | undefined, right: FlatNode | undefined): boo
 }
 
 export function mergeTreeSnapshots(
-  baseTree: SyncTreeNode[],
-  localTree: SyncTreeNode[],
-  remoteTree: SyncTreeNode[],
-  choices: Record<string, 'local' | 'remote'> = {}
-): { tree: SyncTreeNode[]; conflicts: SyncConflict[]; unresolved: SyncConflict[] } {
+  baseTree: ApiNode[],
+  localTree: ApiNode[],
+  remoteTree: ApiNode[],
+  choices: Record<string, 'local' | 'remote'> = {},
+): { tree: ApiNode[]; conflicts: SyncConflict[]; unresolved: SyncConflict[] } {
   const base = flatten(baseTree)
   const local = flatten(localTree)
   const remote = flatten(remoteTree)
@@ -126,7 +89,7 @@ export function mergeTreeSnapshots(
     childrenByParent.set(parentId, children)
   }
 
-  function build(parentId: string, path = new Set<string>()): SyncTreeNode[] {
+  function build(parentId: string, path = new Set<string>()): ApiNode[] {
     return (childrenByParent.get(parentId) ?? [])
       .sort((a, b) => a[1].order - b[1].order)
       .map(([id, entry]) => {
@@ -140,7 +103,7 @@ export function mergeTreeSnapshots(
   return { tree: build(''), conflicts, unresolved }
 }
 
-function localTreeNode(entry: FlatNode, source: Map<string, FlatNode>): SyncTreeNode {
+function localTreeNode(entry: FlatNode, source: Map<string, FlatNode>): ApiNode {
   if (entry.node.kind === 'request') return entry.node
   const children = [...source.entries()]
     .filter(([, child]) => child.parentId === entry.node.id)

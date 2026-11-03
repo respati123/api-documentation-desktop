@@ -1,36 +1,114 @@
-# Repository Guidelines
+# Repository Guidelines (desktop)
 
-## Project Structure & Module Organization
+Electron desktop app. Renderer: React, Vite, shadcn/ui, Tailwind v4, TanStack Query, zod, i18next.
+Read the matching guide in `references/` before you start a task.
 
-This working tree is currently empty apart from this guide; no source, documentation, tests, or asset directories are present yet. Keep API documentation organized by service or API area as the repository grows (for example, `docs/<service>/`), and place reusable examples or schemas in clearly named subdirectories such as `examples/` or `schemas/`. Keep the top-level README focused on setup and navigation.
+## Project
 
-## Build, Test, and Development Commands
+- `src/main/`: Electron main process (Node).
+- `src/preload/`: bridge exposed to the renderer as `window.apiDesktop`.
+- `src/renderer/src/`: React UI. Entry: `src/renderer/index.html`.
+- `electron.vite.config.ts` builds all three.
 
-No build or test configuration is currently checked in, so there are no repository-specific commands to run. When adding a documentation toolchain, record its install, preview, validation, and test commands in the README and keep them reproducible from the repository root. Validate generated or edited API references with the chosen formatter or schema checker before submitting changes.
+Renderer paths in these guides start at `src/renderer/src/`. The `@/` alias points there.
 
-## Coding Style & Naming Conventions
+```
+App.tsx           composition root only
+main.tsx          React entry
+index.css         the only stylesheet
+app/              providers, routes, error boundary wiring, ui-rules.test.ts
+features/<name>/  one folder per product area
+shared/           code used by two or more features
+lib/              pure domain logic shared by features (merge, diff, variables, OpenAPI)
+```
 
-Use Markdown for prose, with descriptive sentence-case headings and short paragraphs. Use fenced code blocks with a language tag for request and response examples. Use consistent paths and filenames in lowercase kebab-case (for example, `authentication.md`); name schema files after the API resource or operation they describe. Keep examples accurate, minimal, and free of real credentials or personal data.
+Feature areas: workspace, collection, request, response, variables, docs, sync, ai-connect.
 
-## Testing Guidelines
+## Commands
 
-There is no test framework or test suite in the current tree. For documentation-only changes, check links, code fences, and rendered formatting. For API schemas or examples added later, include the repository's selected validation command and cover valid and invalid cases where practical.
+Run from this folder. Install with `bun install` (lockfile `bun.lock`).
 
-## Commit & Pull Request Guidelines
+- `bun run dev`: app with hot reload
+- `bun run build`: production build into `out/`
+- `bun run typecheck`: main, preload, renderer
+- `bun run test`: Vitest
+- `bun run i18n-check`: locale key parity
+- `bun run lint` / `bun run format`: Biome check / write
+- `bun run dist:linux` | `dist:mac` | `dist:win`: installers
 
-No Git history is available in this working tree, so an established commit convention cannot be determined. Use concise imperative commit subjects (for example, `Document token refresh endpoint`). Pull requests should summarize the API or pages changed, explain any compatibility or behavioral impact, link related issues when available, and include rendered screenshots only when layout or presentation changes need visual review.
+## Core rules
 
-## Security & Configuration
+1. **Library docs.** Before using a library API you have not verified in this session, look it up with Context7. If Context7 is unavailable, use the official docs and say so.
+2. **MVVM.** Pages call one ViewModel and render one View. Views only render props. All state, effects, handlers, fetching, and derived values live in the ViewModel. → `architecture.md`
+3. **Data.** Services validate every response with zod. Queries and mutations live only in ViewModels. Never fetch in `useEffect`. Never fetch the same data twice. → `data-and-state.md`
+4. **UI.** Views use shadcn/ui components only, never raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, `a`. Tailwind only, theme tokens only. Use the impeccable and shadcn skills. → `ui-design.md`
+5. **Text.** No literals in views or viewmodels. Call `t(CONSTANT)`. Every key exists in `id` and `en`. → `i18n.md`
+6. **Errors.** Show the backend `error` message. Never invent error text or codes. Every page has an error boundary. → `error-handling.md`
+7. **Imports.** Absolute `@/` only. Features import each other only through `@/features/<name>`.
+8. **One owner.** A component, helper, or type used by two or more features lives in `shared/`. Duplicates are defects.
+9. **Types.** No `any`, no `!`, no `as` casts.
+10. **Test ids.** Every interactive element has `data-testid="[feature]-[component]-[element]"`. → `testing.md`
+11. **Performance.** React Compiler is on. No manual `useMemo`, `useCallback`, or `React.memo` without a Profiler reason. → `performance.md`
+12. **Names.** Files, folders, and identifiers are English, even when the UI is Indonesian. → `code-quality.md`
+13. **Refactors** keep behavior, URLs, and visuals. One feature per step. → `refactor.md`
+14. **Security.** The renderer is untrusted. Never weaken `webPreferences`. Secrets only through `safeStorage` in main, never in renderer storage or logs. → `security.md`
+15. **IPC.** Channels and zod contracts live in `src/shared/ipc/`. Every handler validates input, checks the sender, and returns `IpcResult`. Only renderer services call `window.apiDesktop`. → `main-process.md`
 
-Never commit API keys, access tokens, private customer data, or production-only configuration. Use clearly fake example values and mark placeholders (for example, `YOUR_API_TOKEN`).
+Main process and preload follow rules 1, 9, 12, 14, 15, and the handoff checklist.
 
-<!-- antislop:start -->
-## Antislop UI Guidelines
+## Ask first
 
-For interface work, read `.agents/skills/antislop/antislop.md` and the relevant local skill:
-- UI and visual design: `.agents/skills/antislop/skills/antislop-ui/SKILL.md`
-- Accessibility and interaction: `.agents/skills/antislop/skills/antislop-human/SKILL.md`
-- Responsive layout: `.agents/skills/antislop/skills/antislop-layoutmobile/SKILL.md`
+Stop and ask before you:
 
-Resolve the mode using the core's `Two Usage Modes` rules before UI work. Explicit session choices take priority; otherwise use the saved preference or ask. Follow the existing `DESIGN.md` direction and run the core Delivery Gate before handing off UI work. The accessibility skill includes its required `contrast-check.py` helper.
-<!-- antislop:end -->
+- add, remove, or upgrade a dependency
+- change an IPC contract, the cloud API contract, or a stored data format
+- change `webPreferences`, CSP, permissions, or anything in `security.md`
+- delete files outside the change you were asked to make
+- change behavior during a refactor
+
+## Before handoff
+
+1. `bun run typecheck`, `bun run build`, `bun run test`, `bun run i18n-check`, `bun run lint` all pass. Use the `finish-change` skill.
+2. UI changes: checked at the minimum window width and at a wide window. No horizontal page scroll.
+
+Rule tests run with `bun run test` and enforce these rules: `app/ui-rules.test.ts`, `app/architecture-rules.test.ts`, `app/testid-rules.test.ts`, `src/main/security-rules.test.ts`. Never edit a rule test to make a change pass. Ask instead.
+
+## Project skills
+
+In `.agents/skills/`. Read the `SKILL.md` before you use one.
+
+| Skill | Use for |
+|---|---|
+| `new-feature` | a new feature folder or a new screen (scaffold script) |
+| `new-ipc-channel` | anything the renderer needs from the main process |
+| `finish-change` | the handoff checks and report |
+| `impeccable`, `shadcn` | all UI work (`ui-design.md`) |
+| `vercel-react-best-practices` | performance work (`performance.md`) |
+| `karpathy-guidelines` | writing, reviewing, or refactoring code: state assumptions, keep it simple, change only what the task needs, define success criteria |
+
+## Git
+
+- Branches: `feat/<scope>-<short-desc>`, `fix/...`, `refactor/...`, `chore/...`.
+- Commits follow Conventional Commits: `feat(request): add body raw editor`. Scope is a feature area, `main`, `preload`, or `release`.
+- One logical change per commit, with its tests. Never mix a refactor and a behavior change.
+- PR description: what changed, why, how it was tested, screenshots for UI changes, and any "Ask first" item that was approved.
+- Never commit secrets, `.env`, build output (`out/`, `dist/`), or `.agents/skills/impeccable/scripts/bin/`.
+- Do not push, merge, tag, or rewrite history unless asked.
+
+## References
+
+| Read | When |
+|---|---|
+| `references/architecture.md` | creating a feature, placing a file, moving code between layers, types |
+| `references/data-and-state.md` | services, queries, mutations, stores, process logic |
+| `references/error-handling.md` | failed requests, error states, error boundaries |
+| `references/i18n.md` | any user-facing text |
+| `references/ui-design.md` | any UI, styling, loading, or scrolling change |
+| `references/testing.md` | tests, TDD, interactive elements, `data-testid` |
+| `references/code-quality.md` | naming, file size, props, lint |
+| `references/performance.md` | lists, pages, dependencies, heavy computation |
+| `references/refactor.md` | migrating code out of `App.tsx` or legacy `components/` |
+| `references/main-process.md` | `src/main/`, `src/preload/`, IPC, storage, windows, app lifecycle |
+| `references/security.md` | windows, preload, IPC input, file paths, external links, secrets, untrusted content |
+| `references/shortcuts.md` | keyboard shortcuts and menu accelerators |
+| `references/release.md` | versions, changelog, installers, signing, auto-update |
