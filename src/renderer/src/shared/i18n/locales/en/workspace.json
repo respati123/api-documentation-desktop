@@ -27,6 +27,7 @@
     "cloudLabel": "Cloud",
     "cloudRole": "Cloud · {{role}}",
     "localVault": "Local vault",
+    "defaultVaultName": "My workspace",
     "resize": "Resize collections panel",
     "pixels": "{{value}} pixels",
     "myWorkspace": "My workspace",

@@ -502,6 +502,7 @@ export function useWorkspaceViewModel() {
   })
   const team = useWorkspaceTeamViewModel({
     sessionToken,
+    accountId: user?.id ?? null,
     activeWorkspace,
     tree,
     workspaceVariables,

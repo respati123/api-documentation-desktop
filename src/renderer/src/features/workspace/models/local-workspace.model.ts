@@ -31,6 +31,7 @@ export const localWorkspaceSchema: z.ZodType<LocalWorkspace, unknown> = z.object
   baseCommitId: nullableString,
   localHeadId: nullableString,
   role: z.enum(['owner', 'editor', 'viewer']).nullable().optional(),
+  accountId: nullableString,
 })
 
 export const localCommitSchema: z.ZodType<LocalCommit, unknown> = z.object({

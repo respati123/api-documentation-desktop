@@ -12,6 +12,7 @@ const submitEvent = { preventDefault: vi.fn() } as unknown as FormEvent
 function input(overrides: Partial<TeamDialogsInput> = {}): TeamDialogsInput {
   return {
     sessionToken: 'token-1',
+    accountId: 'account-1',
     activeWorkspace: { cloudId: 'cloud-1', name: 'Platform', role: 'owner' },
     tree: [],
     variables: { globals: [], environments: [] },

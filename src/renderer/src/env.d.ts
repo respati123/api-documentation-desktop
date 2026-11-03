@@ -48,6 +48,8 @@ type LocalWorkspace = {
   baseCommitId: string | null
   localHeadId: string | null
   role?: 'owner' | 'editor' | 'viewer' | null
+  // The account that owns this copy on this device. Missing on copies saved before accounts existed.
+  accountId?: string | null
 }
 
 type LocalCommit = {

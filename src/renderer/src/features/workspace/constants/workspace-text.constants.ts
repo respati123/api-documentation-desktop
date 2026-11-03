@@ -27,6 +27,7 @@ export const WORKSPACE_TEXT = {
     cloudLabel: 'sidebar.cloudLabel',
     cloudRole: 'sidebar.cloudRole',
     localVault: 'sidebar.localVault',
+    defaultVaultName: 'sidebar.defaultVaultName',
     resize: 'sidebar.resize',
     pixels: 'sidebar.pixels',
     myWorkspace: 'sidebar.myWorkspace',

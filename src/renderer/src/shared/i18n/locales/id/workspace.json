@@ -27,6 +27,7 @@
     "cloudLabel": "Cloud",
     "cloudRole": "Cloud · {{role}}",
     "localVault": "Penyimpanan lokal",
+    "defaultVaultName": "Workspace saya",
     "resize": "Ubah lebar panel koleksi",
     "pixels": "{{value}} piksel",
     "myWorkspace": "Workspace saya",

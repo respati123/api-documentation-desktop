@@ -12,6 +12,8 @@ type Role = 'editor' | 'viewer'
 
 export type TeamDialogsInput = {
   sessionToken: string | null
+  // The signed-in account. A cloud copy made here is owned by this account on this device.
+  accountId: string | null
   activeWorkspace: { cloudId: string | null; name: string; role?: 'owner' | 'editor' | 'viewer' | null } | undefined
   tree: ApiNode[]
   variables: WorkspaceVariables
@@ -64,6 +66,7 @@ export function useTeamDialogsViewModel(input: TeamDialogsInput) {
         baseCommitId: cloud.headCommitId,
         localHeadId: cloud.headCommitId,
         role: 'owner',
+        accountId: input.accountId,
       }
       await input.onCreated(workspace, cloud, createdVariables)
       setCreateName('')
@@ -126,6 +129,7 @@ export function useTeamDialogsViewModel(input: TeamDialogsInput) {
         baseCommitId: cloud.headCommitId,
         localHeadId: cloud.headCommitId,
         role: cloud.role,
+        accountId: input.accountId,
       }
       await input.onAccepted(workspace, cloud, invitedVariables)
       input.onInviteTokenUsed()
