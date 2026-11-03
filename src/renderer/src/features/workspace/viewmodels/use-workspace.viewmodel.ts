@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
-import { firstRequestId, indexTree, initialTree, isFolder, useCollectionTreeViewModel } from '@/features/collection'
-import type { CloudWorkspace } from '@/features/sync'
 import {
+  firstRequestId,
+  indexTree,
+  initialTree,
+  isFolder,
+  normalizeSharedTree,
+  normalizeSharedVariables,
+  useCollectionTreeViewModel,
+} from '@/features/collection'
+import {
+  type CloudWorkspace,
   changeStatusKey,
   type PendingMergeState,
+  SYNC_TEXT,
+  syncService,
   useCommitDialogStateViewModel,
   useCommitDialogViewModel,
   useDiscardDialogViewModel,
@@ -13,10 +23,13 @@ import {
   useSyncFooterViewModel,
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
+import { refreshedToHead } from '@/features/workspace/lib/head-refresh'
 import { readTree } from '@/features/workspace/lib/storage'
+import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
-import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
+import type { WorkspaceTab, WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
 import { appUpdateService, type UpdateStatus } from '@/features/workspace/services/app-update.service'
+import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
 import { useWorkspaceChangesViewModel } from '@/features/workspace/viewmodels/use-workspace-changes.viewmodel'
@@ -197,7 +210,7 @@ export function useWorkspaceViewModel() {
   useCloudRealtimeViewModel({
     sessionToken,
     setCloudWorkspaces,
-    onStatus: setSyncStatus,
+    onWorkspaceUpdated: (event) => void handleWorkspaceUpdated(event),
   })
   const changes = useWorkspaceChangesViewModel({
     tree,
@@ -392,7 +405,8 @@ export function useWorkspaceViewModel() {
     setMergeChoices,
     persistActiveWorkspace,
   })
-  const { stageChanges, stageChange, saveCommit, discardLocalChanges, pullWorkspace, pushWorkspace, applyMergeResolution } = syncActions
+  const { stageChanges, stageChange, saveCommit, discardLocalChanges, pullWorkspace, pushWorkspace, applyMergeResolution, revertToCommit } =
+    syncActions
   const treeActions = useWorkspaceTreeActionsViewModel({
     tree,
     setTree,
@@ -423,6 +437,46 @@ export function useWorkspaceViewModel() {
   } = treeActions
 
   const { t: tSync } = useTranslation('sync')
+
+  // A teammate pushed to a cloud workspace. A copy with no unpushed work moves to the new head. Otherwise the user is asked to pull.
+  async function handleWorkspaceUpdated(event: WorkspaceUpdateEvent) {
+    const actor = event.actorEmail ?? tSync(SYNC_TEXT.live.unnamed)
+    const commits =
+      event.commitCount === 1 ? tSync(SYNC_TEXT.live.oneCommit) : tSync(SYNC_TEXT.live.manyCommits, { count: event.commitCount ?? 0 })
+    const pushed =
+      event.message === undefined
+        ? tSync(SYNC_TEXT.live.pushed, { actor, commits })
+        : tSync(SYNC_TEXT.live.pushedWithMessage, { actor, commits, message: event.message })
+    try {
+      const result = await autoUpdateFromHead(event.workspaceId)
+      if (result === 'skipped') setSyncStatus(pushed)
+      if (result === 'background') setSyncStatus(tSync(SYNC_TEXT.live.updated, { actor }))
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : pushed)
+    }
+  }
+
+  // Moves an open or background copy of a cloud workspace to its head, when that copy has no unpushed work.
+  async function autoUpdateFromHead(cloudId: string): Promise<'active' | 'background' | 'skipped'> {
+    if (!sessionToken || !user) return 'skipped'
+    if (activeWorkspace?.cloudId === cloudId) {
+      if (hasUnpushedChanges({ ...activeWorkspace, tree, variables: workspaceVariables })) return 'skipped'
+      await pullWorkspace()
+      return 'active'
+    }
+    const stored = await workspaceStorageService.listWorkspaces()
+    const copy = stored.find((item) => item.cloudId === cloudId && item.accountId === user.id)
+    if (!copy || hasUnpushedChanges(copy)) return 'skipped'
+    const pulled = await syncService.pull({ token: sessionToken, cloudId })
+    const next = refreshedToHead(copy, {
+      headCommitId: pulled.headCommitId,
+      tree: normalizeSharedTree(pulled.tree),
+      variables: normalizeSharedVariables(pulled.variables),
+    })
+    await workspaceStorageService.saveWorkspace(next)
+    setLocalWorkspaces((current) => current.map((item) => (item.id === next.id ? next : item)))
+    return 'background'
+  }
   const statusText = (status: WorkspaceChange['status']) => tSync(changeStatusKey(status))
   const commitDialog = useCommitDialogViewModel({
     open: commitDialogOpen,
@@ -472,6 +526,7 @@ export function useWorkspaceViewModel() {
         setSelectedHistoryCommitId(commitId)
       },
       onSelectHistoryChange: setSelectedHistoryChangeId,
+      onRevertHistoryCommit: (commitId) => void revertToCommit(commitId),
       onOpenHistory: () => {
         setCommitDialogView('history')
         setSelectedHistoryCommitId('')

@@ -42,6 +42,7 @@ function input(overrides: Partial<CommitDialogInput> = {}): CommitDialogInput {
       onUnstageAll: noop,
       onSelectHistoryCommit: noop,
       onSelectHistoryChange: noop,
+      onRevertHistoryCommit: noop,
       onOpenHistory: noop,
       onOpenChanges: noop,
     },

@@ -191,6 +191,20 @@ function HistoryPane({ history }: { history: CommitDialogViewProps['history'] })
           ))}
         </section>
         {history.selectedCommit && (
+          <div className="flex justify-end px-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="commit-dialog-history-revert-button"
+              disabled={history.revert.disabled}
+              onClick={history.revert.onRevert}
+            >
+              {history.revert.label}
+            </Button>
+          </div>
+        )}
+        {history.selectedCommit && (
           <section className="change-list-section" aria-busy={history.selectedCommit.busy}>
             <div className="change-list-heading">
               <strong>{history.changedItemsHeading}</strong>

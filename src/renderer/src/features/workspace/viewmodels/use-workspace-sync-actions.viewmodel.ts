@@ -12,6 +12,7 @@ import {
   SYNC_TEXT,
   syncService,
 } from '@/features/sync'
+import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { buildStagedSnapshot, type WorkspaceChange } from '@/lib/workspace-changes'
 import {
@@ -184,6 +185,32 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setSyncStatus(outcome.message)
   }
 
+  // Makes a new cloud head with the content of an earlier commit, then pulls it in. Refused while this copy has changes the cloud does not have.
+  async function revertToCommit(commitId: string) {
+    if (!sessionToken || !activeWorkspace?.cloudId) return
+    const unpushed = hasUnpushedChanges({
+      localHeadId: activeWorkspace.localHeadId ?? null,
+      baseCommitId: activeWorkspace.baseCommitId ?? null,
+      tree,
+      baseTree: activeWorkspace.baseTree,
+      variables: workspaceVariables,
+      baseVariables: activeWorkspace.baseVariables,
+    })
+    if (unpushed) {
+      setSyncStatus(tSync(SYNC_TEXT.history.revertUnpushed))
+      return
+    }
+    setSyncStatus(tSync(SYNC_TEXT.history.reverting))
+    try {
+      await syncService.restore({ token: sessionToken, cloudId: activeWorkspace.cloudId, commitId })
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : tSync(SYNC_TEXT.history.revertFailed))
+      return
+    }
+    await pullWorkspace()
+    setSyncStatus(tSync(SYNC_TEXT.history.reverted))
+  }
+
   // Writes what a pull or a merge decided into the workspace's state. The storage writes already happened in the workflow.
   function applyPulledState(applied: Applied) {
     setLocalWorkspaces((current) => current.map((item) => (item.id === applied.workspace.id ? applied.workspace : item)))
@@ -264,5 +291,5 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setSyncStatus(outcome.message)
   }
 
-  return { stageChanges, stageChange, saveCommit, discardLocalChanges, pullWorkspace, pushWorkspace, applyMergeResolution }
+  return { stageChanges, stageChange, saveCommit, discardLocalChanges, pullWorkspace, pushWorkspace, applyMergeResolution, revertToCommit }
 }
