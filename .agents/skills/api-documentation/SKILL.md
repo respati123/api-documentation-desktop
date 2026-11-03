@@ -32,7 +32,12 @@ Verify facts before writing them. Read the project source, OpenAPI specs, or exi
 
 - Put `{{accessToken}}` or another reference in a request only where a credential is required. Never write the real value into a request, example, or documentation.
 - Tell the user to mark the variable as **Secret** in the desktop Variables UI. Secret values stay on the device and out of cloud sync.
-- The server cannot list, create, or change variable definitions or values, except that `variable.set` can create one. A secret variable is always created empty, and its value is entered in the app. Do not claim a referenced variable exists, and do not invent its value. Name each variable the user still needs to define.
+- Variables are written with a read-first routine, so the server never overwrites a value it has not seen:
+  1. Call `variable_get` with the scope, environment id when the scope is `environment`, and the name. It returns the value, or `<secret>` for a secret, and a `revision`. `exists: false` means there is nothing to overwrite.
+  2. Show the change in chat: scope, environment, name, and before → after. For a secret, say the value is set in the desktop app. Then wait for approval. Approval of a request to change a value is not given until the user has seen this exact change.
+  3. Call `variable_set` with the same fields and `expectedRevision` set to the revision from step 1, or `null` for a new variable. If the server answers "changed since you read it", stop, read the variable again, and show the new state before trying again.
+  4. `variable_delete` follows the same routine, and also needs `confirm: true` after the user explicitly asks for the deletion.
+- A secret variable is created empty. Its value is entered in the desktop app, and the server cannot set or change it. Do not claim a referenced variable exists or invent its value. Name each variable the user still needs to define.
 
 ## Changing collections
 
