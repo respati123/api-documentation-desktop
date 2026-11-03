@@ -1,6 +1,10 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent } from 'react'
-import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
-import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
+import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { isFolder, normalizeSharedVariables, normalizeTree } from '@/features/collection'
+import { type CloudWorkspace, cloudWorkspaceService } from '@/features/sync'
+import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
+import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
@@ -16,6 +20,7 @@ export type StorageInput = {
   setCurrentWorkspaceId: Dispatch<SetStateAction<string>>
   localWorkspaces: LocalWorkspace[]
   setLocalWorkspaces: Dispatch<SetStateAction<LocalWorkspace[]>>
+  cloudWorkspaces: CloudWorkspace[]
   setCloudWorkspaces: Dispatch<SetStateAction<CloudWorkspace[]>>
   setSecureStorageAvailable: Dispatch<SetStateAction<boolean>>
   setTree: Dispatch<SetStateAction<ApiNode[]>>
@@ -30,7 +35,41 @@ export type StorageInput = {
   restoreTabs: (workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) => void
 }
 
-// Loads the saved workspaces at startup and keeps them in step with other windows and with the cloud workspace list.
+type AccountSnapshot = {
+  workspaces: LocalWorkspace[]
+  listed: CloudWorkspace[] | null
+}
+
+// Stored records are migrated on read, so every node and variable the app uses has the current shape.
+function normalizeStoredWorkspace(item: LocalWorkspace): LocalWorkspace {
+  return {
+    ...item,
+    tree: normalizeTree(item.tree),
+    baseTree: normalizeTree(item.baseTree),
+    variables: normalizeWorkspaceVariables(item.variables),
+    baseVariables: normalizeSharedVariables(item.baseVariables ?? item.variables),
+    activeEnvironmentId: item.activeEnvironmentId ?? null,
+  }
+}
+
+function newLocalVault(name: string): LocalWorkspace {
+  return {
+    id: crypto.randomUUID(),
+    cloudId: null,
+    name,
+    tree: [],
+    baseTree: [],
+    variables: emptyWorkspaceVariables(),
+    baseVariables: emptyWorkspaceVariables(),
+    activeEnvironmentId: null,
+    baseCommitId: null,
+    localHeadId: null,
+    role: null,
+    accountId: null,
+  }
+}
+
+// Loads the saved workspaces at startup and keeps them in step with other windows, with the signed-in account, and with the cloud workspace list.
 export function useWorkspaceStorageViewModel(input: StorageInput) {
   const {
     sessionToken,
@@ -41,6 +80,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     setCurrentWorkspaceId,
     localWorkspaces,
     setLocalWorkspaces,
+    cloudWorkspaces,
     setCloudWorkspaces,
     setSecureStorageAvailable,
     setTree,
@@ -54,9 +94,84 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     setSyncStatus,
     restoreTabs,
   } = input
+  const { t } = useTranslation('workspace')
   const restoreTabsEvent = useEffectEvent((workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) =>
     restoreTabs(workspaceId, nextTree, variables),
   )
+  // Set once the cloud list has loaded. Before that, the local list cannot be checked against the server.
+  const cloudListReadyRef = useRef(false)
+
+  // Opens a stored workspace the same way startup does.
+  const activateStoredWorkspace = useEffectEvent((workspace: LocalWorkspace) => {
+    const nextVariables = workspace.variables ?? emptyWorkspaceVariables()
+    const environmentId = workspace.activeEnvironmentId ?? null
+    const nextTree = workspace.tree
+    stagedWorkspaceIdRef.current = workspace.id
+    setStagedSnapshot(readStagedSnapshot(workspace.id))
+    setStagedVariables(readStagedVariables(workspace.id))
+    setCurrentWorkspaceId(workspace.id)
+    setTree(nextTree)
+    setWorkspaceVariables(nextVariables)
+    setActiveEnvironmentId(environmentId && nextVariables.environments.some((item) => item.id === environmentId) ? environmentId : null)
+    restoreTabsEvent(workspace.id, nextTree, nextVariables)
+    setExpandedFolders(new Set(nextTree.filter(isFolder).map((folder) => folder.id)))
+  })
+
+  // Brings the local list in line with the server's cloud list. If the open workspace is dropped, another one is opened.
+  const applyCloudSnapshot = useEffectEvent((cloudRecords: LocalWorkspace[]) => {
+    const next = applyCloudList(localWorkspaces, cloudRecords, currentWorkspaceId)
+    setLocalWorkspaces(next.workspaces)
+    if (next.currentId === currentWorkspaceId) return
+    const fallback = next.workspaces.find((item) => item.id === next.currentId)
+    if (fallback) activateStoredWorkspace(fallback)
+  })
+
+  // Sign-in: this account gets its own workspaces. Device copies are claimed, and copies the server no longer lists are dropped.
+  // Nothing is pulled from the server here. Pulling the head into a local copy, and merging, is always a manual step.
+  // If the server cannot be reached, the account keeps its copies and only its local vault is claimed.
+  const syncAccountWorkspaces = useEffectEvent(async (token: string, accountId: string): Promise<AccountSnapshot> => {
+    const stored = (await workspaceStorageService.listWorkspaces()).map(normalizeStoredWorkspace)
+    const listed = await cloudWorkspaceService.list(token).catch(() => null)
+    const entries = listed
+      ? listed.map((cloud) => ({ id: cloud.id, role: cloud.role, headCommitId: cloud.headCommitId }))
+      : stored
+          .filter((item) => item.accountId === accountId && item.cloudId)
+          .map((item) => ({ id: item.cloudId ?? '', role: item.role ?? 'viewer', headCommitId: item.baseCommitId }))
+    const plan = workspacesForAccount(stored, accountId, entries, () => ({
+      ...newLocalVault(t(WORKSPACE_TEXT.sidebar.defaultVaultName)),
+      accountId,
+    }))
+
+    // Only the name and role come from the server here. The tree stays as it is until the user pulls.
+    const workspaces = plan.workspaces.map((item) => {
+      const cloud = listed?.find((entry) => entry.id === item.cloudId)
+      return cloud ? { ...item, name: cloud.name, role: cloud.role } : item
+    })
+    const listedIds = new Set(listed?.map((cloud) => cloud.id))
+    const visible = listed ? workspaces.filter((item) => !item.cloudId || listedIds.has(item.cloudId)) : workspaces
+    const changed = new Map(plan.changed.map((item) => [item.id, item]))
+    for (const item of visible) if (changed.has(item.id) || item.cloudId) changed.set(item.id, item)
+    await Promise.all([...changed.values()].map((item) => workspaceStorageService.saveWorkspace(item)))
+    return { workspaces: visible, listed }
+  })
+
+  const applyAccountSnapshot = useEffectEvent((result: AccountSnapshot) => {
+    if (result.listed) {
+      cloudListReadyRef.current = true
+      setCloudWorkspaces(result.listed)
+    }
+    setLocalWorkspaces(result.workspaces)
+    const current = result.workspaces.find((item) => item.id === currentWorkspaceId)
+    if (current) return
+    const fallback = result.workspaces.find((item) => !item.cloudId) ?? result.workspaces[0]
+    if (fallback) activateStoredWorkspace(fallback)
+  })
+
+  // While signed in, a workspace another account saved on this device is not shown.
+  const visibleRecords = useEffectEvent((records: LocalWorkspace[]) =>
+    user ? records.filter((item) => item.accountId === user.id) : records,
+  )
+
   useEffect(() => {
     let active = true
     const legacyTree = readTree()
@@ -73,22 +188,8 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       .then(async (defaultWorkspace) => {
         const storedRecords = await workspaceStorageService.listWorkspaces()
         if (!active) return
-        const records = storedRecords.map((item) => ({
-          ...item,
-          tree: normalizeTree(item.tree),
-          baseTree: normalizeTree(item.baseTree),
-          variables: normalizeWorkspaceVariables(item.variables),
-          baseVariables: normalizeSharedVariables(item.baseVariables ?? item.variables),
-          activeEnvironmentId: item.activeEnvironmentId ?? null,
-        }))
-        const current = records.find((item) => item.id === defaultWorkspace.id) ?? {
-          ...defaultWorkspace,
-          tree: normalizeTree(defaultWorkspace.tree),
-          baseTree: normalizeTree(defaultWorkspace.baseTree),
-          variables: normalizeWorkspaceVariables(defaultWorkspace.variables),
-          baseVariables: normalizeSharedVariables(defaultWorkspace.baseVariables ?? defaultWorkspace.variables),
-          activeEnvironmentId: defaultWorkspace.activeEnvironmentId ?? null,
-        }
+        const records = storedRecords.map(normalizeStoredWorkspace)
+        const current = records.find((item) => item.id === defaultWorkspace.id) ?? normalizeStoredWorkspace(defaultWorkspace)
         setLocalWorkspaces(records.length ? records : [current])
         setCurrentWorkspaceId(current.id)
         stagedWorkspaceIdRef.current = current.id
@@ -135,67 +236,46 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         void workspaceStorageService
           .listWorkspaces()
           .then((storedRecords) => {
-            const records = storedRecords.map((item) => ({
-              ...item,
-              tree: normalizeTree(item.tree),
-              baseTree: normalizeTree(item.baseTree),
-              variables: normalizeWorkspaceVariables(item.variables),
-              baseVariables: normalizeSharedVariables(item.baseVariables ?? item.variables),
-              activeEnvironmentId: item.activeEnvironmentId ?? null,
-            }))
+            const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
             setLocalWorkspaces(records)
             const current = records.find((item) => item.id === currentWorkspaceId)
-            if (!current) return
+            if (!current) {
+              const fallback = records.find((item) => !item.cloudId) ?? records[0]
+              if (fallback) activateStoredWorkspace(fallback)
+              return
+            }
             setTree(current.tree)
             setWorkspaceVariables(current.variables ?? emptyWorkspaceVariables())
-            setActiveEnvironmentId(current.activeEnvironmentId)
+            setActiveEnvironmentId(current.activeEnvironmentId ?? null)
           })
           .catch((error) => setSyncStatus(error instanceof Error ? error.message : 'Could not refresh workspace changes.'))
       }),
     [currentWorkspaceId, setLocalWorkspaces, setTree, setWorkspaceVariables, setActiveEnvironmentId, setSyncStatus],
   )
 
-  const findLocalWorkspaceByCloudId = useEffectEvent((cloudId: string) => localWorkspaces.find((item) => item.cloudId === cloudId))
+  // A save was refused because the workspace changed outside the app. The reloaded version is already shown, so say what happened.
+  useEffect(
+    () =>
+      workspaceStorageService.onConflict(() => {
+        setSyncStatus(t(WORKSPACE_TEXT.storage.conflict))
+      }),
+    [setSyncStatus, t],
+  )
+
+  // The MCP server tags workspaces it creates with the signed-in account, so the account id is written where it can read it.
+  useEffect(() => {
+    if (!storageLoaded) return
+    workspaceStorageService.setActiveAccount(user?.id ?? null).catch((error) => {
+      setSyncStatus(error instanceof Error ? error.message : 'Could not record the signed-in account.')
+    })
+  }, [storageLoaded, user?.id, setSyncStatus])
+
   useEffect(() => {
     if (!sessionToken || !user || !storageLoaded) return
     let active = true
-    void cloudWorkspaceService
-      .list(sessionToken)
-      .then(async (workspaces) => {
-        const records: LocalWorkspace[] = []
-        for (const cloud of workspaces) {
-          if (!active) return
-          const existing = findLocalWorkspaceByCloudId(cloud.id)
-          if (existing) {
-            records.push({ ...existing, name: cloud.name, role: cloud.role })
-          } else {
-            const result = await syncService.pull({ token: sessionToken, cloudId: cloud.id })
-            const remoteTree = normalizeSharedTree(result.tree)
-            const remoteVariables = normalizeSharedVariables(result.variables)
-            records.push({
-              id: crypto.randomUUID(),
-              cloudId: cloud.id,
-              name: cloud.name,
-              tree: remoteTree,
-              baseTree: remoteTree,
-              variables: remoteVariables,
-              baseVariables: remoteVariables,
-              activeEnvironmentId: remoteVariables.environments[0]?.id ?? null,
-              baseCommitId: result.headCommitId,
-              localHeadId: result.headCommitId,
-              role: cloud.role,
-            })
-          }
-        }
-        if (!active) return
-        setCloudWorkspaces(workspaces)
-        if (records.length) {
-          await Promise.all(records.map((record) => workspaceStorageService.saveWorkspace(record)))
-          setLocalWorkspaces((current) => {
-            const localOnly = current.filter((item) => !item.cloudId)
-            return [...localOnly, ...records]
-          })
-        }
+    void syncAccountWorkspaces(sessionToken, user.id)
+      .then((result) => {
+        if (active) applyAccountSnapshot(result)
       })
       .catch((error) => {
         if (active) setSyncStatus(error instanceof Error ? error.message : 'Could not load cloud workspaces.')
@@ -203,5 +283,15 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     return () => {
       active = false
     }
-  }, [sessionToken, user, storageLoaded, setCloudWorkspaces, setLocalWorkspaces, setSyncStatus])
+  }, [sessionToken, user, storageLoaded, setSyncStatus])
+
+  // The cloud list is refreshed while the app runs. A workspace the server stops listing (deleted or access removed) is dropped here too.
+  const dropUnlistedCloudWorkspaces = useEffectEvent((listedIds: string[]) => {
+    const listed = new Set(listedIds)
+    if (!localWorkspaces.some((item) => item.cloudId && !listed.has(item.cloudId))) return
+    applyCloudSnapshot(localWorkspaces.filter((item) => item.cloudId && listed.has(item.cloudId)))
+  })
+  useEffect(() => {
+    if (cloudListReadyRef.current) dropUnlistedCloudWorkspaces(cloudWorkspaces.map((item) => item.id))
+  }, [cloudWorkspaces])
 }

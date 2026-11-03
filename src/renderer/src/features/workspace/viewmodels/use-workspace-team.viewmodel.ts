@@ -7,6 +7,7 @@ import type { ApiNode } from '@/shared/models/api-node.model'
 
 export type TeamInput = {
   sessionToken: string | null
+  accountId: string | null
   activeWorkspace: LocalWorkspace | undefined
   tree: ApiNode[]
   workspaceVariables: WorkspaceVariables
@@ -30,6 +31,7 @@ export type TeamInput = {
 export function useWorkspaceTeamViewModel(input: TeamInput) {
   const {
     sessionToken,
+    accountId,
     activeWorkspace,
     tree,
     workspaceVariables,
@@ -57,6 +59,7 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
     setStagedSnapshot(null)
     setStagedVariables(null)
     setCurrentWorkspaceId(workspace.id)
+    setTree(workspace.tree)
     setWorkspaceVariables(createdVariables)
     setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
     resetTabs(workspace.tree)
@@ -79,6 +82,7 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
 
   return useTeamDialogsViewModel({
     sessionToken,
+    accountId,
     activeWorkspace,
     tree,
     variables: workspaceVariables,

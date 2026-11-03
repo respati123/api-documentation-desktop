@@ -1,4 +1,7 @@
 {
+  "storage": {
+    "conflict": "Workspace ini berubah di luar app, jadi perubahan terakhir Anda tidak tersimpan. Versi tersimpan terbaru yang ditampilkan."
+  },
   "topbar": {
     "wordmark": "Dokumentasi API",
     "account": "Akun",
@@ -27,6 +30,7 @@
     "cloudLabel": "Cloud",
     "cloudRole": "Cloud · {{role}}",
     "localVault": "Penyimpanan lokal",
+    "defaultVaultName": "Workspace saya",
     "resize": "Ubah lebar panel koleksi",
     "pixels": "{{value}} piksel",
     "myWorkspace": "Workspace saya",
@@ -45,7 +49,6 @@
   },
   "tabs": {
     "list": "Tab workspace terbuka",
-    "empty": "Buka request dari koleksi.",
     "close": "Tutup tab {{title}}",
     "changed": "Ada perubahan yang belum di-commit",
     "docsBadge": "DOCS",
@@ -74,6 +77,7 @@
     "docsUnavailableDescription": "Pilih endpoint di koleksi untuk membuka dokumentasinya.",
     "noRequest": "Belum ada request yang dipilih",
     "noRequestDescription": "Pilih request atau buat request baru di folder yang dipilih.",
-    "folderFallback": "Workspace"
+    "folderFallback": "Workspace",
+    "newRequest": "Request baru"
   }
 }

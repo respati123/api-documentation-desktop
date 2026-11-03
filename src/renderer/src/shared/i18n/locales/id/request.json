@@ -178,7 +178,10 @@
     "fileContentTypeAria": "Content-Type file",
     "fileNote": "File tetap di perangkat ini. Rekan tim perlu memilih salinan mereka sendiri setelah menarik request.",
     "fileErrorFallback": "Tidak dapat memilih file.",
-    "rawPlaceholderJson": "{\n  \n}"
+    "rawPlaceholderJson": "{\n  \n}",
+    "formatJson": "Format",
+    "jsonValid": "JSON valid",
+    "jsonInvalid": "JSON tidak valid pada baris {{line}}, kolom {{column}}"
   },
   "contract": {
     "title": "Kontrak respons",

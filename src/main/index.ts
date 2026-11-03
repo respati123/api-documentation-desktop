@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
 import updaterModule from 'electron-updater'
 import { z } from 'zod'
-import type { WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
+import type { WorkspaceVariable, WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
 import { bodyModeSchema } from '../renderer/src/shared/models/api-node.model'
 import { isRecord } from '../renderer/src/shared/utils/record'
 import { CHANNELS } from '../shared/ipc/channels'
@@ -12,6 +12,7 @@ import { connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
 import { assertTrustedSender, isTrustedPage } from './ipc-guard'
 import { type LoopbackSignIn, startLoopbackSignIn } from './loopback-auth'
 import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
+import { WorkspaceRows } from './workspace-rows'
 
 // electron-updater is CommonJS; named imports fail when Electron loads the ESM main bundle.
 const { autoUpdater } = updaterModule
@@ -93,6 +94,8 @@ type LocalWorkspace = {
 }
 
 let localDatabase: DatabaseSync | undefined
+// The rows the window last read or wrote. A save of a row that changed outside the app is refused.
+const workspaceRows = new WorkspaceRows()
 let mainWindow: BrowserWindow | undefined
 let pendingInviteToken: string | undefined
 let activeSignIn: LoopbackSignIn | undefined
@@ -120,6 +123,7 @@ function database(): DatabaseSync {
       CREATE TABLE IF NOT EXISTS workspaces (id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS commits (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS secrets (key TEXT PRIMARY KEY, value BLOB NOT NULL);
+      CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
     `)
   }
   return localDatabase
@@ -168,6 +172,24 @@ function restoreSecretVariableValues(workspaceId: string, value: WorkspaceVariab
   }
 }
 
+function writeWorkspaceSecrets(db: DatabaseSync, workspaceId: string, secretRows: WorkspaceVariable[], canEncrypt: boolean): void {
+  const prefix = `workspace-variable:${workspaceId}:`
+  const activeKeys = new Set(secretRows.map((item) => `${prefix}${item.id}`))
+  const existing = z.array(keyRowSchema).parse(db.prepare('SELECT key FROM secrets').all())
+  for (const row of existing)
+    if (row.key.startsWith(prefix) && !activeKeys.has(row.key)) db.prepare('DELETE FROM secrets WHERE key = ?').run(row.key)
+  if (!canEncrypt) return
+  for (const item of secretRows) {
+    const key = `${prefix}${item.id}`
+    if (!item.value) db.prepare('DELETE FROM secrets WHERE key = ?').run(key)
+    else {
+      const encrypted = safeStorage.encryptString(item.value)
+      db.prepare('INSERT INTO secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, encrypted)
+    }
+  }
+}
+
+// Refuses the save, and tells the window, when the workspace changed outside the app since it was last read. The window then reloads it.
 function persistWorkspace(workspace: LocalWorkspace): boolean {
   const db = database()
   const variables = workspace.variables ?? { globals: [], environments: [] }
@@ -175,33 +197,21 @@ function persistWorkspace(workspace: LocalWorkspace): boolean {
     (item) => item.secret,
   )
   const canEncrypt = safeStorage.isEncryptionAvailable()
-  const prefix = `workspace-variable:${workspace.id}:`
-  const activeKeys = new Set(secretRows.map((item) => `${prefix}${item.id}`))
-  const existing = z.array(keyRowSchema).parse(db.prepare('SELECT key FROM secrets').all())
-  for (const row of existing)
-    if (row.key.startsWith(prefix) && !activeKeys.has(row.key)) db.prepare('DELETE FROM secrets WHERE key = ?').run(row.key)
-  if (canEncrypt) {
-    for (const item of secretRows) {
-      const key = `${prefix}${item.id}`
-      if (!item.value) db.prepare('DELETE FROM secrets WHERE key = ?').run(key)
-      else {
-        const encrypted = safeStorage.encryptString(item.value)
-        db.prepare('INSERT INTO secrets (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(
-          key,
-          encrypted,
-        )
-      }
-    }
+  const saved = workspaceRows.save(db, workspace.id, () => {
+    writeWorkspaceSecrets(db, workspace.id, secretRows, canEncrypt)
+    const data = JSON.stringify({
+      ...workspace,
+      variables: stripSecretVariableValues(variables),
+      baseVariables: stripSecretVariableValues(workspace.baseVariables),
+    })
+    db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data').run(workspace.id, data)
+    return data
+  })
+  if (!saved) {
+    sendToWindow(CHANNELS.workspace.conflict, workspace.id)
+    sendToWindow(CHANNELS.workspace.externalChange)
+    return false
   }
-  const stored = {
-    ...workspace,
-    variables: stripSecretVariableValues(variables),
-    baseVariables: stripSecretVariableValues(workspace.baseVariables),
-  }
-  db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data').run(
-    workspace.id,
-    JSON.stringify(stored),
-  )
   return canEncrypt || secretRows.every((item) => !item.value)
 }
 
@@ -443,7 +453,10 @@ ipcMain.handle(CHANNELS.workspace.load, (event, ...args: unknown[]) => {
   const [legacyTree] = z.tuple([z.unknown()]).parse(args)
   const db = database()
   const saved = dataRowSchema.optional().parse(db.prepare('SELECT data FROM workspaces WHERE id = ?').get('local-default'))
-  if (saved) return loadWorkspaceData(saved.data)
+  if (saved) {
+    workspaceRows.remember('local-default', saved.data)
+    return loadWorkspaceData(saved.data)
+  }
   const tree = Array.isArray(legacyTree) ? legacyTree : []
   const variables = { globals: [], environments: [] }
   const workspace: LocalWorkspace = {
@@ -458,7 +471,9 @@ ipcMain.handle(CHANNELS.workspace.load, (event, ...args: unknown[]) => {
     baseCommitId: null,
     localHeadId: null,
   }
-  db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?)').run(workspace.id, JSON.stringify(workspace))
+  const data = JSON.stringify(workspace)
+  db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?)').run(workspace.id, data)
+  workspaceRows.remember(workspace.id, data)
   return workspace
 })
 
@@ -474,7 +489,11 @@ ipcMain.handle(CHANNELS.workspace.list, (event, ...args: unknown[]) => {
   return z
     .array(dataRowSchema)
     .parse(database().prepare('SELECT data FROM workspaces ORDER BY rowid').all())
-    .map((row) => loadWorkspaceData(row.data))
+    .map((row) => {
+      const workspace = loadWorkspaceData(row.data)
+      workspaceRows.remember(workspace.id, row.data)
+      return workspace
+    })
 })
 
 ipcMain.handle(CHANNELS.commit.save, (event, ...args: unknown[]) => {
@@ -557,6 +576,19 @@ ipcMain.handle(CHANNELS.session.clear, (event, ...args: unknown[]) => {
   assertTrustedSender(event)
   z.tuple([]).parse(args)
   database().prepare('DELETE FROM secrets WHERE key = ?').run('api-session')
+})
+
+// The signed-in account id is not a secret. The MCP server reads it to tag workspaces it creates.
+ipcMain.handle(CHANNELS.account.setActive, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [userId] = z.tuple([z.string().min(1).max(200).nullable()]).parse(args)
+  const db = database()
+  if (userId === null) db.prepare('DELETE FROM app_settings WHERE key = ?').run('active-account')
+  else
+    db.prepare('INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(
+      'active-account',
+      userId,
+    )
 })
 
 let latestUpdateStatus: UpdateStatus | undefined

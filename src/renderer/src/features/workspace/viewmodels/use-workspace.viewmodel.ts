@@ -137,6 +137,7 @@ export function useWorkspaceViewModel() {
     setCurrentWorkspaceId,
     localWorkspaces,
     setLocalWorkspaces,
+    cloudWorkspaces,
     setCloudWorkspaces,
     setSecureStorageAvailable,
     setTree,
@@ -195,7 +196,6 @@ export function useWorkspaceViewModel() {
   const isReadOnly = activeWorkspace?.role === 'viewer'
   useCloudRealtimeViewModel({
     sessionToken,
-    cloudWorkspaceCount: cloudWorkspaces.length,
     setCloudWorkspaces,
     onStatus: setSyncStatus,
   })
@@ -502,6 +502,7 @@ export function useWorkspaceViewModel() {
   })
   const team = useWorkspaceTeamViewModel({
     sessionToken,
+    accountId: user?.id ?? null,
     activeWorkspace,
     tree,
     workspaceVariables,
@@ -604,6 +605,7 @@ export function useWorkspaceViewModel() {
     activeFolderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : null,
     activeDocsRequest,
     hasRequestWorkbench: Boolean(requestWorkbench),
+    canCreateRequest: Boolean(activeWorkspace) && !isReadOnly,
     onSelectTab: selectWorkspaceTab,
     onCloseTab: closeWorkspaceTab,
     onCloseOtherTabs: closeOtherWorkspaceTabs,

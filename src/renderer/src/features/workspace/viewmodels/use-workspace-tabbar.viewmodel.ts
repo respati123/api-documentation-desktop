@@ -23,6 +23,7 @@ export type TabbarInput = {
   activeFolderName: string | null
   activeDocsRequest: ApiNode | undefined
   hasRequestWorkbench: boolean
+  canCreateRequest: boolean
   onSelectTab: (tab: WorkspaceTab) => void
   onCloseTab: (tab: WorkspaceTab) => void
   onCloseOtherTabs: (tab: WorkspaceTab) => void
@@ -177,7 +178,6 @@ export function useWorkspaceTabbarViewModel(input: TabbarInput) {
 
   return {
     listLabel: t(WORKSPACE_TEXT.tabs.list),
-    emptyText: input.tabs.length ? null : t(WORKSPACE_TEXT.tabs.empty),
     tabs,
     changedLabel: t(WORKSPACE_TEXT.tabs.changed),
     readDocs: { label: t(WORKSPACE_TEXT.tabs.readDocs), disabled: !input.hasRequests, onClick: input.onReadDocs },
@@ -215,6 +215,11 @@ export function useWorkspaceTabbarViewModel(input: TabbarInput) {
       docsUnavailableDescription: t(WORKSPACE_TEXT.main.docsUnavailableDescription),
       noRequest: t(WORKSPACE_TEXT.main.noRequest),
       noRequestDescription: t(WORKSPACE_TEXT.main.noRequestDescription),
+      newRequest: {
+        label: t(WORKSPACE_TEXT.main.newRequest),
+        disabled: !input.canCreateRequest,
+        onClick: input.onNewRequest,
+      },
     },
   }
 }

@@ -2,11 +2,18 @@
 export const CHANNELS = {
   request: { send: 'request:send' },
   file: { select: 'file:select' },
-  workspace: { load: 'workspace:load', save: 'workspace:save', list: 'workspace:list', externalChange: 'workspace:external-change' },
+  workspace: {
+    load: 'workspace:load',
+    save: 'workspace:save',
+    list: 'workspace:list',
+    externalChange: 'workspace:external-change',
+    conflict: 'workspace:conflict',
+  },
   commit: { save: 'commit:save', list: 'commit:list' },
   secret: { available: 'secret:available' },
   auth: { begin: 'auth:begin', code: 'auth:code' },
   session: { load: 'session:load', save: 'session:save', clear: 'session:clear' },
+  account: { setActive: 'account:set-active' },
   invite: { token: 'invite:token' },
   update: { status: 'update:status', download: 'update:download', latest: 'update:latest' },
   ai: {

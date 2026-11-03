@@ -84,6 +84,7 @@ In `.agents/skills/`. Read the `SKILL.md` before you use one.
 | `finish-change` | the handoff checks and report |
 | `impeccable`, `shadcn` | all UI work (`ui-design.md`) |
 | `vercel-react-best-practices` | performance work (`performance.md`) |
+| `karpathy-guidelines` | writing, reviewing, or refactoring code: state assumptions, keep it simple, change only what the task needs, define success criteria |
 
 ## Git
 

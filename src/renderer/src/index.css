@@ -6,6 +6,8 @@
 
 @theme inline {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  /* One Tailwind spacing unit is 4px, so p-2 is 8px, p-4 is 16px, and h-9 is 36px. The default is 0.25rem, which is 3.5px at the app's 14px root size. */
+  --spacing: 4px;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);

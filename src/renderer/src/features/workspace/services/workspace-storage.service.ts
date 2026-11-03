@@ -22,4 +22,10 @@ export const workspaceStorageService = {
     z.array(localCommitSchema).parse(await window.apiDesktop.listCommits(workspaceId)),
 
   onExternalChange: (handler: () => void): (() => void) => window.apiDesktop.onExternalWorkspaceChange(handler),
+
+  onConflict: (handler: (workspaceId: string) => void): (() => void) => window.apiDesktop.onWorkspaceConflict(handler),
+
+  setActiveAccount: async (userId: string | null): Promise<void> => {
+    await window.apiDesktop.setActiveAccount(userId)
+  },
 }

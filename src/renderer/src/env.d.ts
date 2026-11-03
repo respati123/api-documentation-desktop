@@ -48,6 +48,8 @@ type LocalWorkspace = {
   baseCommitId: string | null
   localHeadId: string | null
   role?: 'owner' | 'editor' | 'viewer' | null
+  // The account that owns this copy on this device. Missing on copies saved before accounts existed.
+  accountId?: string | null
 }
 
 type LocalCommit = {
@@ -75,12 +77,14 @@ interface Window {
     saveWorkspace(workspace: LocalWorkspace): Promise<boolean>
     listWorkspaces(): Promise<LocalWorkspace[]>
     onExternalWorkspaceChange(handler: () => void): () => void
+    onWorkspaceConflict(handler: (workspaceId: string) => void): () => void
     secureStorageAvailable(): Promise<boolean>
     saveCommit(workspaceId: string, commit: LocalCommit): Promise<void>
     listCommits(workspaceId: string): Promise<LocalCommit[]>
     loadSession(): Promise<string | null>
     saveSession(token: string): Promise<boolean>
     clearSession(): Promise<void>
+    setActiveAccount(userId: string | null): Promise<void>
     onInviteToken(handler: (token: string) => void): () => void
     beginBrowserSignIn(cloudUrl: string): Promise<void>
     downloadUpdate(version: string): Promise<void>
