@@ -137,10 +137,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       : stored
           .filter((item) => item.accountId === accountId && item.cloudId)
           .map((item) => ({ id: item.cloudId ?? '', role: item.role ?? 'viewer', headCommitId: item.baseCommitId }))
-    const plan = workspacesForAccount(stored, accountId, entries, () => ({
-      ...newLocalVault(t(WORKSPACE_TEXT.sidebar.defaultVaultName)),
-      accountId,
-    }))
+    const plan = workspacesForAccount(stored, accountId, entries, () => newLocalVault(t(WORKSPACE_TEXT.sidebar.defaultVaultName)))
 
     // Only the name and role come from the server here. The tree stays as it is until the user pulls.
     const workspaces = plan.workspaces.map((item) => {
@@ -167,9 +164,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     if (fallback) activateStoredWorkspace(fallback)
   })
 
-  // While signed in, a workspace another account saved on this device is not shown.
+  // While signed in, another account's cloud copy saved on this device is not shown. Local workspaces belong to the device, so they are.
   const visibleRecords = useEffectEvent((records: LocalWorkspace[]) =>
-    user ? records.filter((item) => item.accountId === user.id) : records,
+    user ? records.filter((item) => !item.cloudId || item.accountId === user.id) : records,
   )
 
   useEffect(() => {
