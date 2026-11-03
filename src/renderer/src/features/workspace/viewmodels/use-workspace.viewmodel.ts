@@ -392,7 +392,8 @@ export function useWorkspaceViewModel() {
     setMergeChoices,
     persistActiveWorkspace,
   })
-  const { stageChanges, stageChange, saveCommit, discardLocalChanges, pullWorkspace, pushWorkspace, applyMergeResolution } = syncActions
+  const { stageChanges, stageChange, saveCommit, discardLocalChanges, pullWorkspace, pushWorkspace, applyMergeResolution, revertToCommit } =
+    syncActions
   const treeActions = useWorkspaceTreeActionsViewModel({
     tree,
     setTree,
@@ -472,6 +473,7 @@ export function useWorkspaceViewModel() {
         setSelectedHistoryCommitId(commitId)
       },
       onSelectHistoryChange: setSelectedHistoryChangeId,
+      onRevertHistoryCommit: (commitId) => void revertToCommit(commitId),
       onOpenHistory: () => {
         setCommitDialogView('history')
         setSelectedHistoryCommitId('')

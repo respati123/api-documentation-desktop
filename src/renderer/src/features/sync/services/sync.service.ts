@@ -48,4 +48,10 @@ export const syncService = {
     })
     return pushResponseSchema.parse(data).headCommitId
   },
+
+  // Makes a new cloud head whose content is the content of an earlier commit. The history itself is kept.
+  restore: async (input: { token: string; cloudId: string; commitId: string }): Promise<string> => {
+    const data = await apiCall(`/api/workspaces/${input.cloudId}/sync/restore/${input.commitId}`, { token: input.token, method: 'POST' })
+    return pushResponseSchema.parse(data).headCommitId
+  },
 }
