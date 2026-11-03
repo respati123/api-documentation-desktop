@@ -1,7 +1,7 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isFolder, normalizeSharedVariables, normalizeTree } from '@/features/collection'
-import { type CloudWorkspace, cloudWorkspaceService } from '@/features/sync'
+import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
+import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
 import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
@@ -49,6 +49,27 @@ function normalizeStoredWorkspace(item: LocalWorkspace): LocalWorkspace {
     variables: normalizeWorkspaceVariables(item.variables),
     baseVariables: normalizeSharedVariables(item.baseVariables ?? item.variables),
     activeEnvironmentId: item.activeEnvironmentId ?? null,
+  }
+}
+
+// A first local copy of a cloud workspace, built from the server's current head. Only used for a workspace the device has never had.
+async function pullCopy(token: string, cloud: CloudWorkspace, accountId: string): Promise<LocalWorkspace> {
+  const result = await syncService.pull({ token, cloudId: cloud.id })
+  const tree = normalizeSharedTree(result.tree)
+  const variables = normalizeSharedVariables(result.variables)
+  return {
+    id: crypto.randomUUID(),
+    cloudId: cloud.id,
+    name: cloud.name,
+    tree,
+    baseTree: tree,
+    variables,
+    baseVariables: variables,
+    activeEnvironmentId: variables.environments[0]?.id ?? null,
+    baseCommitId: result.headCommitId,
+    localHeadId: result.headCommitId,
+    role: cloud.role,
+    accountId,
   }
 }
 
@@ -147,9 +168,20 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       const cloud = listed?.find((entry) => entry.id === item.cloudId)
       return cloud ? { ...item, name: cloud.name, role: cloud.role } : item
     })
+    const changed = new Map(plan.changed.map((item) => [item.id, item]))
+    // A cloud workspace this account has never had on this device is cloned once, so it can be opened. Changes after that are pulled by hand.
+    for (const cloud of listed ?? []) {
+      if (workspaces.some((item) => item.cloudId === cloud.id)) continue
+      try {
+        const copy = await pullCopy(token, cloud, accountId)
+        workspaces.push(copy)
+        changed.set(copy.id, copy)
+      } catch {
+        // Not reachable right now. The workspace is cloned on the next sign-in.
+      }
+    }
     const listedIds = new Set(listed?.map((cloud) => cloud.id))
     const visible = listed ? workspaces.filter((item) => !item.cloudId || listedIds.has(item.cloudId)) : workspaces
-    const changed = new Map(plan.changed.map((item) => [item.id, item]))
     for (const item of visible) if (changed.has(item.id) || item.cloudId) changed.set(item.id, item)
     await Promise.all([...changed.values()].map((item) => workspaceStorageService.saveWorkspace(item)))
     return { workspaces: visible, listed }
