@@ -133,6 +133,14 @@
     "conflictPublished": "The workspace was published, but its cloud version changed. Pull before pushing again.",
     "failed": "Could not push commits."
   },
+  "live": {
+    "oneCommit": "1 commit",
+    "manyCommits": "{{count}} commits",
+    "unnamed": "A teammate",
+    "pushed": "{{actor}} pushed {{commits}}. Pull to get updates.",
+    "pushedWithMessage": "{{actor}} pushed {{commits}}: “{{message}}”. Pull to get updates.",
+    "updated": "Updated to the latest version from {{actor}}."
+  },
   "pull": {
     "pulling": "Pulling cloud changes…",
     "upToDate": "Workspace is up to date.",
