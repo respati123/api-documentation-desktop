@@ -5,8 +5,7 @@ import { SYNC_TEXT } from '@/features/sync/constants/sync-text.constants'
 import { inviteTokenFrom, isValidEmail, normalizeEmail } from '@/features/sync/lib/invite'
 import type { CloudWorkspaceRecord } from '@/features/sync/models/cloud-workspace.model'
 import { cloudWorkspaceService } from '@/features/sync/services/cloud-workspace.service'
-import { stripLocalFilePaths } from '@/lib/merge'
-import { preserveLocalSecretValues, shareableWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
+import { emptyWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
 import type { ApiNode } from '@/shared/models/api-node.model'
 
 type Role = 'editor' | 'viewer'
@@ -43,16 +42,16 @@ export function useTeamDialogsViewModel(input: TeamDialogsInput) {
     if (!input.sessionToken || !createName.trim()) return
     input.onStatus(t(SYNC_TEXT.createWorkspace.creating))
     try {
-      const sharedVariables = shareableWorkspaceVariables(input.variables)
+      // A new cloud workspace starts empty. The local workspace's tree and variables stay local.
+      const emptyVariables = emptyWorkspaceVariables()
       const cloud = await cloudWorkspaceService.create({
         token: input.sessionToken,
         name: createName.trim(),
-        tree: stripLocalFilePaths(input.tree),
-        variables: sharedVariables,
+        tree: [],
+        variables: emptyVariables,
       })
       const createdTree = normalizeSharedTree(cloud.tree ?? [])
-      const baseVariables = normalizeSharedVariables(cloud.variables ?? sharedVariables)
-      const createdVariables = preserveLocalSecretValues(baseVariables, input.variables)
+      const createdVariables = normalizeSharedVariables(cloud.variables ?? emptyVariables)
       const workspace: LocalWorkspace = {
         id: crypto.randomUUID(),
         cloudId: cloud.id,
@@ -60,8 +59,8 @@ export function useTeamDialogsViewModel(input: TeamDialogsInput) {
         tree: createdTree,
         baseTree: createdTree,
         variables: createdVariables,
-        baseVariables,
-        activeEnvironmentId: input.activeEnvironmentId,
+        baseVariables: createdVariables,
+        activeEnvironmentId: null,
         baseCommitId: cloud.headCommitId,
         localHeadId: cloud.headCommitId,
         role: 'owner',

@@ -57,6 +57,7 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
     setStagedSnapshot(null)
     setStagedVariables(null)
     setCurrentWorkspaceId(workspace.id)
+    setTree(workspace.tree)
     setWorkspaceVariables(createdVariables)
     setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
     resetTabs(workspace.tree)
