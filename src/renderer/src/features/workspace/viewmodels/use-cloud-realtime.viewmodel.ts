@@ -1,12 +1,13 @@
 import { type Dispatch, type SetStateAction, useEffect, useEffectEvent } from 'react'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
-import { parseWorkspaceEvent } from '@/features/workspace/models/workspace.model'
+import { parseWorkspaceEvent, type WorkspaceUpdateEvent } from '@/features/workspace/models/workspace.model'
 import { apiWebSocketUrl } from '@/lib/api'
 
 export type CloudRealtimeInput = {
   sessionToken: string | null
   setCloudWorkspaces: Dispatch<SetStateAction<CloudWorkspace[]>>
-  onStatus: (message: string) => void
+  // Called for each head move. The owner of the workspace state decides whether to pull, or to ask the user to.
+  onWorkspaceUpdated: (event: WorkspaceUpdateEvent) => void
 }
 
 // The cloud workspace list. Callers keep their last known list when a request fails.
@@ -18,7 +19,7 @@ async function fetchCloudWorkspaces(token: string): Promise<CloudWorkspace[]> {
 // A workspace.updated event moves that workspace's head commit without a fetch.
 export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
   const { sessionToken, setCloudWorkspaces } = input
-  const reportStatus = useEffectEvent((message: string) => input.onStatus(message))
+  const workspaceUpdated = useEffectEvent((event: WorkspaceUpdateEvent) => input.onWorkspaceUpdated(event))
 
   useEffect(() => {
     if (!sessionToken) return
@@ -56,10 +57,7 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
       setCloudWorkspaces((current) =>
         current.map((workspace) => (workspace.id === event.workspaceId ? { ...workspace, headCommitId: event.headCommitId } : workspace)),
       )
-      const count = event.commitCount === 1 ? '1 commit' : `${event.commitCount ?? 0} commits`
-      const actor = event.actorEmail ?? 'A teammate'
-      const message = event.message === undefined ? '' : `: “${event.message}”`
-      reportStatus(`${actor} pushed ${count}${message}. Pull to get updates.`)
+      workspaceUpdated(event)
     }
 
     const connect = async () => {

@@ -133,6 +133,14 @@
     "conflictPublished": "Workspace sudah dipublikasikan, tetapi versi cloud-nya berubah. Tarik perubahan sebelum mengirim lagi.",
     "failed": "Commit tidak dapat dikirim."
   },
+  "live": {
+    "oneCommit": "1 commit",
+    "manyCommits": "{{count}} commit",
+    "unnamed": "Anggota tim",
+    "pushed": "{{actor}} push {{commits}}. Tarik untuk mendapat pembaruan.",
+    "pushedWithMessage": "{{actor}} push {{commits}}: “{{message}}”. Tarik untuk mendapat pembaruan.",
+    "updated": "Diperbarui ke versi terbaru dari {{actor}}."
+  },
   "pull": {
     "pulling": "Mengambil perubahan dari cloud…",
     "upToDate": "Workspace sudah yang terbaru.",

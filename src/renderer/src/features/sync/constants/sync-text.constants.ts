@@ -133,6 +133,14 @@ export const SYNC_TEXT = {
     conflictPublished: 'push.conflictPublished',
     failed: 'push.failed',
   },
+  live: {
+    oneCommit: 'live.oneCommit',
+    manyCommits: 'live.manyCommits',
+    unnamed: 'live.unnamed',
+    pushed: 'live.pushed',
+    pushedWithMessage: 'live.pushedWithMessage',
+    updated: 'live.updated',
+  },
   pull: {
     pulling: 'pull.pulling',
     upToDate: 'pull.upToDate',
