@@ -45,7 +45,6 @@
   },
   "tabs": {
     "list": "Open workspace tabs",
-    "empty": "Open a request from the collection.",
     "close": "Close {{title}} tab",
     "changed": "Has uncommitted changes",
     "docsBadge": "DOCS",
@@ -74,6 +73,7 @@
     "docsUnavailableDescription": "Choose an endpoint in the collection to open its documentation.",
     "noRequest": "No request selected",
     "noRequestDescription": "Choose a request or create one in the selected folder.",
-    "folderFallback": "Workspace"
+    "folderFallback": "Workspace",
+    "newRequest": "New request"
   }
 }

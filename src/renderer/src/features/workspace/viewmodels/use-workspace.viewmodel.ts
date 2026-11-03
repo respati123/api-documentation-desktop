@@ -604,6 +604,7 @@ export function useWorkspaceViewModel() {
     activeFolderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : null,
     activeDocsRequest,
     hasRequestWorkbench: Boolean(requestWorkbench),
+    canCreateRequest: Boolean(activeWorkspace) && !isReadOnly,
     onSelectTab: selectWorkspaceTab,
     onCloseTab: closeWorkspaceTab,
     onCloseOtherTabs: closeOtherWorkspaceTabs,

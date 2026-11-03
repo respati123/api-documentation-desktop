@@ -1,3 +1,4 @@
+import { FileText } from 'lucide-react'
 import { type ComponentProps, Fragment, type ReactElement } from 'react'
 import { ApiReferencePage } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
@@ -5,7 +6,6 @@ import { EnvironmentTabView } from '@/features/variables'
 import type { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
 import { CONTEXT_MENU_ITEM, CONTEXT_MENU_PANEL, CONTEXT_MENU_SEPARATOR } from '@/shared/components/context-menu'
 import { styleWithVariables } from '@/shared/components/css-variables'
-import { StateMessage } from '@/shared/components/state-message'
 import { Button } from '@/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -67,6 +67,48 @@ function TabBadge({ badge }: { badge: TabbarViewModel['tabs'][number]['badge'] }
   )
 }
 
+type EmptyAction = { label: string; disabled: boolean; onClick: () => void }
+
+// The pane shown when no request is open. It fills the pane, explains the next step, and offers the action that starts it.
+function EmptyPaneView({
+  testId,
+  title,
+  description,
+  action,
+}: {
+  testId: string
+  title: string
+  description: string
+  action?: EmptyAction
+}): ReactElement {
+  return (
+    <div
+      className="col-span-full row-start-2 flex min-h-0 items-center justify-center rounded-[12px] border border-border bg-card p-4"
+      data-testid={testId}
+    >
+      <div className="flex max-w-[320px] flex-col items-center gap-2 text-center">
+        <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-hidden="true">
+          <FileText size={18} strokeWidth={1.8} aria-hidden="true" />
+        </span>
+        <h2 className="mt-2 text-[15px] font-semibold text-foreground">{title}</h2>
+        <p className="text-[13px] leading-[1.6] text-muted-foreground">{description}</p>
+        {action && (
+          <Button
+            type="button"
+            size="sm"
+            className="mt-4"
+            disabled={action.disabled}
+            data-testid="workspace-main-empty-new-request"
+            onClick={action.onClick}
+          >
+            {action.label}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function WorkspaceTabbarView({ tabbar }: { tabbar: TabbarViewModel }): ReactElement {
   const env = tabbar.environment
   return (
@@ -117,7 +159,6 @@ export function WorkspaceTabbarView({ tabbar }: { tabbar: TabbarViewModel }): Re
             </Button>
           </div>
         ))}
-        {tabbar.emptyText && <span className="self-center px-2 pb-2 text-[12px] text-muted-foreground">{tabbar.emptyText}</span>}
       </div>
       <div className="flex min-w-0 shrink-0 items-center pb-2 max-[720px]:pb-2">
         <Select value={env.value} onValueChange={env.onChange} disabled={env.disabled}>
@@ -165,19 +206,20 @@ export function WorkspaceMainView({
         />
       )}
       {tabbar.pane === 'docsUnavailable' && (
-        <section className="request-card docs-page">
-          <StateMessage
-            testId="workspace-main-docs-unavailable-state"
-            title={main.docsUnavailable}
-            description={main.docsUnavailableDescription}
-          />
-        </section>
+        <EmptyPaneView
+          testId="workspace-main-docs-unavailable-state"
+          title={main.docsUnavailable}
+          description={main.docsUnavailableDescription}
+        />
       )}
       {tabbar.pane === 'request' && requestWorkbench && <RequestWorkbenchPage {...requestWorkbench} />}
       {tabbar.pane === 'empty' && (
-        <section className="request-card">
-          <StateMessage testId="workspace-main-no-request-state" title={main.noRequest} description={main.noRequestDescription} />
-        </section>
+        <EmptyPaneView
+          testId="workspace-main-no-request-state"
+          title={main.noRequest}
+          description={main.noRequestDescription}
+          action={main.newRequest}
+        />
       )}
     </section>
   )

@@ -45,7 +45,6 @@
   },
   "tabs": {
     "list": "Tab workspace terbuka",
-    "empty": "Buka request dari koleksi.",
     "close": "Tutup tab {{title}}",
     "changed": "Ada perubahan yang belum di-commit",
     "docsBadge": "DOCS",
@@ -74,6 +73,7 @@
     "docsUnavailableDescription": "Pilih endpoint di koleksi untuk membuka dokumentasinya.",
     "noRequest": "Belum ada request yang dipilih",
     "noRequestDescription": "Pilih request atau buat request baru di folder yang dipilih.",
-    "folderFallback": "Workspace"
+    "folderFallback": "Workspace",
+    "newRequest": "Request baru"
   }
 }

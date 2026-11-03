@@ -45,7 +45,6 @@ export const WORKSPACE_TEXT = {
   },
   tabs: {
     list: 'tabs.list',
-    empty: 'tabs.empty',
     close: 'tabs.close',
     changed: 'tabs.changed',
     docsBadge: 'tabs.docsBadge',
@@ -75,5 +74,6 @@ export const WORKSPACE_TEXT = {
     noRequest: 'main.noRequest',
     noRequestDescription: 'main.noRequestDescription',
     folderFallback: 'main.folderFallback',
+    newRequest: 'main.newRequest',
   },
 } as const
