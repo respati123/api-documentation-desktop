@@ -56,6 +56,7 @@ export function BodyEditorView({
   formatJsonDisabled,
   onFormatJson,
   onRawBlur,
+  onRawPaste,
 }: BodyEditorViewProps): ReactElement {
   const { t } = useTranslation('request')
 
@@ -262,6 +263,7 @@ export function BodyEditorView({
             readOnly={readOnly}
             onValueChange={onRawChange}
             onBlur={(event) => onRawBlur(event.currentTarget.value)}
+            onPaste={onRawPaste}
             placeholder={rawPlaceholder}
           />
         </div>
