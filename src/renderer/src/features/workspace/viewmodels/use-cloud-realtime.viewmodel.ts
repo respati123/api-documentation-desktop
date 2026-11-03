@@ -1,11 +1,10 @@
 import { type Dispatch, type SetStateAction, useEffect, useEffectEvent } from 'react'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
-import { workspaceUpdateEventSchema } from '@/features/workspace/models/workspace.model'
+import { parseWorkspaceEvent } from '@/features/workspace/models/workspace.model'
 import { apiWebSocketUrl } from '@/lib/api'
 
 export type CloudRealtimeInput = {
   sessionToken: string | null
-  cloudWorkspaceCount: number
   setCloudWorkspaces: Dispatch<SetStateAction<CloudWorkspace[]>>
   onStatus: (message: string) => void
 }
@@ -15,29 +14,11 @@ async function fetchCloudWorkspaces(token: string): Promise<CloudWorkspace[]> {
   return cloudWorkspaceService.list(token)
 }
 
-// Keeps cloud head commits fresh: a 30-second poll while cloud workspaces exist, and a refresh on every reconnect of the sync event socket.
+// Keeps the cloud list live over the sync event socket. The list is fetched on every connect, and again on each workspace.changed event.
+// A workspace.updated event moves that workspace's head commit without a fetch.
 export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
-  const { sessionToken, cloudWorkspaceCount, setCloudWorkspaces } = input
+  const { sessionToken, setCloudWorkspaces } = input
   const reportStatus = useEffectEvent((message: string) => input.onStatus(message))
-
-  useEffect(() => {
-    if (!sessionToken || !cloudWorkspaceCount) return
-    let active = true
-    const refreshCloudHeads = async () => {
-      try {
-        const workspaces = await fetchCloudWorkspaces(sessionToken)
-        if (active) setCloudWorkspaces(workspaces)
-      } catch {
-        // Keep the last known cloud status when the network is temporarily unavailable.
-      }
-    }
-    void refreshCloudHeads()
-    const timer = window.setInterval(() => void refreshCloudHeads(), 30_000)
-    return () => {
-      active = false
-      window.clearInterval(timer)
-    }
-  }, [sessionToken, cloudWorkspaceCount, setCloudWorkspaces])
 
   useEffect(() => {
     if (!sessionToken) return
@@ -46,12 +27,12 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
     let reconnectTimer: number | undefined
     let reconnectAttempt = 0
 
-    const refreshCloudHeads = async () => {
+    const refreshCloudWorkspaces = async () => {
       try {
         const workspaces = await fetchCloudWorkspaces(sessionToken)
         if (active) setCloudWorkspaces(workspaces)
       } catch {
-        // The existing polling fallback will retry when the current workspace is cloud-backed.
+        // Keep the last known list when the network is temporarily unavailable. The next connect or event refreshes it.
       }
     }
 
@@ -63,6 +44,22 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
         reconnectTimer = undefined
         void connect()
       }, delay)
+    }
+
+    const handleEvent = (raw: string) => {
+      const event = parseWorkspaceEvent(raw)
+      if (!event) return
+      if (event.type === 'workspace.changed') {
+        void refreshCloudWorkspaces()
+        return
+      }
+      setCloudWorkspaces((current) =>
+        current.map((workspace) => (workspace.id === event.workspaceId ? { ...workspace, headCommitId: event.headCommitId } : workspace)),
+      )
+      const count = event.commitCount === 1 ? '1 commit' : `${event.commitCount ?? 0} commits`
+      const actor = event.actorEmail ?? 'A teammate'
+      const message = event.message === undefined ? '' : `: “${event.message}”`
+      reportStatus(`${actor} pushed ${count}${message}. Pull to get updates.`)
     }
 
     const connect = async () => {
@@ -77,26 +74,11 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
           'open',
           () => {
             reconnectAttempt = 0
-            void refreshCloudHeads()
+            void refreshCloudWorkspaces()
           },
           { once: true },
         )
-        connection.addEventListener('message', (messageEvent) => {
-          try {
-            const update = workspaceUpdateEventSchema.parse(JSON.parse(String(messageEvent.data)))
-            setCloudWorkspaces((current) =>
-              current.map((workspace) =>
-                workspace.id === update.workspaceId ? { ...workspace, headCommitId: update.headCommitId } : workspace,
-              ),
-            )
-            const count = update.commitCount === 1 ? '1 commit' : `${update.commitCount ?? 0} commits`
-            const actor = update.actorEmail ?? 'A teammate'
-            const message = update.message === undefined ? '' : `: “${update.message}”`
-            reportStatus(`${actor} pushed ${count}${message}. Pull to get updates.`)
-          } catch {
-            // Ignore malformed messages and keep the sync connection available.
-          }
-        })
+        connection.addEventListener('message', (messageEvent) => handleEvent(String(messageEvent.data)))
         connection.addEventListener('close', scheduleReconnect, { once: true })
         connection.addEventListener('error', () => connection.close(), { once: true })
       } catch {

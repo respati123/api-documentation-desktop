@@ -196,7 +196,6 @@ export function useWorkspaceViewModel() {
   const isReadOnly = activeWorkspace?.role === 'viewer'
   useCloudRealtimeViewModel({
     sessionToken,
-    cloudWorkspaceCount: cloudWorkspaces.length,
     setCloudWorkspaces,
     onStatus: setSyncStatus,
   })
