@@ -1,4 +1,7 @@
 {
+  "storage": {
+    "conflict": "This workspace changed outside the app, so your last edit was not saved. The latest saved version is shown."
+  },
   "topbar": {
     "wordmark": "API Documentation",
     "account": "Account",

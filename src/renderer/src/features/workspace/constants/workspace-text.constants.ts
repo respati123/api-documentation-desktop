@@ -77,4 +77,7 @@ export const WORKSPACE_TEXT = {
     folderFallback: 'main.folderFallback',
     newRequest: 'main.newRequest',
   },
+  storage: {
+    conflict: 'storage.conflict',
+  },
 } as const

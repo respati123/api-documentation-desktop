@@ -77,6 +77,7 @@ interface Window {
     saveWorkspace(workspace: LocalWorkspace): Promise<boolean>
     listWorkspaces(): Promise<LocalWorkspace[]>
     onExternalWorkspaceChange(handler: () => void): () => void
+    onWorkspaceConflict(handler: (workspaceId: string) => void): () => void
     secureStorageAvailable(): Promise<boolean>
     saveCommit(workspaceId: string, commit: LocalCommit): Promise<void>
     listCommits(workspaceId: string): Promise<LocalCommit[]>

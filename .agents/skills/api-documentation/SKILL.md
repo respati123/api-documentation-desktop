@@ -39,15 +39,18 @@ Verify facts before writing them. Read the project source, OpenAPI specs, or exi
 - Use `changes_preview` before every change to a collection: create, update, move, rename, deprecate, or delete. It accepts `create_folder`, `create_request`, `update_request`, `rename_folder`, `move_node`, `deprecate_request`, and `delete_node`.
 - Show the preview in chat before applying. Include the workspace name, the full folder path of each item, each action, and the target. For a request, show method, URL, params, headers, auth type, body mode and body, responses, and documentation. For an edit, show each changed field as before → after. For a move or rename, show old → new. For a deletion, name the exact item and, for a folder, count every nested item that will be removed. Name the variables the user still has to define. Redact secret values, and never paste raw tool JSON as the only preview.
 - End with a request for approval of that exact preview, then stop. A request to make a change is not approval. Call `changes_apply` only after the user approves the displayed preview. `changes_apply` refuses a preview whose workspace has changed since, so re-preview after any change.
-- Destructive commands (`*_delete`) need `confirm: true`. Set it only after the user explicitly asks for that deletion.
+- Deleting a folder or request is a collection change: put `delete_node` in `changes_preview`, then `changes_apply`. Deleting an environment or a variable uses `environment_delete` or `variable_delete`, which need `confirm: true`. Set it only after the user explicitly asks for that deletion.
 - Environment and variable commands have no preview step. Show the intended change in chat and get approval before running them.
-- Mark a deprecated endpoint with `request_deprecate` (through `changes_preview` when it is a collection change), include the user's reason, and name a replacement when one is known.
+- Mark a deprecated endpoint with a `deprecate_request` operation in `changes_preview`, include the user's reason, and name a replacement when one is known.
+- The MCP server does not expose direct collection writes such as `request_create`, `request_update`, `folder_create`, or `node_move`. Those exist only in the CLI. Every collection change goes through `changes_preview` and then `changes_apply`.
 
 ## Limits to tell the user about
 
 - Cloud workspaces are read from the MCP server, but not created, renamed, or deleted there. Cloud copies also refuse edits, because an edit would stay unpushed. Make those changes in the desktop app and push from there.
 - Only the active account's workspaces are visible. Workspaces that predate accounts are visible to everyone on the device.
 - Viewer workspaces refuse writes.
-- `request_send` sends JSON, text, XML, YAML, GraphQL, and urlencoded bodies with bearer, basic, or API-key auth. Multipart and file bodies must be sent from the app. Path parameters are not substituted yet. Confirm the target URL before sending, since a send reaches a real server.
+- `request_send` sends JSON, text, XML, YAML, GraphQL, and urlencoded bodies with bearer, basic, or API-key auth. Multipart and file bodies must be sent from the app. Path parameters are not substituted yet.
+
+Sending reaches a real server, so it takes two steps. First call `request_send` with `dryRun: true`. It returns the URL the request would call, with secret query values removed. Show that URL to the user and wait for approval. Then call `request_send` with `confirmUrl` set to exactly that URL. The server refuses the send if the URL has changed since the dry run. Without `dryRun` or `confirmUrl`, the MCP server refuses to send.
 - The app must be open to see changes. Keep the app idle while the server writes, and check the workspace again after an apply.
 - Commit and push are the user's job unless they explicitly ask for them.

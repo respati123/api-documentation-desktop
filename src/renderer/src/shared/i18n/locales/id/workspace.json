@@ -1,4 +1,7 @@
 {
+  "storage": {
+    "conflict": "Workspace ini berubah di luar app, jadi perubahan terakhir Anda tidak tersimpan. Versi tersimpan terbaru yang ditampilkan."
+  },
   "topbar": {
     "wordmark": "Dokumentasi API",
     "account": "Akun",

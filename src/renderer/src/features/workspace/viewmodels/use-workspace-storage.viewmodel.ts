@@ -253,6 +253,15 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     [currentWorkspaceId, setLocalWorkspaces, setTree, setWorkspaceVariables, setActiveEnvironmentId, setSyncStatus],
   )
 
+  // A save was refused because the workspace changed outside the app. The reloaded version is already shown, so say what happened.
+  useEffect(
+    () =>
+      workspaceStorageService.onConflict(() => {
+        setSyncStatus(t(WORKSPACE_TEXT.storage.conflict))
+      }),
+    [setSyncStatus, t],
+  )
+
   // The MCP server tags workspaces it creates with the signed-in account, so the account id is written where it can read it.
   useEffect(() => {
     if (!storageLoaded) return

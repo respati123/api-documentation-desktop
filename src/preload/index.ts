@@ -54,6 +54,13 @@ contextBridge.exposeInMainWorld('apiDesktop', {
     ipcRenderer.on(CHANNELS.workspace.externalChange, listener)
     return () => ipcRenderer.removeListener(CHANNELS.workspace.externalChange, listener)
   },
+  onWorkspaceConflict: (handler: (workspaceId: string) => void) => {
+    const listener = (_event: unknown, workspaceId: unknown) => {
+      if (typeof workspaceId === 'string') handler(workspaceId)
+    }
+    ipcRenderer.on(CHANNELS.workspace.conflict, listener)
+    return () => ipcRenderer.removeListener(CHANNELS.workspace.conflict, listener)
+  },
   secureStorageAvailable: (): Promise<boolean> => ipcRenderer.invoke(CHANNELS.secret.available),
   saveCommit: (workspaceId: string, commit: LocalCommit) => ipcRenderer.invoke(CHANNELS.commit.save, workspaceId, commit),
   listCommits: (workspaceId: string) => ipcRenderer.invoke(CHANNELS.commit.list, workspaceId),
