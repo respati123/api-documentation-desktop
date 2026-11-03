@@ -50,7 +50,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           npm version "${{ inputs.bump || 'patch' }}" --no-git-tag-version >/dev/null
           VERSION=$(node -p "require('./package.json').version")
-          git add package.json package-lock.json
+          git add package.json
           git commit -m "Release v${VERSION}"
           git tag -a "v${VERSION}" -m "v${VERSION}"
           git push origin HEAD:main "v${VERSION}"
@@ -101,11 +101,14 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
-          cache: npm
 
-      - run: npm ci
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.2
 
-      - run: npm run ${{ matrix.script }} -- --publish never
+      - run: bun install --frozen-lockfile
+
+      - run: bun run ${{ matrix.script }} --publish never
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
