@@ -1,23 +1,12 @@
 name: Release desktop app
 
-# Runs on every push to main (patch bump) and on manual dispatch (choose the bump).
-# Each run bumps the version, tags it, builds all three platforms, and attaches the
-# installers to a DRAFT GitHub release. Publishing the draft is a manual step in the
-# GitHub UI.
+# Runs when a tag vX.Y.Z is pushed on a commit in main. The tag is the version: it is set in package.json
+# for the build and is not committed back. Runs the checks, builds all three platforms, and attaches the
+# installers to a DRAFT GitHub release. Publishing the draft is a manual step in the GitHub UI.
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: 'Version bump'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-        default: patch
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -27,42 +16,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  version:
-    # Commits whose message contains [skip release] do not create a release.
-    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
+  check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
-      version: ${{ steps.bump.outputs.version }}
-      sha: ${{ steps.bump.outputs.sha }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      # Build the bump on the latest main. A queued run otherwise starts from the commit that triggered it,
-      # reads an old version, and fails on a tag that already exists.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: main
           fetch-depth: 0
+
+      - name: Read the version from the tag
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! printf '%s' "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Tag must look like v0.1.5, got: $TAG"; exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag $TAG is not on main."; exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
-      - name: Bump version, commit, and tag
-        id: bump
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version "${{ inputs.bump || 'patch' }}" --no-git-tag-version >/dev/null
-          VERSION=$(node -p "require('./package.json').version")
-          git add package.json
-          git commit -m "Release v${VERSION}"
-          git tag -a "v${VERSION}" -m "v${VERSION}"
-          git push origin HEAD:main "v${VERSION}"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.2
+
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run i18n-check
+      - run: bun run test
 
   build:
-    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
-    needs: version
+    needs: check
     strategy:
       fail-fast: false
       matrix:
@@ -98,8 +90,6 @@ jobs:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          ref: ${{ needs.version.outputs.sha }}
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -108,6 +98,12 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.4.2
+
+      - name: Set the version from the tag
+        shell: bash
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - run: bun install --frozen-lockfile
 
@@ -120,8 +116,7 @@ jobs:
           if-no-files-found: error
 
   draft-release:
-    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
-    needs: [version, build]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -129,13 +124,24 @@ jobs:
           path: installers
           merge-multiple: true
 
-      - name: Create draft release with installers
+      # A re-run finds the draft an earlier attempt left and replaces its files. --clobber deletes before it uploads,
+      # so a published release is refused.
+      - name: Create or update the draft release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
         run: |
-          gh release create "v${{ needs.version.outputs.version }}" installers/* \
-            --repo "${{ github.repository }}" \
-            --target "${{ needs.version.outputs.sha }}" \
-            --title "v${{ needs.version.outputs.version }}" \
-            --generate-notes \
-            --draft
+          if is_draft=$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft); then
+            if [ "$is_draft" != "true" ]; then
+              echo "$TAG is already published. Its installers are left as they are."; exit 1
+            fi
+            gh release upload "$TAG" installers/* --repo "$REPO" --clobber
+          else
+            gh release create "$TAG" installers/* \
+              --repo "$REPO" \
+              --verify-tag \
+              --title "$TAG" \
+              --generate-notes \
+              --draft
+          fi

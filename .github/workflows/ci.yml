@@ -1,6 +1,6 @@
 name: CI
 
-# Runs the same checks as a local change before merge. A release is built only after a merge to main (see release.yml).
+# Runs the same checks as a local change before merge. A release is built only from a version tag (see release.yml).
 on:
   pull_request:
     branches:
