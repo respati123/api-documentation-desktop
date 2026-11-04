@@ -485,6 +485,7 @@ export function useWorkspaceViewModel() {
     message: commitMessage,
     readOnly: Boolean(isReadOnly),
     cloudConnected: Boolean(activeWorkspace?.cloudId),
+    cloudHeadId: activeWorkspace?.baseCommitId ?? null,
     changeCount: workspaceChanges.length,
     staged: stagedChanges,
     unstaged: unstagedChanges,
