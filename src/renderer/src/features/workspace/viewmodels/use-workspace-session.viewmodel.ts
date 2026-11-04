@@ -1,4 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { cloudAuthService } from '@/features/workspace/services/cloud-auth.service'
 import { sessionService } from '@/features/workspace/services/session.service'
@@ -11,6 +13,8 @@ export type SessionInput = {
 
 // Who is signed in, the sign-in flow and its errors, the invite token waiting to be used, and the account menu.
 export function useWorkspaceSessionViewModel(input: SessionInput) {
+  const { t } = useTranslation('workspace')
+  const signInFailedMessage = useEffectEvent(() => t(WORKSPACE_TEXT.session.signInFailed))
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const sessionTokenRef = useRef<string | null>(null)
   const [user, setUser] = useState<ApiUser | null>(null)
@@ -50,7 +54,7 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
             if (!saved) reportStatus('Session will last until the app closes because secure storage is unavailable on this system.')
             if (inviteTokenDraft) openTeamAfterAuth()
           } catch (error) {
-            setAuthError(error instanceof Error ? error.message : 'Could not complete sign-in.')
+            setAuthError(error instanceof Error ? error.message : signInFailedMessage())
           }
         })()
       }),

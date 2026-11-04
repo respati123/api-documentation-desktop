@@ -24,6 +24,7 @@ import {
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { refreshedToHead } from '@/features/workspace/lib/head-refresh'
+import { pullNoticeNeeded } from '@/features/workspace/lib/live-update-notice'
 import { readTree } from '@/features/workspace/lib/storage'
 import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -141,7 +142,7 @@ export function useWorkspaceViewModel() {
   const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
   const treeIndex = indexTree(tree)
-  useWorkspaceStorageViewModel({
+  const storage = useWorkspaceStorageViewModel({
     sessionToken,
     user,
     storageLoaded,
@@ -211,6 +212,7 @@ export function useWorkspaceViewModel() {
     sessionToken,
     setCloudWorkspaces,
     onWorkspaceUpdated: (event) => void handleWorkspaceUpdated(event),
+    onWorkspaceChanged: () => void storage.refreshAccount(),
   })
   const changes = useWorkspaceChangesViewModel({
     tree,
@@ -449,7 +451,7 @@ export function useWorkspaceViewModel() {
         : tSync(SYNC_TEXT.live.pushedWithMessage, { actor, commits, message: event.message })
     try {
       const result = await autoUpdateFromHead(event.workspaceId)
-      if (result === 'skipped') setSyncStatus(pushed)
+      if (pullNoticeNeeded(event, user?.id ?? null, result)) setSyncStatus(pushed)
       if (result === 'background') setSyncStatus(tSync(SYNC_TEXT.live.updated, { actor }))
     } catch (error) {
       setSyncStatus(error instanceof Error ? error.message : pushed)
@@ -484,6 +486,7 @@ export function useWorkspaceViewModel() {
     message: commitMessage,
     readOnly: Boolean(isReadOnly),
     cloudConnected: Boolean(activeWorkspace?.cloudId),
+    cloudHeadId: activeWorkspace?.baseCommitId ?? null,
     changeCount: workspaceChanges.length,
     staged: stagedChanges,
     unstaged: unstagedChanges,

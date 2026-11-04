@@ -12,6 +12,7 @@ import { connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
 import { assertTrustedSender, isTrustedPage } from './ipc-guard'
 import { type LoopbackSignIn, startLoopbackSignIn } from './loopback-auth'
 import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
+import { localVaultId, removeWorkspaceRows } from './workspace-removal'
 import { WorkspaceRows } from './workspace-rows'
 
 // electron-updater is CommonJS; named imports fail when Electron loads the ESM main bundle.
@@ -481,6 +482,14 @@ ipcMain.handle(CHANNELS.workspace.save, (event, ...args: unknown[]) => {
   assertTrustedSender(event)
   const [workspace] = z.tuple([z.custom<LocalWorkspace>(isLocalWorkspace)]).parse(args)
   return persistWorkspace(workspace)
+})
+
+ipcMain.handle(CHANNELS.workspace.remove, (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [workspaceId] = z.tuple([z.string()]).parse(args)
+  if (workspaceId === localVaultId) return false
+  workspaceRows.forget(workspaceId)
+  return removeWorkspaceRows(database(), workspaceId)
 })
 
 ipcMain.handle(CHANNELS.workspace.list, (event, ...args: unknown[]) => {

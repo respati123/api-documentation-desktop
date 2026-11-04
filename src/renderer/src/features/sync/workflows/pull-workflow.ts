@@ -1,5 +1,5 @@
 import { firstRequestId, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
-import { mergeTreeSnapshots, type SyncConflict } from '@/lib/merge'
+import { mergeTreeSnapshots, type SyncConflict, stripLocalFilePaths } from '@/lib/merge'
 import {
   mergeWorkspaceVariables,
   preserveLocalSecretValues,
@@ -72,7 +72,10 @@ export async function pullWorkspaceChanges(deps: PullDeps): Promise<PullOutcome>
     const localCommit = commits.find((item) => item.id === workspace.localHeadId)
     const expectedTree = localCommit?.tree ?? workspace.baseTree
     const expectedVariables = normalizeSharedVariables(localCommit?.variables ?? workspace.baseVariables)
-    if (!sameJson(expectedTree, deps.tree) || !sameJson(expectedVariables, shareableWorkspaceVariables(deps.variables))) {
+    if (
+      !sameJson(stripLocalFilePaths(expectedTree), stripLocalFilePaths(deps.tree)) ||
+      !sameJson(expectedVariables, shareableWorkspaceVariables(deps.variables))
+    ) {
       return { kind: 'blocked', message: deps.translate('blocked') }
     }
 

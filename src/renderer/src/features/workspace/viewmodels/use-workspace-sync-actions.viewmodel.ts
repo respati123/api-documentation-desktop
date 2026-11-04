@@ -6,9 +6,11 @@ import {
   type CloudWorkspaceRecord,
   cloudWorkspaceService,
   type PendingMergeState,
+  type PullOutcome,
   pullWorkspaceChanges,
   pushWorkspaceCommits,
   resolvePendingMerge,
+  revertSucceeded,
   SYNC_TEXT,
   syncService,
 } from '@/features/sync'
@@ -114,7 +116,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     const previousTree = committedTree
     if (!stagedChanges.length) {
       setCommitDialogOpen(false)
-      setSyncStatus('Stage at least one change before committing.')
+      setSyncStatus(tSync(SYNC_TEXT.commit.stageFirst))
       return
     }
     const stagedTree = stagedSnapshot ?? previousTree
@@ -124,7 +126,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       JSON.stringify(committedVariables) === JSON.stringify(stagedVariableSnapshot)
     ) {
       setCommitDialogOpen(false)
-      setSyncStatus('There are no staged changes to commit.')
+      setSyncStatus(tSync(SYNC_TEXT.commit.nothingStaged))
       return
     }
     const commit: LocalCommit = {
@@ -143,7 +145,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setStagedVariables(null)
     setCommitMessage('')
     setCommitDialogOpen(false)
-    setSyncStatus('Commit saved locally.')
+    setSyncStatus(tSync(SYNC_TEXT.commit.saved))
   }
 
   function discardLocalChanges() {
@@ -158,12 +160,12 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setStagedVariables(null)
     setDiscardConfirmOpen(false)
     setSyncMenuOpen(false)
-    setSyncStatus('Discarded uncommitted changes.')
+    setSyncStatus(tSync(SYNC_TEXT.commit.discarded))
   }
 
   // Brings cloud changes in. The workflow decides what happens; this applies the outcome to the workspace's state.
-  async function pullWorkspace() {
-    if (!sessionToken || !activeWorkspace?.cloudId) return
+  async function pullWorkspace(): Promise<PullOutcome | undefined> {
+    if (!sessionToken || !activeWorkspace?.cloudId) return undefined
     setSyncStatus(tSync(SYNC_TEXT.pull.pulling))
     const outcome = await pullWorkspaceChanges({
       token: sessionToken,
@@ -183,6 +185,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       setPendingMerge(outcome.pending)
     }
     setSyncStatus(outcome.message)
+    return outcome
   }
 
   // Makes a new cloud head with the content of an earlier commit, then pulls it in. Refused while this copy has changes the cloud does not have.
@@ -207,8 +210,9 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       setSyncStatus(error instanceof Error ? error.message : tSync(SYNC_TEXT.history.revertFailed))
       return
     }
-    await pullWorkspace()
-    setSyncStatus(tSync(SYNC_TEXT.history.reverted))
+    const pulled = await pullWorkspace()
+    // A blocked, conflicted, or failed pull keeps its own message. Only a pull that applied the new head reports success.
+    if (pulled && revertSucceeded(pulled.kind)) setSyncStatus(tSync(SYNC_TEXT.history.reverted))
   }
 
   // Writes what a pull or a merge decided into the workspace's state. The storage writes already happened in the workflow.

@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
-import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { removedFromCloud, visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
+import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { emptyWorkspaceVariables, normalizeWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
@@ -38,6 +39,8 @@ export type StorageInput = {
 type AccountSnapshot = {
   workspaces: LocalWorkspace[]
   listed: CloudWorkspace[] | null
+  // A copy the cloud no longer lists was kept because it still has local changes.
+  keptLocal: boolean
 }
 
 // Stored records are migrated on read, so every node and variable the app uses has the current shape.
@@ -177,11 +180,31 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         // Not reachable right now. The workspace is cloned on the next sign-in.
       }
     }
-    const listedIds = new Set(listed?.map((cloud) => cloud.id))
-    const visible = listed ? workspaces.filter((item) => !item.cloudId || listedIds.has(item.cloudId)) : workspaces
+    // A copy the cloud no longer lists is removed from this device, unless it still has local changes. Removing it is not a silent loss, because the cloud no longer has it.
+    const gone = listed
+      ? removedFromCloud(
+          workspaces,
+          accountId,
+          listed.map((cloud) => cloud.id),
+          (copy) => hasUnpushedChanges(copy),
+        )
+      : { remove: [], kept: [] }
+    const removedIds = new Set<string>()
+    for (const copy of gone.remove) {
+      changed.delete(copy.id)
+      try {
+        if (await workspaceStorageService.removeWorkspace(copy.id)) removedIds.add(copy.id)
+      } catch {
+        // Stays on this device for now. The next sign-in tries again.
+      }
+    }
+    const visible = visibleToAccount(
+      workspaces.filter((item) => !removedIds.has(item.id)),
+      accountId,
+    )
     for (const item of visible) if (changed.has(item.id) || item.cloudId) changed.set(item.id, item)
     await Promise.all([...changed.values()].map((item) => workspaceStorageService.saveWorkspace(item)))
-    return { workspaces: visible, listed }
+    return { workspaces: visible, listed, keptLocal: gone.kept.length > 0 }
   })
 
   const applyAccountSnapshot = useEffectEvent((result: AccountSnapshot) => {
@@ -190,6 +213,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       setCloudWorkspaces(result.listed)
     }
     setLocalWorkspaces(result.workspaces)
+    if (result.keptLocal) setSyncStatus(t(WORKSPACE_TEXT.storage.removedKept))
     const current = result.workspaces.find((item) => item.id === currentWorkspaceId)
     if (current) return
     const fallback = result.workspaces.find((item) => !item.cloudId) ?? result.workspaces[0]
@@ -197,9 +221,10 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   })
 
   // While signed in, another account's cloud copy saved on this device is not shown. Local workspaces belong to the device, so they are.
-  const visibleRecords = useEffectEvent((records: LocalWorkspace[]) =>
-    user ? records.filter((item) => !item.cloudId || item.accountId === user.id) : records,
-  )
+  // Set when a save was refused, so the change event that follows does not replace the conflict message.
+  const conflictSeenRef = useRef(false)
+  const visibleRecords = useEffectEvent((records: LocalWorkspace[]) => visibleToAccount(records, user?.id ?? null))
+  const storageMessage = useEffectEvent((key: keyof typeof WORKSPACE_TEXT.storage) => t(WORKSPACE_TEXT.storage[key]))
 
   useEffect(() => {
     let active = true
@@ -217,7 +242,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       .then(async (defaultWorkspace) => {
         const storedRecords = await workspaceStorageService.listWorkspaces()
         if (!active) return
-        const records = storedRecords.map(normalizeStoredWorkspace)
+        const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
         const current = records.find((item) => item.id === defaultWorkspace.id) ?? normalizeStoredWorkspace(defaultWorkspace)
         setLocalWorkspaces(records.length ? records : [current])
         setCurrentWorkspaceId(current.id)
@@ -240,7 +265,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         localStorage.removeItem('api-docs-collections')
         setStorageLoaded(true)
       })
-      .catch((error) => setAuthError(error instanceof Error ? error.message : 'Could not load local workspace.'))
+      .catch((error) => setAuthError(error instanceof Error ? error.message : storageMessage('loadFailed')))
     return () => {
       active = false
     }
@@ -267,6 +292,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
           .then((storedRecords) => {
             const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
             setLocalWorkspaces(records)
+            // A refused save also sends this event. Its conflict message is already shown, so it is not replaced.
+            if (conflictSeenRef.current) conflictSeenRef.current = false
+            else setSyncStatus(storageMessage('externalChanged'))
             const current = records.find((item) => item.id === currentWorkspaceId)
             if (!current) {
               const fallback = records.find((item) => !item.cloudId) ?? records[0]
@@ -277,7 +305,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
             setWorkspaceVariables(current.variables ?? emptyWorkspaceVariables())
             setActiveEnvironmentId(current.activeEnvironmentId ?? null)
           })
-          .catch((error) => setSyncStatus(error instanceof Error ? error.message : 'Could not refresh workspace changes.'))
+          .catch((error) => setSyncStatus(error instanceof Error ? error.message : storageMessage('refreshFailed')))
       }),
     [currentWorkspaceId, setLocalWorkspaces, setTree, setWorkspaceVariables, setActiveEnvironmentId, setSyncStatus],
   )
@@ -286,6 +314,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(
     () =>
       workspaceStorageService.onConflict(() => {
+        conflictSeenRef.current = true
         setSyncStatus(t(WORKSPACE_TEXT.storage.conflict))
       }),
     [setSyncStatus, t],
@@ -295,7 +324,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(() => {
     if (!storageLoaded) return
     workspaceStorageService.setActiveAccount(user?.id ?? null).catch((error) => {
-      setSyncStatus(error instanceof Error ? error.message : 'Could not record the signed-in account.')
+      setSyncStatus(error instanceof Error ? error.message : storageMessage('accountFailed'))
     })
   }, [storageLoaded, user?.id, setSyncStatus])
 
@@ -307,7 +336,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         if (active) applyAccountSnapshot(result)
       })
       .catch((error) => {
-        if (active) setSyncStatus(error instanceof Error ? error.message : 'Could not load cloud workspaces.')
+        if (active) setSyncStatus(error instanceof Error ? error.message : storageMessage('cloudListFailed'))
       })
     return () => {
       active = false
@@ -323,4 +352,16 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(() => {
     if (cloudListReadyRef.current) dropUnlistedCloudWorkspaces(cloudWorkspaces.map((item) => item.id))
   }, [cloudWorkspaces])
+
+  // Runs the sign-in sync again. The cloud says a workspace was created, renamed, or changed role, and the copies on this device follow.
+  const refreshAccount = useEffectEvent(async () => {
+    if (!sessionToken || !user) return
+    try {
+      applyAccountSnapshot(await syncAccountWorkspaces(sessionToken, user.id))
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : storageMessage('cloudListFailed'))
+    }
+  })
+
+  return { refreshAccount }
 }

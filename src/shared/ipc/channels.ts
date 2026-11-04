@@ -6,6 +6,7 @@ export const CHANNELS = {
     load: 'workspace:load',
     save: 'workspace:save',
     list: 'workspace:list',
+    remove: 'workspace:remove',
     externalChange: 'workspace:external-change',
     conflict: 'workspace:conflict',
   },

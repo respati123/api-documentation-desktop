@@ -9,6 +9,10 @@ export class WorkspaceRows {
     this.seen.set(id, data)
   }
 
+  forget(id: string): void {
+    this.seen.delete(id)
+  }
+
   // The check and the write run in one immediate transaction, so no other process can change the row between them.
   // Returns false, and does not run write, when the row changed outside the app.
   save(db: DatabaseSync, id: string, write: () => string): boolean {

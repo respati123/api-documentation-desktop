@@ -12,6 +12,9 @@ export const workspaceStorageService = {
     await window.apiDesktop.saveWorkspace(workspace)
   },
 
+  // Removes a cloud copy that the cloud no longer lists for this account. The local vault is never removed.
+  removeWorkspace: async (workspaceId: string): Promise<boolean> => z.boolean().parse(await window.apiDesktop.removeWorkspace(workspaceId)),
+
   secureStorageAvailable: async (): Promise<boolean> => z.boolean().parse(await window.apiDesktop.secureStorageAvailable()),
 
   saveCommit: async (workspaceId: string, commit: LocalCommit): Promise<void> => {
