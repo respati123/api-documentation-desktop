@@ -346,4 +346,16 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(() => {
     if (cloudListReadyRef.current) dropUnlistedCloudWorkspaces(cloudWorkspaces.map((item) => item.id))
   }, [cloudWorkspaces])
+
+  // Runs the sign-in sync again. The cloud says a workspace was created, renamed, or changed role, and the copies on this device follow.
+  const refreshAccount = useEffectEvent(async () => {
+    if (!sessionToken || !user) return
+    try {
+      applyAccountSnapshot(await syncAccountWorkspaces(sessionToken, user.id))
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : storageMessage('cloudListFailed'))
+    }
+  })
+
+  return { refreshAccount }
 }

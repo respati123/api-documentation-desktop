@@ -8,6 +8,8 @@ export type CloudRealtimeInput = {
   setCloudWorkspaces: Dispatch<SetStateAction<CloudWorkspace[]>>
   // Called for each head move. The owner of the workspace state decides whether to pull, or to ask the user to.
   onWorkspaceUpdated: (event: WorkspaceUpdateEvent) => void
+  // Called when a workspace was created, renamed, or changed role, so the copies on this device can follow.
+  onWorkspaceChanged: () => void
 }
 
 // The cloud workspace list. Callers keep their last known list when a request fails.
@@ -20,6 +22,7 @@ async function fetchCloudWorkspaces(token: string): Promise<CloudWorkspace[]> {
 export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
   const { sessionToken, setCloudWorkspaces } = input
   const workspaceUpdated = useEffectEvent((event: WorkspaceUpdateEvent) => input.onWorkspaceUpdated(event))
+  const workspaceChanged = useEffectEvent(() => input.onWorkspaceChanged())
 
   useEffect(() => {
     if (!sessionToken) return
@@ -52,6 +55,7 @@ export function useCloudRealtimeViewModel(input: CloudRealtimeInput) {
       if (!event) return
       if (event.type === 'workspace.changed') {
         void refreshCloudWorkspaces()
+        workspaceChanged()
         return
       }
       setCloudWorkspaces((current) =>
