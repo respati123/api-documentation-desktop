@@ -24,6 +24,7 @@ import {
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { refreshedToHead } from '@/features/workspace/lib/head-refresh'
+import { pullNoticeNeeded } from '@/features/workspace/lib/live-update-notice'
 import { readTree } from '@/features/workspace/lib/storage'
 import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -449,7 +450,7 @@ export function useWorkspaceViewModel() {
         : tSync(SYNC_TEXT.live.pushedWithMessage, { actor, commits, message: event.message })
     try {
       const result = await autoUpdateFromHead(event.workspaceId)
-      if (result === 'skipped') setSyncStatus(pushed)
+      if (pullNoticeNeeded(event, user?.id ?? null, result)) setSyncStatus(pushed)
       if (result === 'background') setSyncStatus(tSync(SYNC_TEXT.live.updated, { actor }))
     } catch (error) {
       setSyncStatus(error instanceof Error ? error.message : pushed)
