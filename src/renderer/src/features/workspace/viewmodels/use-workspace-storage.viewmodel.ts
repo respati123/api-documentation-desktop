@@ -221,6 +221,8 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   })
 
   // While signed in, another account's cloud copy saved on this device is not shown. Local workspaces belong to the device, so they are.
+  // Set when a save was refused, so the change event that follows does not replace the conflict message.
+  const conflictSeenRef = useRef(false)
   const visibleRecords = useEffectEvent((records: LocalWorkspace[]) => visibleToAccount(records, user?.id ?? null))
   const storageMessage = useEffectEvent((key: keyof typeof WORKSPACE_TEXT.storage) => t(WORKSPACE_TEXT.storage[key]))
 
@@ -290,6 +292,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
           .then((storedRecords) => {
             const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
             setLocalWorkspaces(records)
+            // A refused save also sends this event. Its conflict message is already shown, so it is not replaced.
+            if (conflictSeenRef.current) conflictSeenRef.current = false
+            else setSyncStatus(storageMessage('externalChanged'))
             const current = records.find((item) => item.id === currentWorkspaceId)
             if (!current) {
               const fallback = records.find((item) => !item.cloudId) ?? records[0]
@@ -309,6 +314,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(
     () =>
       workspaceStorageService.onConflict(() => {
+        conflictSeenRef.current = true
         setSyncStatus(t(WORKSPACE_TEXT.storage.conflict))
       }),
     [setSyncStatus, t],

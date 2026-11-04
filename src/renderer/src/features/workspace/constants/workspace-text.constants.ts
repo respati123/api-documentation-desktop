@@ -84,6 +84,7 @@ export const WORKSPACE_TEXT = {
     accountFailed: 'storage.accountFailed',
     cloudListFailed: 'storage.cloudListFailed',
     removedKept: 'storage.removedKept',
+    externalChanged: 'storage.externalChanged',
   },
   session: {
     signInFailed: 'session.signInFailed',
