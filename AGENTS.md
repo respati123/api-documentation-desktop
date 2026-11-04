@@ -88,12 +88,61 @@ In `.agents/skills/`. Read the `SKILL.md` before you use one.
 
 ## Git
 
-- Branches: `feat/<scope>-<short-desc>`, `fix/...`, `refactor/...`, `chore/...`.
+- Start every change from an up-to-date `main`, on a branch: `feat/<scope>-<short-desc>`, `fix/...`, `test/...`, `refactor/...`, `chore/...`.
+- Never commit directly to `main`. Never force-push `main`, and never move or delete a pushed tag.
 - Commits follow Conventional Commits: `feat(request): add body raw editor`. Scope is a feature area, `main`, `preload`, or `release`.
 - One logical change per commit, with its tests. Never mix a refactor and a behavior change.
-- PR description: what changed, why, how it was tested, screenshots for UI changes, and any "Ask first" item that was approved.
+- Stage explicit paths, then read `git diff --cached --name-status` before committing. A file staged earlier goes into the next commit.
+- Read `git log` before any `git reset`. Rewrite only your own unpushed commits.
+- Never drop a stash you did not create.
 - Never commit secrets, `.env`, build output (`out/`, `dist/`), or `.agents/skills/impeccable/scripts/bin/`.
-- Do not push, merge, tag, or rewrite history unless asked.
+
+## Pull requests
+
+- Base is `main`. One topic per pull request.
+- PR description: what changed, why, how it was tested, screenshots for UI changes, and any "Ask first" item that was approved. List only checks that actually ran.
+- Before pushing, run the checks in "Before handoff". Merge only when CI is green, using a merge commit (`gh pr merge --merge`).
+
+## Changes across repos
+
+When a change needs something new from the cloud API, it goes in this order:
+
+1. Server first, with the old behavior still working, so apps already installed do not break.
+2. Merge, tag, and deploy the server. A merge to the cloud repo's `main` does not reach production.
+3. Check it in production.
+4. Merge the desktop change.
+
+Say this order in both pull request descriptions.
+
+## Release
+
+A merge to `main` releases nothing.
+
+1. Tag a commit on `main`: `git tag vX.Y.Z <sha> && git push origin vX.Y.Z`. Use patch for fixes and minor for features. The version must be higher than the last published release, or the app does not offer it as an update.
+2. `release.yml` refuses a tag that is not on `main`, runs the checks, builds all platforms, and creates a draft release. The tag is the version: it is set for the build and not committed, so `package.json` on `main` can be behind.
+3. Read the draft's assets, then publish the draft in GitHub Releases. Publishing is what makes it available to users, and what the auto-updater sees.
+4. Check the published build: sign in, and open a cloud workspace.
+
+Release builds take `VITE_API_URL` and `VITE_CLOUD_URL` from repo variables, so they talk to production. Local builds use `.env`. A release build is not a local test build.
+
+Re-running a failed release job is safe while the release is a draft. The workflow refuses to replace the files of a published release.
+
+## Actions that need an explicit request
+
+An agent does these only when asked for that action, in that conversation:
+
+- push, open a pull request, merge
+- create or push a tag
+- publish a release
+- delete data in the local workspace database
+- change repo settings, secrets, or variables
+
+A request for one does not cover the next. "Merge" does not mean "release". If a permission check refuses an action, stop and report it. Do not reach the same result another way.
+
+## When something fails
+
+- CI red: fix the cause. Do not skip the check.
+- GitHub `5xx` during a workflow: read what already happened, then re-run the failed job once. A partly finished run may have already changed something.
 
 ## References
 
