@@ -1,21 +1,11 @@
 import { collectionKeys, collectionOf, normalizeSharedTree, replaceCollection } from '@/features/collection'
 import { applyBranchHeads, type BranchCommit, type CollectionHead, planBranchCommits } from '@/features/sync/lib/branch-sync'
+import { headsFromBranches } from '@/features/sync/lib/collection-heads'
 import type { CollectionBranch } from '@/features/sync/models/collection-branch.model'
 import { ApiError } from '@/lib/api'
 import type { ApiNode } from '@/shared/models/api-node.model'
 
-const mainName = 'main'
-
-// The branch each collection syncs with. A collection with no entry in heads uses its main branch.
-export function headsFromBranches(branches: CollectionBranch[], heads: Record<string, CollectionHead>): Record<string, CollectionHead> {
-  const next = { ...heads }
-  for (const branch of branches) {
-    if (branch.name === mainName && !next[branch.collectionKey]) {
-      next[branch.collectionKey] = { branchId: branch.id, headCommitId: branch.headCommitId }
-    }
-  }
-  return next
-}
+export { headsFromBranches } from '@/features/sync/lib/collection-heads'
 
 export type CollectionPullDeps = {
   tree: ApiNode[]

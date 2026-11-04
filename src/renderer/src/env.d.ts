@@ -50,6 +50,8 @@ type LocalWorkspace = {
   role?: 'owner' | 'editor' | 'viewer' | null
   // The account that owns this copy on this device. Missing on copies saved before accounts existed.
   accountId?: string | null
+  // The branch and head of each collection. Missing on copies that still sync through the workspace head.
+  collectionHeads?: Record<string, { branchId: string; headCommitId: string | null }> | null
 }
 
 type LocalCommit = {
