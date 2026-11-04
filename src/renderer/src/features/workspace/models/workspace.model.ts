@@ -20,6 +20,7 @@ export const workspaceUpdateEventSchema = z.object({
   workspaceId: z.string(),
   headCommitId: z.string(),
   message: z.string().optional(),
+  actorId: z.string().optional(),
   actorEmail: z.string().optional(),
   commitCount: z.number().optional(),
 })
