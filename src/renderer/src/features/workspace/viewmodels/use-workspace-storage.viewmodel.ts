@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
-import { visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { removedFromCloud, visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
+import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { emptyWorkspaceVariables, normalizeWorkspaceVariables, type WorkspaceVariables } from '@/lib/workspace-variables'
@@ -38,6 +39,8 @@ export type StorageInput = {
 type AccountSnapshot = {
   workspaces: LocalWorkspace[]
   listed: CloudWorkspace[] | null
+  // A copy the cloud no longer lists was kept because it still has local changes.
+  keptLocal: boolean
 }
 
 // Stored records are migrated on read, so every node and variable the app uses has the current shape.
@@ -177,11 +180,31 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         // Not reachable right now. The workspace is cloned on the next sign-in.
       }
     }
-    const listedIds = new Set(listed?.map((cloud) => cloud.id))
-    const visible = listed ? workspaces.filter((item) => !item.cloudId || listedIds.has(item.cloudId)) : workspaces
+    // A copy the cloud no longer lists is removed from this device, unless it still has local changes. Removing it is not a silent loss, because the cloud no longer has it.
+    const gone = listed
+      ? removedFromCloud(
+          workspaces,
+          accountId,
+          listed.map((cloud) => cloud.id),
+          (copy) => hasUnpushedChanges(copy),
+        )
+      : { remove: [], kept: [] }
+    const removedIds = new Set<string>()
+    for (const copy of gone.remove) {
+      changed.delete(copy.id)
+      try {
+        if (await workspaceStorageService.removeWorkspace(copy.id)) removedIds.add(copy.id)
+      } catch {
+        // Stays on this device for now. The next sign-in tries again.
+      }
+    }
+    const visible = visibleToAccount(
+      workspaces.filter((item) => !removedIds.has(item.id)),
+      accountId,
+    )
     for (const item of visible) if (changed.has(item.id) || item.cloudId) changed.set(item.id, item)
     await Promise.all([...changed.values()].map((item) => workspaceStorageService.saveWorkspace(item)))
-    return { workspaces: visible, listed }
+    return { workspaces: visible, listed, keptLocal: gone.kept.length > 0 }
   })
 
   const applyAccountSnapshot = useEffectEvent((result: AccountSnapshot) => {
@@ -190,6 +213,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       setCloudWorkspaces(result.listed)
     }
     setLocalWorkspaces(result.workspaces)
+    if (result.keptLocal) setSyncStatus(t(WORKSPACE_TEXT.storage.removedKept))
     const current = result.workspaces.find((item) => item.id === currentWorkspaceId)
     if (current) return
     const fallback = result.workspaces.find((item) => !item.cloudId) ?? result.workspaces[0]

@@ -4,7 +4,8 @@
     "loadFailed": "Tidak bisa memuat workspace lokal.",
     "refreshFailed": "Tidak bisa menyegarkan perubahan workspace.",
     "accountFailed": "Tidak bisa mencatat akun yang sedang masuk.",
-    "cloudListFailed": "Tidak bisa memuat workspace cloud."
+    "cloudListFailed": "Tidak bisa memuat workspace cloud.",
+    "removedKept": "Workspace ini sudah dihapus di cloud, tapi masih punya perubahan lokal, jadi tetap ada di perangkat ini."
   },
   "session": {
     "signInFailed": "Tidak bisa menyelesaikan sign-in."

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { removedFromCloud, visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 
 function workspace(id: string, patch: Partial<LocalWorkspace> = {}): LocalWorkspace {
   return {
@@ -77,5 +77,33 @@ describe('visibleToAccount', () => {
 
   it('does not show a legacy cloud copy with no account until it is claimed', () => {
     expect(visibleToAccount(records, 'account-b').map((item) => item.id)).not.toContain('cloud-legacy')
+  })
+})
+
+describe('removedFromCloud', () => {
+  const unpushed = (copy: LocalWorkspace) => copy.id === 'cloud-dirty'
+  const copies = [
+    workspace('local'),
+    workspace('cloud-gone', { cloudId: 'c-gone', accountId: 'account-a' }),
+    workspace('cloud-dirty', { cloudId: 'c-dirty', accountId: 'account-a' }),
+    workspace('cloud-listed', { cloudId: 'c-listed', accountId: 'account-a' }),
+    workspace('cloud-other', { cloudId: 'c-other', accountId: 'account-b' }),
+  ]
+
+  it('removes this account’s copies that the server no longer lists and that have no unpushed work', () => {
+    const result = removedFromCloud(copies, 'account-a', ['c-listed', 'c-dirty'], unpushed)
+    expect(result.remove.map((item) => item.id)).toEqual(['cloud-gone'])
+  })
+
+  it('keeps a copy with unpushed work, so the work is not lost silently', () => {
+    const result = removedFromCloud(copies, 'account-a', ['c-listed'], unpushed)
+    expect(result.kept.map((item) => item.id)).toEqual(['cloud-dirty'])
+  })
+
+  it('never touches the local vault or another account’s copy', () => {
+    const result = removedFromCloud(copies, 'account-a', [], unpushed)
+    const touched = [...result.remove, ...result.kept].map((item) => item.id)
+    expect(touched).not.toContain('local')
+    expect(touched).not.toContain('cloud-other')
   })
 })
