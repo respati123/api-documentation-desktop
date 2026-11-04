@@ -18,7 +18,9 @@ export const sessionService = {
     await window.apiDesktop.beginBrowserSignIn(cloudUrl)
   },
 
-  onAuthCode: (handler: (code: string) => void): (() => void) => window.apiDesktop.onAuthCode(handler),
+  onAuthSession: (handler: (token: string) => void): (() => void) => window.apiDesktop.onAuthSession(handler),
+
+  onAuthFailed: (handler: (reason: string) => void): (() => void) => window.apiDesktop.onAuthFailed(handler),
 
   onInviteToken: (handler: (token: string) => void): (() => void) => window.apiDesktop.onInviteToken(handler),
 }

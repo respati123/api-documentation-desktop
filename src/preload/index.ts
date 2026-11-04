@@ -32,15 +32,22 @@ ipcRenderer.on(CHANNELS.update.status, (_event, status: UpdateStatus) =>
   }),
 )
 
-let pendingAuthCode: string | null = null
-const authCodeHandlers = new Set<(code: string) => void>()
+let pendingAuthSession: string | null = null
+const authSessionHandlers = new Set<(token: string) => void>()
+const authFailedHandlers = new Set<(reason: string) => void>()
 
-ipcRenderer.on(CHANNELS.auth.code, (_event, code: string) => {
-  pendingAuthCode = code
-  authCodeHandlers.forEach((handler) => {
-    handler(code)
+ipcRenderer.on(CHANNELS.auth.session, (_event, token: string) => {
+  pendingAuthSession = token
+  authSessionHandlers.forEach((handler) => {
+    handler(token)
   })
-  if (authCodeHandlers.size) pendingAuthCode = null
+  if (authSessionHandlers.size) pendingAuthSession = null
+})
+
+ipcRenderer.on(CHANNELS.auth.failed, (_event, reason: string) => {
+  authFailedHandlers.forEach((handler) => {
+    handler(reason)
+  })
 })
 
 contextBridge.exposeInMainWorld('apiDesktop', {
@@ -106,13 +113,17 @@ contextBridge.exposeInMainWorld('apiDesktop', {
     return () => updateHandlers.delete(handler)
   },
   beginBrowserSignIn: (cloudUrl: string): Promise<void> => ipcRenderer.invoke(CHANNELS.auth.begin, cloudUrl),
-  onAuthCode: (handler: (code: string) => void) => {
-    authCodeHandlers.add(handler)
-    if (pendingAuthCode) {
-      handler(pendingAuthCode)
-      pendingAuthCode = null
+  onAuthSession: (handler: (token: string) => void) => {
+    authSessionHandlers.add(handler)
+    if (pendingAuthSession) {
+      handler(pendingAuthSession)
+      pendingAuthSession = null
     }
-    return () => authCodeHandlers.delete(handler)
+    return () => authSessionHandlers.delete(handler)
+  },
+  onAuthFailed: (handler: (reason: string) => void) => {
+    authFailedHandlers.add(handler)
+    return () => authFailedHandlers.delete(handler)
   },
 })
 

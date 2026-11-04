@@ -44,13 +44,14 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
 
   useEffect(
     () =>
-      sessionService.onAuthCode((code) => {
+      sessionService.onAuthSession((token) => {
         void (async () => {
           try {
-            const result = await cloudAuthService.exchangeCode(code)
-            setSessionToken(result.token)
-            setUser(result.user)
-            const saved = await sessionService.save(result.token)
+            // The main process opened the sealed session, so the token is already the desktop's own. Its user is read with it.
+            const user = await cloudAuthService.me(token)
+            setSessionToken(token)
+            setUser(user)
+            const saved = await sessionService.save(token)
             if (!saved) reportStatus('Session will last until the app closes because secure storage is unavailable on this system.')
             if (inviteTokenDraft) openTeamAfterAuth()
           } catch (error) {
@@ -59,6 +60,15 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
         })()
       }),
     [inviteTokenDraft],
+  )
+
+  // The sign-in was not completed (the box could not be opened). The user can try again.
+  useEffect(
+    () =>
+      sessionService.onAuthFailed(() => {
+        setAuthError(signInFailedMessage())
+      }),
+    [],
   )
 
   // A saved session is checked with the cloud before it counts as signed in.
