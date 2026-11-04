@@ -75,6 +75,7 @@ interface Window {
     selectFile(): Promise<{ path: string; name: string } | null>
     loadWorkspace(legacyTree: unknown[]): Promise<LocalWorkspace>
     saveWorkspace(workspace: LocalWorkspace): Promise<boolean>
+    removeWorkspace(workspaceId: string): Promise<boolean>
     listWorkspaces(): Promise<LocalWorkspace[]>
     onExternalWorkspaceChange(handler: () => void): () => void
     onWorkspaceConflict(handler: (workspaceId: string) => void): () => void

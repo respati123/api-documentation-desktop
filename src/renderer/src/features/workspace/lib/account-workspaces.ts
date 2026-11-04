@@ -37,3 +37,18 @@ export function workspacesForAccount(
 export function visibleToAccount(records: LocalWorkspace[], accountId: string | null): LocalWorkspace[] {
   return records.filter((item) => !item.cloudId || (accountId !== null && item.accountId === accountId))
 }
+
+// This account's cloud copies that the server no longer lists. A copy with unpushed work is kept, so nothing is lost silently.
+export function removedFromCloud(
+  workspaces: LocalWorkspace[],
+  accountId: string,
+  listedIds: string[],
+  hasUnpushed: (copy: LocalWorkspace) => boolean,
+): { remove: LocalWorkspace[]; kept: LocalWorkspace[] } {
+  const listed = new Set(listedIds)
+  const gone = workspaces.filter((item) => item.cloudId && item.accountId === accountId && !listed.has(item.cloudId))
+  return {
+    remove: gone.filter((item) => !hasUnpushed(item)),
+    kept: gone.filter((item) => hasUnpushed(item)),
+  }
+}

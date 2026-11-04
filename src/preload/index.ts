@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('apiDesktop', {
   loadWorkspace: (legacyTree: unknown[]) => ipcRenderer.invoke(CHANNELS.workspace.load, legacyTree),
   saveWorkspace: (workspace: LocalWorkspace): Promise<boolean> => ipcRenderer.invoke(CHANNELS.workspace.save, workspace),
   listWorkspaces: () => ipcRenderer.invoke(CHANNELS.workspace.list),
+  removeWorkspace: (workspaceId: string): Promise<boolean> => ipcRenderer.invoke(CHANNELS.workspace.remove, workspaceId),
   onExternalWorkspaceChange: (handler: () => void) => {
     const listener = () => handler()
     ipcRenderer.on(CHANNELS.workspace.externalChange, listener)
