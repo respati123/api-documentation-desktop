@@ -1,4 +1,5 @@
 export * from '@/features/collection/components/workspace-icons'
+export * from '@/features/collection/lib/collection-tree'
 export * from '@/features/collection/lib/collection-width'
 export * from '@/features/collection/lib/context-menu-position'
 export * from '@/features/collection/lib/sample-tree'
