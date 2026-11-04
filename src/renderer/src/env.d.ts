@@ -74,7 +74,7 @@ interface Window {
     sendRequest(request: ApiRequest): Promise<ApiResponse>
     selectFile(): Promise<{ path: string; name: string } | null>
     loadWorkspace(legacyTree: unknown[]): Promise<LocalWorkspace>
-    saveWorkspace(workspace: LocalWorkspace): Promise<boolean>
+    saveWorkspace(workspace: LocalWorkspace, options?: { overwrite: boolean }): Promise<boolean>
     removeWorkspace(workspaceId: string): Promise<boolean>
     listWorkspaces(): Promise<LocalWorkspace[]>
     onExternalWorkspaceChange(handler: () => void): () => void

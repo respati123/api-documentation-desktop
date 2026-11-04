@@ -1,4 +1,4 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef } from 'react'
+import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
@@ -221,8 +221,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   })
 
   // While signed in, another account's cloud copy saved on this device is not shown. Local workspaces belong to the device, so they are.
-  // Set when a save was refused, so the change event that follows does not replace the conflict message.
-  const conflictSeenRef = useRef(false)
+  // Set while a save is refused and the user has not chosen yet. The screen keeps their edit until then.
+  const saveConflictRef = useRef(false)
+  const [saveConflict, setSaveConflict] = useState<string | null>(null)
   const visibleRecords = useEffectEvent((records: LocalWorkspace[]) => visibleToAccount(records, user?.id ?? null))
   const storageMessage = useEffectEvent((key: keyof typeof WORKSPACE_TEXT.storage) => t(WORKSPACE_TEXT.storage[key]))
 
@@ -284,41 +285,54 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     setStorageLoaded,
   ])
 
+  // Reloads the stored workspaces into the screen, so the screen shows what is saved.
+  const reloadStoredWorkspaces = useEffectEvent(async () => {
+    const storedRecords = await workspaceStorageService.listWorkspaces()
+    const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
+    setLocalWorkspaces(records)
+    const current = records.find((item) => item.id === currentWorkspaceId)
+    if (!current) {
+      const fallback = records.find((item) => !item.cloudId) ?? records[0]
+      if (fallback) activateStoredWorkspace(fallback)
+      return
+    }
+    setTree(current.tree)
+    setWorkspaceVariables(current.variables ?? emptyWorkspaceVariables())
+    setActiveEnvironmentId(current.activeEnvironmentId ?? null)
+  })
+
   useEffect(
     () =>
       workspaceStorageService.onExternalChange(() => {
-        void workspaceStorageService
-          .listWorkspaces()
-          .then((storedRecords) => {
-            const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
-            setLocalWorkspaces(records)
-            // A refused save also sends this event. Its conflict message is already shown, so it is not replaced.
-            if (conflictSeenRef.current) conflictSeenRef.current = false
-            else setSyncStatus(storageMessage('externalChanged'))
-            const current = records.find((item) => item.id === currentWorkspaceId)
-            if (!current) {
-              const fallback = records.find((item) => !item.cloudId) ?? records[0]
-              if (fallback) activateStoredWorkspace(fallback)
-              return
-            }
-            setTree(current.tree)
-            setWorkspaceVariables(current.variables ?? emptyWorkspaceVariables())
-            setActiveEnvironmentId(current.activeEnvironmentId ?? null)
-          })
+        // While the user chooses between their version and the saved one, nothing is reloaded or recorded, so their edit stays.
+        if (saveConflictRef.current) return
+        reloadStoredWorkspaces()
+          .then(() => setSyncStatus(storageMessage('externalChanged')))
           .catch((error) => setSyncStatus(error instanceof Error ? error.message : storageMessage('refreshFailed')))
       }),
-    [currentWorkspaceId, setLocalWorkspaces, setTree, setWorkspaceVariables, setActiveEnvironmentId, setSyncStatus],
+    [setSyncStatus],
   )
 
-  // A save was refused because the workspace changed outside the app. The reloaded version is already shown, so say what happened.
+  // A save was refused because the workspace changed outside the app. The screen keeps the user's edit until they choose.
   useEffect(
     () =>
-      workspaceStorageService.onConflict(() => {
-        conflictSeenRef.current = true
+      workspaceStorageService.onConflict((workspaceId) => {
+        saveConflictRef.current = true
+        setSaveConflict(workspaceId)
         setSyncStatus(t(WORKSPACE_TEXT.storage.conflict))
       }),
     [setSyncStatus, t],
   )
+
+  // The user kept their version, or chose the saved one. Either way the conflict is over.
+  const clearSaveConflict = useEffectEvent(() => {
+    saveConflictRef.current = false
+    setSaveConflict(null)
+  })
+  const loadSavedVersion = useEffectEvent(async () => {
+    clearSaveConflict()
+    await reloadStoredWorkspaces()
+  })
 
   // The MCP server tags workspaces it creates with the signed-in account, so the account id is written where it can read it.
   useEffect(() => {
@@ -363,5 +377,5 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     }
   })
 
-  return { refreshAccount }
+  return { refreshAccount, saveConflict, clearSaveConflict, loadSavedVersion }
 }

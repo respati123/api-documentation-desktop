@@ -441,6 +441,16 @@ export function useWorkspaceViewModel() {
   const { t: tSync } = useTranslation('sync')
 
   // A teammate pushed to a cloud workspace. A copy with no unpushed work moves to the new head. Otherwise the user is asked to pull.
+  // The user keeps the version on screen. It is written over the saved one, which the user has now chosen to replace.
+  async function keepMyVersion() {
+    if (!activeWorkspace) return
+    const saved = await workspaceStorageService.saveWorkspace(
+      { ...activeWorkspace, tree, variables: workspaceVariables, activeEnvironmentId },
+      { overwrite: true },
+    )
+    if (saved) storage.clearSaveConflict()
+  }
+
   async function handleWorkspaceUpdated(event: WorkspaceUpdateEvent) {
     const actor = event.actorEmail ?? tSync(SYNC_TEXT.live.unnamed)
     const commits =
@@ -808,5 +818,10 @@ export function useWorkspaceViewModel() {
     pullWorkspace,
     pushWorkspace,
     applyMergeResolution,
+    saveConflictDialog: {
+      open: storage.saveConflict !== null,
+      onKeepMine: () => void keepMyVersion(),
+      onUseSaved: () => void storage.loadSavedVersion(),
+    },
   }
 }

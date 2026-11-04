@@ -8,9 +8,9 @@ export const workspaceStorageService = {
 
   listWorkspaces: async (): Promise<LocalWorkspace[]> => z.array(localWorkspaceSchema).parse(await window.apiDesktop.listWorkspaces()),
 
-  saveWorkspace: async (workspace: LocalWorkspace): Promise<void> => {
-    await window.apiDesktop.saveWorkspace(workspace)
-  },
+  // A refused save (the row changed outside the app) resolves to false. overwrite keeps this version, after the user chose it.
+  saveWorkspace: async (workspace: LocalWorkspace, options?: { overwrite: boolean }): Promise<boolean> =>
+    window.apiDesktop.saveWorkspace(workspace, options),
 
   // Removes a cloud copy that the cloud no longer lists for this account. The local vault is never removed.
   removeWorkspace: async (workspaceId: string): Promise<boolean> => z.boolean().parse(await window.apiDesktop.removeWorkspace(workspaceId)),

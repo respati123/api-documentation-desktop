@@ -12,6 +12,7 @@ import {
 } from '@/features/sync'
 import { VariableQuickEditView, VariablesDialogView } from '@/features/variables'
 import type { useWorkspaceViewModel } from '@/features/workspace/viewmodels/use-workspace.viewmodel'
+import { SaveConflictDialogView } from '@/features/workspace/views/save-conflict-dialog.view'
 import { WorkspaceMainView } from '@/features/workspace/views/workspace-main.view'
 import { WorkspaceSidebarView } from '@/features/workspace/views/workspace-sidebar.view'
 import { WorkspaceTopbarView, WorkspaceUpdateDialogView } from '@/features/workspace/views/workspace-topbar.view'
@@ -43,6 +44,7 @@ export function WorkspaceView(props: WorkspaceViewProps): ReactElement {
       <AiConnectView {...props.aiConnect} />
       <WorkspaceUpdateDialogView dialog={props.chrome.dialog} />
       <VariablesDialogView {...props.variablesDialog} />
+      <SaveConflictDialogView {...props.saveConflictDialog} />
       <VariableQuickEditView {...props.variableQuickEdit} />
       <OpenApiDialog
         open={props.openApiDialogOpen}
