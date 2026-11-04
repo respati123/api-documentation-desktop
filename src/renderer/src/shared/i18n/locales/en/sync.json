@@ -134,6 +134,7 @@
     "save": "Save merge"
   },
   "push": {
+    "saveRefused": "The workspace changed outside the app, so this copy was not updated. Choose which version to keep before you push again.",
     "viewer": "Viewer access cannot push changes.",
     "nothing": "No local commits to push.",
     "pushing": "Pushing commits…",
@@ -152,6 +153,7 @@
     "updated": "Updated to the latest version from {{actor}}."
   },
   "pull": {
+    "saveRefused": "The workspace changed outside the app, so the cloud changes were not applied. Choose which version to keep, then pull again.",
     "pulling": "Pulling cloud changes…",
     "upToDate": "Workspace is up to date.",
     "blocked": "Commit local changes before pulling cloud updates.",

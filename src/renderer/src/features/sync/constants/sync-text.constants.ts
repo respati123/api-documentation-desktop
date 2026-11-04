@@ -134,6 +134,7 @@ export const SYNC_TEXT = {
     save: 'merge.save',
   },
   push: {
+    saveRefused: 'push.saveRefused',
     viewer: 'push.viewer',
     nothing: 'push.nothing',
     pushing: 'push.pushing',
@@ -152,6 +153,7 @@ export const SYNC_TEXT = {
     updated: 'live.updated',
   },
   pull: {
+    saveRefused: 'pull.saveRefused',
     pulling: 'pull.pulling',
     upToDate: 'pull.upToDate',
     blocked: 'pull.blocked',

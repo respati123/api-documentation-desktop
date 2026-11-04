@@ -134,6 +134,7 @@
     "save": "Simpan merge"
   },
   "push": {
+    "saveRefused": "Workspace berubah di luar app, jadi salinan ini belum diperbarui. Pilih versi yang mau dipertahankan sebelum push lagi.",
     "viewer": "Akses viewer tidak dapat mengirim perubahan.",
     "nothing": "Tidak ada commit lokal untuk dikirim.",
     "pushing": "Mengirim commit…",
@@ -152,6 +153,7 @@
     "updated": "Diperbarui ke versi terbaru dari {{actor}}."
   },
   "pull": {
+    "saveRefused": "Workspace berubah di luar app, jadi perubahan dari cloud belum diterapkan. Pilih versi yang mau dipertahankan, lalu pull lagi.",
     "pulling": "Mengambil perubahan dari cloud…",
     "upToDate": "Workspace sudah yang terbaru.",
     "blocked": "Commit perubahan lokal sebelum mengambil pembaruan cloud.",
