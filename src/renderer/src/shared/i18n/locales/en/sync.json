@@ -49,6 +49,10 @@
     "accepted": "Invite accepted. Workspace added."
   },
   "commit": {
+    "stageFirst": "Stage at least one change before committing.",
+    "nothingStaged": "There are no staged changes to commit.",
+    "saved": "Commit saved locally.",
+    "discarded": "Discarded uncommitted changes.",
     "title": "Commit changes",
     "historyTitle": "Commit history",
     "changesDescription": "Stage the workspace changes you want in this commit. Commit locally, then push to share them with your team.",

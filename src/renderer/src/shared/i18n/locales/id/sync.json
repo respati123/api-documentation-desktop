@@ -49,6 +49,10 @@
     "accepted": "Undangan diterima. Workspace ditambahkan."
   },
   "commit": {
+    "stageFirst": "Stage minimal satu perubahan sebelum commit.",
+    "nothingStaged": "Tidak ada perubahan yang di-stage untuk di-commit.",
+    "saved": "Commit disimpan di perangkat.",
+    "discarded": "Perubahan yang belum di-commit sudah dibuang.",
     "title": "Commit perubahan",
     "historyTitle": "Riwayat commit",
     "changesDescription": "Stage perubahan workspace yang ingin kamu masukkan ke commit ini. Commit secara lokal, lalu push untuk membagikannya ke tim.",

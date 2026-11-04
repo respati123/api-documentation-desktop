@@ -114,7 +114,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     const previousTree = committedTree
     if (!stagedChanges.length) {
       setCommitDialogOpen(false)
-      setSyncStatus('Stage at least one change before committing.')
+      setSyncStatus(tSync(SYNC_TEXT.commit.stageFirst))
       return
     }
     const stagedTree = stagedSnapshot ?? previousTree
@@ -124,7 +124,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       JSON.stringify(committedVariables) === JSON.stringify(stagedVariableSnapshot)
     ) {
       setCommitDialogOpen(false)
-      setSyncStatus('There are no staged changes to commit.')
+      setSyncStatus(tSync(SYNC_TEXT.commit.nothingStaged))
       return
     }
     const commit: LocalCommit = {
@@ -143,7 +143,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setStagedVariables(null)
     setCommitMessage('')
     setCommitDialogOpen(false)
-    setSyncStatus('Commit saved locally.')
+    setSyncStatus(tSync(SYNC_TEXT.commit.saved))
   }
 
   function discardLocalChanges() {
@@ -158,7 +158,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setStagedVariables(null)
     setDiscardConfirmOpen(false)
     setSyncMenuOpen(false)
-    setSyncStatus('Discarded uncommitted changes.')
+    setSyncStatus(tSync(SYNC_TEXT.commit.discarded))
   }
 
   // Brings cloud changes in. The workflow decides what happens; this applies the outcome to the workspace's state.

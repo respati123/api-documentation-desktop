@@ -79,5 +79,12 @@ export const WORKSPACE_TEXT = {
   },
   storage: {
     conflict: 'storage.conflict',
+    loadFailed: 'storage.loadFailed',
+    refreshFailed: 'storage.refreshFailed',
+    accountFailed: 'storage.accountFailed',
+    cloudListFailed: 'storage.cloudListFailed',
+  },
+  session: {
+    signInFailed: 'session.signInFailed',
   },
 } as const

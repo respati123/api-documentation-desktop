@@ -49,6 +49,10 @@ export const SYNC_TEXT = {
     accepted: 'team.accepted',
   },
   commit: {
+    stageFirst: 'commit.stageFirst',
+    nothingStaged: 'commit.nothingStaged',
+    saved: 'commit.saved',
+    discarded: 'commit.discarded',
     title: 'commit.title',
     historyTitle: 'commit.historyTitle',
     changesDescription: 'commit.changesDescription',
