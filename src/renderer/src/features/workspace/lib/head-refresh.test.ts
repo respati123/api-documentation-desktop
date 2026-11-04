@@ -36,6 +36,20 @@ describe('refreshedToHead', () => {
     expect(next.baseTree).toEqual(newTree)
   })
 
+  it('keeps the secret values this device already has, because the cloud sends secrets with an empty value', () => {
+    const local = { globals: [{ id: 'token', name: 'token', value: 'device-secret', secret: true }], environments: [] }
+    const shared = { globals: [{ id: 'token', name: 'token', value: '', secret: true }], environments: [] }
+
+    const next = refreshedToHead(copy({ variables: local, baseVariables: local }), {
+      headCommitId: 'head-2',
+      tree: newTree,
+      variables: shared,
+    })
+
+    expect(next.variables?.globals[0]?.value).toBe('device-secret')
+    expect(next.baseVariables?.globals[0]?.value).toBe('')
+  })
+
   it('keeps the active environment when it still exists, and falls back to the first one when it does not', () => {
     const withEnv = { ...emptyVariables, environments: [{ id: 'env-1', name: 'Dev', variables: [] }] }
     const kept = refreshedToHead(copy({ activeEnvironmentId: 'env-1' }), { headCommitId: 'head-2', tree: newTree, variables: withEnv })
