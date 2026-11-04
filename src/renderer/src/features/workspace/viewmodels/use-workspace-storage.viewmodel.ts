@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
-import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
@@ -197,9 +197,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   })
 
   // While signed in, another account's cloud copy saved on this device is not shown. Local workspaces belong to the device, so they are.
-  const visibleRecords = useEffectEvent((records: LocalWorkspace[]) =>
-    user ? records.filter((item) => !item.cloudId || item.accountId === user.id) : records,
-  )
+  const visibleRecords = useEffectEvent((records: LocalWorkspace[]) => visibleToAccount(records, user?.id ?? null))
 
   useEffect(() => {
     let active = true
@@ -217,7 +215,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
       .then(async (defaultWorkspace) => {
         const storedRecords = await workspaceStorageService.listWorkspaces()
         if (!active) return
-        const records = storedRecords.map(normalizeStoredWorkspace)
+        const records = visibleRecords(storedRecords.map(normalizeStoredWorkspace))
         const current = records.find((item) => item.id === defaultWorkspace.id) ?? normalizeStoredWorkspace(defaultWorkspace)
         setLocalWorkspaces(records.length ? records : [current])
         setCurrentWorkspaceId(current.id)

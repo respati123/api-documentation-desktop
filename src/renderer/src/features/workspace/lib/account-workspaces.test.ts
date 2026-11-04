@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
+import { visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 
 function workspace(id: string, patch: Partial<LocalWorkspace> = {}): LocalWorkspace {
   return {
@@ -56,5 +56,26 @@ describe('workspacesForAccount', () => {
     const result = workspacesForAccount(stored, 'account-a', [], newVault('vault-a'))
     expect(result.workspaces.map((item) => item.id)).toEqual(['vault'])
     expect(result.changed).toEqual([])
+  })
+})
+
+describe('visibleToAccount', () => {
+  const records = [
+    workspace('local'),
+    workspace('cloud-a', { cloudId: 'c-a', accountId: 'account-a' }),
+    workspace('cloud-b', { cloudId: 'c-b', accountId: 'account-b' }),
+    workspace('cloud-legacy', { cloudId: 'c-l', accountId: null }),
+  ]
+
+  it('shows only local workspaces when nobody is signed in, so no other account’s cloud copy is visible', () => {
+    expect(visibleToAccount(records, null).map((item) => item.id)).toEqual(['local'])
+  })
+
+  it('shows the local workspaces and only the signed-in account’s own cloud copies', () => {
+    expect(visibleToAccount(records, 'account-a').map((item) => item.id)).toEqual(['local', 'cloud-a'])
+  })
+
+  it('does not show a legacy cloud copy with no account until it is claimed', () => {
+    expect(visibleToAccount(records, 'account-b').map((item) => item.id)).not.toContain('cloud-legacy')
   })
 })
