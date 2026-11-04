@@ -142,7 +142,7 @@ export function useWorkspaceViewModel() {
   const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
   const treeIndex = indexTree(tree)
-  useWorkspaceStorageViewModel({
+  const storage = useWorkspaceStorageViewModel({
     sessionToken,
     user,
     storageLoaded,
@@ -212,6 +212,7 @@ export function useWorkspaceViewModel() {
     sessionToken,
     setCloudWorkspaces,
     onWorkspaceUpdated: (event) => void handleWorkspaceUpdated(event),
+    onWorkspaceChanged: () => void storage.refreshAccount(),
   })
   const changes = useWorkspaceChangesViewModel({
     tree,
