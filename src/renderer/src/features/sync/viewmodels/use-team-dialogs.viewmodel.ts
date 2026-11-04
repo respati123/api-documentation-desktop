@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { normalizeSharedTree, normalizeSharedVariables } from '@/features/collection'
+import type { NotifyInput } from '@/features/notifications'
 import { SYNC_TEXT } from '@/features/sync/constants/sync-text.constants'
 import { inviteTokenFrom, isValidEmail, normalizeEmail } from '@/features/sync/lib/invite'
 import type { CloudWorkspaceRecord } from '@/features/sync/models/cloud-workspace.model'
@@ -25,6 +26,7 @@ export type TeamDialogsInput = {
   // The workspace saves a new cloud workspace and applies it to its own state: the list, the active one, and its tabs.
   onCreated: (workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, variables: WorkspaceVariables) => Promise<void>
   onAccepted: (workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, variables: WorkspaceVariables) => Promise<void>
+  onNotify: (input: NotifyInput) => void
 }
 
 // Owns the two cloud dialogs: creating a cloud workspace and the team dialog (invite, copy, accept).
@@ -94,7 +96,9 @@ export function useTeamDialogsViewModel(input: TeamDialogsInput) {
         role,
       })
       setInviteLink(`api-docs://invite?token=${encodeURIComponent(result.token)}`)
-      setNotice(result.emailSent ? t(SYNC_TEXT.team.sentTo, { email: address }) : t(SYNC_TEXT.team.emailFailed))
+      const message = result.emailSent ? t(SYNC_TEXT.team.sentTo, { email: address }) : t(SYNC_TEXT.team.emailFailed)
+      setNotice(message)
+      input.onNotify({ tone: result.emailSent ? 'success' : 'info', title: message })
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t(SYNC_TEXT.team.inviteFailed))
     }

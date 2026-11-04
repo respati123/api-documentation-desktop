@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAiConnectViewModel } from '@/features/ai-connect'
 import {
@@ -10,6 +10,7 @@ import {
   normalizeSharedVariables,
   useCollectionTreeViewModel,
 } from '@/features/collection'
+import { NOTIFICATION_TEXT, useNotificationsViewModel } from '@/features/notifications'
 import {
   type CloudWorkspace,
   changeStatusKey,
@@ -24,7 +25,7 @@ import {
 } from '@/features/sync'
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { refreshedToHead } from '@/features/workspace/lib/head-refresh'
-import { pullNoticeNeeded } from '@/features/workspace/lib/live-update-notice'
+import { pullNoticeNeeded, pushedByTeammate } from '@/features/workspace/lib/live-update-notice'
 import { readTree } from '@/features/workspace/lib/storage'
 import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -142,6 +143,7 @@ export function useWorkspaceViewModel() {
   const [pendingMerge, setPendingMerge] = useState<PendingMergeState | null>(null)
   const [mergeChoices, setMergeChoices] = useState<Record<string, 'local' | 'remote'>>({})
   const treeIndex = indexTree(tree)
+  const notifications = useNotificationsViewModel()
   const storage = useWorkspaceStorageViewModel({
     sessionToken,
     user,
@@ -163,6 +165,7 @@ export function useWorkspaceViewModel() {
     stagedWorkspaceIdRef,
     setAuthError,
     setSyncStatus,
+    onNotify: notifications.notify,
     restoreTabs: (workspaceId, nextTree, variables) => navigation.restoreTabs(workspaceId, nextTree, variables),
   })
   const { takePendingSave } = useWorkspacePersistenceViewModel({
@@ -282,7 +285,34 @@ export function useWorkspaceViewModel() {
 
   const aiConnect = useAiConnectViewModel()
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null)
-  useEffect(() => appUpdateService.onStatus(setUpdateStatus), [])
+  const { t: tNotice } = useTranslation('notifications')
+  const announceUpdate = useEffectEvent((status: UpdateStatus) => {
+    if (status.state === 'available') {
+      notifications.notify({
+        id: `update-${status.version}`,
+        tone: 'action',
+        title: tNotice(NOTIFICATION_TEXT.updateAvailable, { version: status.version }),
+        actionLabel: tNotice(NOTIFICATION_TEXT.updateDownload),
+        onAction: () => void appUpdateService.download(status.version),
+      })
+    }
+    if (status.state === 'downloaded') {
+      notifications.notify({
+        id: `update-ready-${status.version}`,
+        tone: 'success',
+        title: tNotice(NOTIFICATION_TEXT.updateReady),
+        body: tNotice(NOTIFICATION_TEXT.updateReadyBody),
+      })
+    }
+  })
+  useEffect(
+    () =>
+      appUpdateService.onStatus((status) => {
+        setUpdateStatus(status)
+        announceUpdate(status)
+      }),
+    [],
+  )
 
   const navigation = useWorkspaceNavigationViewModel({
     localWorkspaces,
@@ -461,8 +491,18 @@ export function useWorkspaceViewModel() {
         : tSync(SYNC_TEXT.live.pushedWithMessage, { actor, commits, message: event.message })
     try {
       const result = await autoUpdateFromHead(event.workspaceId)
-      if (pullNoticeNeeded(event, user?.id ?? null, result)) setSyncStatus(pushed)
-      if (result === 'background') setSyncStatus(tSync(SYNC_TEXT.live.updated, { actor }))
+      // Every push from a teammate is announced. A copy that could not follow the head asks for a manual pull, so that notice stays until dismissed.
+      if (pushedByTeammate(event, user?.id ?? null)) {
+        const pullNeeded = pullNoticeNeeded(event, user?.id ?? null, result)
+        const message = pullNeeded ? pushed : tSync(SYNC_TEXT.live.updated, { actor })
+        setSyncStatus(message)
+        notifications.notify({
+          id: `pull-${event.headCommitId}`,
+          tone: pullNeeded ? 'action' : 'info',
+          title: tNotice(NOTIFICATION_TEXT.teamUpdate),
+          body: message,
+        })
+      }
     } catch (error) {
       setSyncStatus(error instanceof Error ? error.message : pushed)
     }
@@ -569,6 +609,7 @@ export function useWorkspaceViewModel() {
     onConfirm: discardLocalChanges,
   })
   const team = useWorkspaceTeamViewModel({
+    onNotify: notifications.notify,
     sessionToken,
     accountId: user?.id ?? null,
     activeWorkspace,
@@ -692,6 +733,7 @@ export function useWorkspaceViewModel() {
   })
   return {
     chrome,
+    notifications: notifications.stack,
     sidebar,
     tabbar,
     syncFooter,

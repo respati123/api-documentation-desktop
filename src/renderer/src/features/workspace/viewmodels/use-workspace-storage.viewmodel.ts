@@ -1,6 +1,7 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isFolder, normalizeSharedTree, normalizeSharedVariables, normalizeTree } from '@/features/collection'
+import { NOTIFICATION_TEXT, type NotifyInput } from '@/features/notifications'
 import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/features/sync'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
 import { removedFromCloud, visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
@@ -34,6 +35,7 @@ export type StorageInput = {
   stagedWorkspaceIdRef: MutableRefObject<string>
   setAuthError: Dispatch<SetStateAction<string>>
   setSyncStatus: Dispatch<SetStateAction<string>>
+  onNotify: (input: NotifyInput) => void
   restoreTabs: (workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) => void
 }
 
@@ -117,9 +119,26 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     stagedWorkspaceIdRef,
     setAuthError,
     setSyncStatus,
+    onNotify,
     restoreTabs,
   } = input
   const { t } = useTranslation('workspace')
+  const { t: tNotice } = useTranslation('notifications')
+  // A workspace that shows up after the list was already known is one the user just joined. A fresh sign-in starts from an empty list,
+  // so the first load does not announce every workspace.
+  const announceJoined = useEffectEvent((listed: CloudWorkspace[]) => {
+    if (!cloudListReadyRef.current || cloudWorkspaces.length === 0) return
+    const known = new Set(cloudWorkspaces.map((item) => item.id))
+    for (const cloud of listed) {
+      if (known.has(cloud.id)) continue
+      onNotify({
+        id: `joined-${cloud.id}`,
+        tone: 'success',
+        title: tNotice(NOTIFICATION_TEXT.joined, { name: cloud.name }),
+        body: tNotice(NOTIFICATION_TEXT.joinedBody),
+      })
+    }
+  })
   const restoreTabsEvent = useEffectEvent((workspaceId: string, nextTree: ApiNode[], variables: WorkspaceVariables) =>
     restoreTabs(workspaceId, nextTree, variables),
   )
@@ -178,8 +197,9 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         const copy = await pullCopy(token, cloud, accountId)
         workspaces.push(copy)
         changed.set(copy.id, copy)
-      } catch {
-        // Not reachable right now. The workspace is cloned on the next sign-in.
+      } catch (error) {
+        // Shown, not swallowed, so a workspace that did not appear says why. The next sign-in tries again.
+        setSyncStatus(error instanceof Error ? error.message : storageMessage('cloudListFailed'))
       }
     }
     // A copy the cloud no longer lists is removed from this device, unless it still has local changes. Removing it is not a silent loss, because the cloud no longer has it.
@@ -217,6 +237,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
 
   const applyAccountSnapshot = useEffectEvent((result: AccountSnapshot) => {
     if (result.listed) {
+      announceJoined(result.listed)
       cloudListReadyRef.current = true
       setCloudWorkspaces(result.listed)
     }
