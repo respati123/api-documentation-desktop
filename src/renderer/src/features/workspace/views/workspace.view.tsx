@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { AiConnectView } from '@/features/ai-connect'
 import { CollectionMenuView, DeleteItemDialogView } from '@/features/collection'
 import { OpenApiDialog } from '@/features/docs'
+import { NotificationStackView } from '@/features/notifications'
 import {
   CommitDialogView,
   CreateWorkspaceDialogView,
@@ -76,6 +77,7 @@ export function WorkspaceView(props: WorkspaceViewProps): ReactElement {
       <DeleteItemDialogView deleteDialog={props.collection.deleteDialog} />
       <CommitDialogView {...props.commitDialog} />
       <MergeDialogView {...props.mergeDialog} />
+      <NotificationStackView {...props.notifications} />
       <SyncToastView message={props.syncStatus} />
     </main>
   )

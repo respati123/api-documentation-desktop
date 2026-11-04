@@ -1,4 +1,6 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import { useTranslation } from 'react-i18next'
+import { NOTIFICATION_TEXT, type NotifyInput } from '@/features/notifications'
 import type { CloudWorkspace, CloudWorkspaceRecord } from '@/features/sync'
 import { useTeamDialogsViewModel } from '@/features/sync'
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
@@ -25,6 +27,7 @@ export type TeamInput = {
   setWorkspaceVariables: Dispatch<SetStateAction<WorkspaceVariables>>
   setActiveEnvironmentId: Dispatch<SetStateAction<string | null>>
   resetTabs: (nextTree: ApiNode[]) => void
+  onNotify: (input: NotifyInput) => void
 }
 
 // Team and invite dialogs, and how a workspace created or joined here becomes the active one.
@@ -49,7 +52,9 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
     setWorkspaceVariables,
     setActiveEnvironmentId,
     resetTabs,
+    onNotify,
   } = input
+  const { t: tNotice } = useTranslation('notifications')
   // A cloud workspace this device just created becomes the active one, with its own tabs.
   async function adoptCreatedWorkspace(workspace: LocalWorkspace, cloud: CloudWorkspaceRecord, createdVariables: WorkspaceVariables) {
     await workspaceStorageService.saveWorkspace(workspace)
@@ -78,9 +83,16 @@ export function useWorkspaceTeamViewModel(input: TeamInput) {
     setWorkspaceVariables(invitedVariables)
     setActiveEnvironmentId(workspace.activeEnvironmentId ?? null)
     resetTabs(workspace.tree)
+    onNotify({
+      id: `joined-${cloud.id}`,
+      tone: 'success',
+      title: tNotice(NOTIFICATION_TEXT.joined, { name: cloud.name }),
+      body: tNotice(NOTIFICATION_TEXT.joinedBody),
+    })
   }
 
   return useTeamDialogsViewModel({
+    onNotify,
     sessionToken,
     accountId,
     activeWorkspace,

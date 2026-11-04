@@ -1,0 +1,10 @@
+{
+  "dismiss": "Dismiss",
+  "teamUpdate": "Update from your team",
+  "updateAvailable": "Update v{{version}} is available",
+  "updateDownload": "Download",
+  "updateReady": "Update ready",
+  "updateReadyBody": "The app will restart to finish the update.",
+  "joined": "You joined {{name}}",
+  "joinedBody": "The workspace is now in your list."
+}

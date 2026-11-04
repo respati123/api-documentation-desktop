@@ -1,0 +1,10 @@
+{
+  "dismiss": "Tutup",
+  "teamUpdate": "Update dari tim kamu",
+  "updateAvailable": "Update v{{version}} tersedia",
+  "updateDownload": "Unduh",
+  "updateReady": "Update siap",
+  "updateReadyBody": "Aplikasi akan restart untuk menyelesaikan update.",
+  "joined": "Kamu bergabung ke {{name}}",
+  "joinedBody": "Workspace ini sekarang ada di daftar kamu."
+}

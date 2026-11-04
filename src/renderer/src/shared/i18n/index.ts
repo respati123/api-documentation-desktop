@@ -5,6 +5,7 @@ import enAiConnect from '@/shared/i18n/locales/en/ai-connect.json'
 import enCollection from '@/shared/i18n/locales/en/collection.json'
 import enCommon from '@/shared/i18n/locales/en/common.json'
 import enDocs from '@/shared/i18n/locales/en/docs.json'
+import enNotifications from '@/shared/i18n/locales/en/notifications.json'
 import enRequest from '@/shared/i18n/locales/en/request.json'
 import enResponse from '@/shared/i18n/locales/en/response.json'
 import enSync from '@/shared/i18n/locales/en/sync.json'
@@ -14,6 +15,7 @@ import idAiConnect from '@/shared/i18n/locales/id/ai-connect.json'
 import idCollection from '@/shared/i18n/locales/id/collection.json'
 import idCommon from '@/shared/i18n/locales/id/common.json'
 import idDocs from '@/shared/i18n/locales/id/docs.json'
+import idNotifications from '@/shared/i18n/locales/id/notifications.json'
 import idRequest from '@/shared/i18n/locales/id/request.json'
 import idResponse from '@/shared/i18n/locales/id/response.json'
 import idSync from '@/shared/i18n/locales/id/sync.json'
@@ -35,6 +37,7 @@ const resources = {
     docs: enDocs,
     sync: enSync,
     workspace: enWorkspace,
+    notifications: enNotifications,
   },
   id: {
     common: idCommon,
@@ -46,6 +49,7 @@ const resources = {
     docs: idDocs,
     sync: idSync,
     workspace: idWorkspace,
+    notifications: idNotifications,
   },
 }
 

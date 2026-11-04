@@ -23,6 +23,7 @@ function input(overrides: Partial<TeamDialogsInput> = {}): TeamDialogsInput {
     onStatus: vi.fn(),
     onCreated: vi.fn(async () => undefined),
     onAccepted: vi.fn(async () => undefined),
+    onNotify: vi.fn(),
     ...overrides,
   }
 }
