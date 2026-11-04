@@ -1,6 +1,13 @@
 {
   "storage": {
-    "conflict": "This workspace changed outside the app, so your last edit was not saved. The latest saved version is shown."
+    "conflict": "This workspace changed outside the app, so your last edit was not saved. The latest saved version is shown.",
+    "loadFailed": "Could not load local workspace.",
+    "refreshFailed": "Could not refresh workspace changes.",
+    "accountFailed": "Could not record the signed-in account.",
+    "cloudListFailed": "Could not load cloud workspaces."
+  },
+  "session": {
+    "signInFailed": "Could not complete sign-in."
   },
   "topbar": {
     "wordmark": "API Documentation",

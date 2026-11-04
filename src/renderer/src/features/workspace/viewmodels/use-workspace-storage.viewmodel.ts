@@ -198,6 +198,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
 
   // While signed in, another account's cloud copy saved on this device is not shown. Local workspaces belong to the device, so they are.
   const visibleRecords = useEffectEvent((records: LocalWorkspace[]) => visibleToAccount(records, user?.id ?? null))
+  const storageMessage = useEffectEvent((key: keyof typeof WORKSPACE_TEXT.storage) => t(WORKSPACE_TEXT.storage[key]))
 
   useEffect(() => {
     let active = true
@@ -238,7 +239,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         localStorage.removeItem('api-docs-collections')
         setStorageLoaded(true)
       })
-      .catch((error) => setAuthError(error instanceof Error ? error.message : 'Could not load local workspace.'))
+      .catch((error) => setAuthError(error instanceof Error ? error.message : storageMessage('loadFailed')))
     return () => {
       active = false
     }
@@ -275,7 +276,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
             setWorkspaceVariables(current.variables ?? emptyWorkspaceVariables())
             setActiveEnvironmentId(current.activeEnvironmentId ?? null)
           })
-          .catch((error) => setSyncStatus(error instanceof Error ? error.message : 'Could not refresh workspace changes.'))
+          .catch((error) => setSyncStatus(error instanceof Error ? error.message : storageMessage('refreshFailed')))
       }),
     [currentWorkspaceId, setLocalWorkspaces, setTree, setWorkspaceVariables, setActiveEnvironmentId, setSyncStatus],
   )
@@ -293,7 +294,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   useEffect(() => {
     if (!storageLoaded) return
     workspaceStorageService.setActiveAccount(user?.id ?? null).catch((error) => {
-      setSyncStatus(error instanceof Error ? error.message : 'Could not record the signed-in account.')
+      setSyncStatus(error instanceof Error ? error.message : storageMessage('accountFailed'))
     })
   }, [storageLoaded, user?.id, setSyncStatus])
 
@@ -305,7 +306,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
         if (active) applyAccountSnapshot(result)
       })
       .catch((error) => {
-        if (active) setSyncStatus(error instanceof Error ? error.message : 'Could not load cloud workspaces.')
+        if (active) setSyncStatus(error instanceof Error ? error.message : storageMessage('cloudListFailed'))
       })
     return () => {
       active = false
