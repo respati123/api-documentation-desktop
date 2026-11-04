@@ -67,6 +67,33 @@ describe('pullWorkspaceChanges', () => {
     expect(outcome).toEqual({ kind: 'blocked', message: 'blocked' })
   })
 
+  it('does not block a pull when only a local file path differs from the commit', async () => {
+    const committed = {
+      id: 'r',
+      kind: 'request',
+      name: 'Upload',
+      method: 'POST',
+      url: 'https://x.test/up',
+      body: '',
+      bodyMode: 'file',
+      bodyPath: '/old/report.pdf',
+    } as ApiNode
+    const local = { ...committed, bodyPath: '/new/report.pdf' } as ApiNode
+    const commit: LocalCommit = {
+      id: 'head-1',
+      parentIds: [],
+      message: 'x',
+      tree: [committed],
+      variables: empty,
+      createdAt: '2026-01-01',
+      pushed: true,
+    }
+
+    const outcome = await pullWorkspaceChanges(deps({ listCommits: vi.fn(async () => [commit]), tree: [local] }))
+
+    expect(outcome.kind).not.toBe('blocked')
+  })
+
   it('fast-forwards when nothing local is unpublished', async () => {
     const outcome = await pullWorkspaceChanges(deps())
     expect(outcome.kind).toBe('applied')
