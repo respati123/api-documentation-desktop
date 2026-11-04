@@ -41,6 +41,12 @@ export function SendControlView({
         disabled={isSending}
       >
         {label}
+        {downloadAfterSend && (
+          <span className="ml-2 text-xs opacity-80" title={t(REQUEST_TEXT.send.downloadAfter)}>
+            <span aria-hidden="true">↓</span>
+            <span className="sr-only">{t(REQUEST_TEXT.send.downloadAfter)}</span>
+          </span>
+        )}
       </Button>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>

@@ -13,6 +13,12 @@
     "deleted": "Deleted",
     "modified": "Modified"
   },
+  "variablesConflict": {
+    "title": "Variables changed in the cloud",
+    "description": "Someone saved different workspace variables after you read them. Keep your version and save it on top of theirs, or use the cloud version and drop your edit.",
+    "keepMine": "Keep my version",
+    "useCloud": "Use the cloud version"
+  },
   "createWorkspace": {
     "title": "Create cloud workspace",
     "description": "Creates an empty cloud workspace your team can join. Your local workspace stays as it is.",

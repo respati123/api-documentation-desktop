@@ -47,7 +47,8 @@ contextBridge.exposeInMainWorld('apiDesktop', {
   sendRequest: (request: ApiRequest) => ipcRenderer.invoke(CHANNELS.request.send, request),
   selectFile: (): Promise<{ path: string; name: string } | null> => ipcRenderer.invoke(CHANNELS.file.select),
   loadWorkspace: (legacyTree: unknown[]) => ipcRenderer.invoke(CHANNELS.workspace.load, legacyTree),
-  saveWorkspace: (workspace: LocalWorkspace): Promise<boolean> => ipcRenderer.invoke(CHANNELS.workspace.save, workspace),
+  saveWorkspace: (workspace: LocalWorkspace, options?: { overwrite: boolean }): Promise<boolean> =>
+    ipcRenderer.invoke(CHANNELS.workspace.save, workspace, options),
   listWorkspaces: () => ipcRenderer.invoke(CHANNELS.workspace.list),
   removeWorkspace: (workspaceId: string): Promise<boolean> => ipcRenderer.invoke(CHANNELS.workspace.remove, workspaceId),
   onExternalWorkspaceChange: (handler: () => void) => {

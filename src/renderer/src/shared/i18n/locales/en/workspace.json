@@ -6,7 +6,11 @@
     "accountFailed": "Could not record the signed-in account.",
     "cloudListFailed": "Could not load cloud workspaces.",
     "removedKept": "A workspace was deleted in the cloud, but it still has local changes, so it stays on this device.",
-    "externalChanged": "This workspace changed outside the app and was reloaded."
+    "externalChanged": "This workspace changed outside the app and was reloaded.",
+    "conflictTitle": "This workspace changed outside the app",
+    "conflictDescription": "Your edit is not saved yet. The saved version changed in another app, so saving would replace it. Keep your version to replace the saved one, or use the saved version and drop your edit.",
+    "keepMine": "Keep my version",
+    "useSaved": "Use the saved version"
   },
   "session": {
     "signInFailed": "Could not complete sign-in."

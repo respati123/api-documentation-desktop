@@ -6,7 +6,11 @@
     "accountFailed": "Tidak bisa mencatat akun yang sedang masuk.",
     "cloudListFailed": "Tidak bisa memuat workspace cloud.",
     "removedKept": "Workspace ini sudah dihapus di cloud, tapi masih punya perubahan lokal, jadi tetap ada di perangkat ini.",
-    "externalChanged": "Workspace ini berubah di luar app dan sudah dimuat ulang."
+    "externalChanged": "Workspace ini berubah di luar app dan sudah dimuat ulang.",
+    "conflictTitle": "Workspace ini berubah di luar app",
+    "conflictDescription": "Edit kamu belum tersimpan. Versi tersimpan berubah di aplikasi lain, jadi menyimpan akan menggantinya. Pertahankan versi kamu untuk menggantinya, atau pakai versi tersimpan dan buang edit kamu.",
+    "keepMine": "Pertahankan versi saya",
+    "useSaved": "Pakai versi tersimpan"
   },
   "session": {
     "signInFailed": "Tidak bisa menyelesaikan sign-in."

@@ -191,8 +191,10 @@ function writeWorkspaceSecrets(db: DatabaseSync, workspaceId: string, secretRows
 }
 
 // Refuses the save, and tells the window, when the workspace changed outside the app since it was last read. The window then reloads it.
-function persistWorkspace(workspace: LocalWorkspace): boolean {
+function persistWorkspace(workspace: LocalWorkspace, overwrite = false): boolean {
   const db = database()
+  // An overwrite is the user's choice to keep their version. The app forgets what it last saw, so the save goes through.
+  if (overwrite) workspaceRows.forget(workspace.id)
   const variables = workspace.variables ?? { globals: [], environments: [] }
   const secretRows = [...variables.globals, ...variables.environments.flatMap((environment) => environment.variables)].filter(
     (item) => item.secret,
@@ -480,8 +482,10 @@ ipcMain.handle(CHANNELS.workspace.load, (event, ...args: unknown[]) => {
 
 ipcMain.handle(CHANNELS.workspace.save, (event, ...args: unknown[]) => {
   assertTrustedSender(event)
-  const [workspace] = z.tuple([z.custom<LocalWorkspace>(isLocalWorkspace)]).parse(args)
-  return persistWorkspace(workspace)
+  const [workspace, options] = z
+    .tuple([z.custom<LocalWorkspace>(isLocalWorkspace), z.object({ overwrite: z.boolean() }).optional()])
+    .parse(args)
+  return persistWorkspace(workspace, options?.overwrite ?? false)
 })
 
 ipcMain.handle(CHANNELS.workspace.remove, (event, ...args: unknown[]) => {

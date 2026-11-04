@@ -13,6 +13,12 @@
     "deleted": "Dihapus",
     "modified": "Diubah"
   },
+  "variablesConflict": {
+    "title": "Variabel berubah di cloud",
+    "description": "Orang lain menyimpan variabel workspace yang berbeda setelah kamu membacanya. Pertahankan versi kamu dan simpan di atas versi mereka, atau pakai versi cloud dan buang perubahanmu.",
+    "keepMine": "Pertahankan versi saya",
+    "useCloud": "Pakai versi cloud"
+  },
   "createWorkspace": {
     "title": "Buat workspace cloud",
     "description": "Membuat workspace cloud yang kosong agar tim kamu bisa bergabung. Workspace lokal tetap seperti sekarang.",

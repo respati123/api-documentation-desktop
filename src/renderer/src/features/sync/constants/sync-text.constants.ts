@@ -13,6 +13,12 @@ export const SYNC_TEXT = {
     deleted: 'changes.deleted',
     modified: 'changes.modified',
   },
+  variablesConflict: {
+    title: 'variablesConflict.title',
+    description: 'variablesConflict.description',
+    keepMine: 'variablesConflict.keepMine',
+    useCloud: 'variablesConflict.useCloud',
+  },
   createWorkspace: {
     title: 'createWorkspace.title',
     description: 'createWorkspace.description',

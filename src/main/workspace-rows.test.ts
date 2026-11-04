@@ -45,6 +45,23 @@ describe('WorkspaceRows', () => {
     expect(rowOf(db, 'w1')).toBe('{"v":"from-mcp"}')
   })
 
+  it('an explicit overwrite replaces a row another process changed, after the user chose to keep their version', () => {
+    db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?)').run('w1', '{"v":1}')
+    rows.remember('w1', '{"v":1}')
+    db.prepare('UPDATE workspaces SET data = ? WHERE id = ?').run('{"v":"from-mcp"}', 'w1')
+    expect(rows.save(db, 'w1', () => '{"v":"from-app"}')).toBe(false)
+
+    rows.forget('w1')
+
+    expect(
+      rows.save(db, 'w1', () => {
+        db.prepare('UPDATE workspaces SET data = ? WHERE id = ?').run('{"v":"from-app"}', 'w1')
+        return '{"v":"from-app"}'
+      }),
+    ).toBe(true)
+    expect(rowOf(db, 'w1')).toBe('{"v":"from-app"}')
+  })
+
   it('does not bring back a row that another process deleted after the app last saw it', () => {
     db.prepare('INSERT INTO workspaces (id, data) VALUES (?, ?)').run('w1', '{"v":1}')
     rows.remember('w1', '{"v":1}')
