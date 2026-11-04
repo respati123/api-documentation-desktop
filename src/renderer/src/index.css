@@ -250,25 +250,6 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .variable-suggestion-scope { color: #64748b; font-size: 10px; }
 .request-docs-field { min-height: 180px; resize: vertical; font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; font-size: 13px; line-height: 1.6; }
 .editor-pane { min-height: 0; margin-top: 16px; overflow: auto; }
-.responses-editor { display: grid; align-content: start; gap: 16px; min-width: 0; }
-.responses-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.responses-editor-heading > div { display: grid; gap: 0; }
-.responses-editor-heading strong { color: #1e293b; font-size: 13px; }
-.responses-editor-heading span { color: #64748b; font-size: 11px; }
-.response-definition { display: grid; gap: 8px; border: 1px solid #d6deea; border-radius: 8px; padding: 16px; background: #fff; }
-.response-definition-heading { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; align-items: end; gap: 8px; }
-.response-definition-heading label, .response-content-heading label, .response-content-fields label { min-width: 0; display: grid; gap: 8px; }
-.response-definition-heading label > span, .response-content-heading label > span, .response-content-fields label > span { color: #526176; font-size: 11px; font-weight: 600; }
-.response-description-field { flex: 1; }
-.response-remove { min-height: 34px; color: #64748b; font-size: 11px; }
-.response-content-definition { display: grid; gap: 8px; border-top: 1px solid #edf1f6; padding-top: 8px; }
-.response-content-heading { display: flex; align-items: end; gap: 8px; }
-.response-content-heading label { width: min(250px, 100%); }
-.response-content-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.response-code-editor { min-height: 120px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.5; }
-.response-add-content { justify-self: start; min-height: 28px; padding-inline: 8px; color: #1d4ed8; font-size: 11px; }
-.responses-empty { display: grid; gap: 8px; border: 1px dashed #cbd5e1; border-radius: 7px; padding: 16px; color: #64748b; font-size: 11px; }
-.responses-empty strong { color: #334155; font-size: 12px; }
 .code-field { line-height: 1.65; }
 .body-composer { display: grid; align-content: start; gap: 16px; min-width: 0; }
 .body-toolbar { display: flex; align-items: center; gap: 16px; min-height: 38px; }

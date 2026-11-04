@@ -10,7 +10,9 @@
     "noRequestTitle": "No request selected",
     "noRequestDescription": "Choose a request or create one in the selected folder.",
     "docsLabel": "Request documentation",
-    "docsPlaceholder": "Describe this endpoint, its inputs, and expected response."
+    "docsPlaceholder": "Describe this endpoint, its inputs, and expected response.",
+    "previewLabel": "Preview",
+    "previewEmpty": "Nothing documented yet. Write markdown on the left to see it here."
   },
   "tabs": {
     "label": "Request configuration",
@@ -212,6 +214,7 @@
     "descriptionPlaceholder": "Successful response",
     "contentTypePlaceholder": "application/json",
     "schemaPlaceholder": "{\n  \"type\": \"object\",\n  \"properties\": {}\n}",
-    "examplePlaceholder": "{\n  \"id\": 123\n}"
+    "examplePlaceholder": "{\n  \"id\": 123\n}",
+    "formatExample": "Format JSON"
   }
 }

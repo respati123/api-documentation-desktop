@@ -12,6 +12,7 @@ import { ResponseContractView } from '@/features/request/views/response-contract
 import { SendControlView } from '@/features/request/views/send-control.view'
 import { ResponseView } from '@/features/response'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
+import { MarkdownView } from '@/shared/components/markdown-view'
 import { Button } from '@/shared/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
@@ -200,16 +201,26 @@ export function RequestWorkbenchView({
             <ResponseContractView {...contract} />
           </TabsContent>
           <TabsContent value="docs" className="editor-pane">
-            <DebouncedTextarea
-              data-testid={REQUEST_TEST_IDS.docsField}
-              aria-label={t(REQUEST_TEXT.workbench.docsLabel)}
-              className="request-docs-field"
-              maxLength={100000}
-              placeholder={t(REQUEST_TEXT.workbench.docsPlaceholder)}
-              value={docs.value}
-              readOnly={readOnly}
-              onValueChange={docs.onChange}
-            />
+            <div className="grid min-h-0 gap-4 md:grid-cols-2">
+              <DebouncedTextarea
+                data-testid={REQUEST_TEST_IDS.docsField}
+                aria-label={t(REQUEST_TEXT.workbench.docsLabel)}
+                className="request-docs-field min-h-[320px] font-mono text-xs"
+                maxLength={100000}
+                placeholder={t(REQUEST_TEXT.workbench.docsPlaceholder)}
+                value={docs.value}
+                readOnly={readOnly}
+                onValueChange={docs.onChange}
+              />
+              <section className="grid min-w-0 content-start gap-2" aria-label={t(REQUEST_TEXT.workbench.previewLabel)}>
+                <p className="text-xs font-medium text-muted-foreground">{t(REQUEST_TEXT.workbench.previewLabel)}</p>
+                {docs.value.trim() === '' ? (
+                  <p className="text-sm text-muted-foreground">{t(REQUEST_TEXT.workbench.previewEmpty)}</p>
+                ) : (
+                  <MarkdownView source={docs.value} testId={REQUEST_TEST_IDS.docsPreview} />
+                )}
+              </section>
+            </div>
           </TabsContent>
         </Tabs>
       </form>

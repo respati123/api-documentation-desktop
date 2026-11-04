@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
+import { formatJsonText } from '@/features/request/lib/format-json'
 import type { ResponseContent, ResponseDefinition } from '@/shared/models/api-node.model'
 
 // Owns the response contract tab: the documented status codes and their payloads.
@@ -34,6 +35,8 @@ export function useResponseContractViewModel({
       return {
         id: response.id,
         statusCode: response.statusCode,
+        // The first digit of the code, as a class such as 2xx, or empty when the code is not a number.
+        statusClass: /^[1-5]/.test(response.statusCode.trim()) ? `${response.statusCode.trim()[0]}xx` : '',
         description: response.description,
         statusLabel: t(REQUEST_TEXT.contract.statusAria, { position: index + 1 }),
         descriptionLabel: t(REQUEST_TEXT.contract.descriptionAria, { position: index + 1 }),
@@ -47,6 +50,7 @@ export function useResponseContractViewModel({
           mediaTypeLabel: t(REQUEST_TEXT.contract.contentTypeAria, { position: index + 1, content: contentIndex + 1 }),
           schemaLabel: t(REQUEST_TEXT.contract.schemaAria, { position: index + 1, content: contentIndex + 1 }),
           exampleLabel: t(REQUEST_TEXT.contract.exampleAria, { position: index + 1, content: contentIndex + 1 }),
+          canFormat: formatJsonText(item.example) !== null,
         })),
       }
     }),
@@ -69,5 +73,11 @@ export function useResponseContractViewModel({
     onMediaTypeChange: (id: string, contentId: string, mediaType: string) => updateContent(id, contentId, { mediaType }),
     onSchemaChange: (id: string, contentId: string, schema: string) => updateContent(id, contentId, { schema }),
     onExampleChange: (id: string, contentId: string, example: string) => updateContent(id, contentId, { example }),
+    onFormatExample: (id: string, contentId: string) => {
+      const response = responses.find((item) => item.id === id)
+      const example = response?.content.find((item) => item.id === contentId)?.example ?? ''
+      const formatted = formatJsonText(example)
+      if (formatted !== null) updateContent(id, contentId, { example: formatted })
+    },
   }
 }

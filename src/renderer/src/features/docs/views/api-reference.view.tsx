@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 import type { useApiReferenceViewModel } from '@/features/docs/viewmodels/use-api-reference.viewmodel'
+import { MarkdownView } from '@/shared/components/markdown-view'
 import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/utils/cn'
 
@@ -42,7 +43,7 @@ export function ApiReferenceView(props: ApiReferenceViewProps): ReactElement {
         {props.overview && (
           <section className="docs-section">
             <h2>{props.overviewLabel}</h2>
-            <p className="docs-description">{props.overview}</p>
+            <MarkdownView source={props.overview} />
           </section>
         )}
         <section className="docs-section">

@@ -11,6 +11,8 @@ export const REQUEST_TEXT = {
     noRequestDescription: 'workbench.noRequestDescription',
     docsLabel: 'workbench.docsLabel',
     docsPlaceholder: 'workbench.docsPlaceholder',
+    previewLabel: 'workbench.previewLabel',
+    previewEmpty: 'workbench.previewEmpty',
   },
   tabs: {
     label: 'tabs.label',
@@ -203,6 +205,7 @@ export const REQUEST_TEXT = {
     example: 'contract.example',
     exampleAria: 'contract.exampleAria',
     addContent: 'contract.addContent',
+    formatExample: 'contract.formatExample',
     defaultDescription: 'contract.defaultDescription',
     statusPlaceholder: 'contract.statusPlaceholder',
     descriptionPlaceholder: 'contract.descriptionPlaceholder',
