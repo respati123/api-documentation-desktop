@@ -5,6 +5,7 @@ import { type CloudWorkspace, cloudWorkspaceService, syncService } from '@/featu
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
 import { removedFromCloud, visibleToAccount, workspacesForAccount } from '@/features/workspace/lib/account-workspaces'
 import { applyCloudList } from '@/features/workspace/lib/cloud-workspace-sync'
+import { createSerialQueue } from '@/features/workspace/lib/serial-queue'
 import { readStagedSnapshot, readStagedVariables, readTree } from '@/features/workspace/lib/storage'
 import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
@@ -124,6 +125,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   )
   // Set once the cloud list has loaded. Before that, the local list cannot be checked against the server.
   const cloudListReadyRef = useRef(false)
+  const [enqueueAccountSync] = useState(createSerialQueue)
 
   // Opens a stored workspace the same way startup does.
   const activateStoredWorkspace = useEffectEvent((workspace: LocalWorkspace) => {
@@ -153,7 +155,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
   // Sign-in: this account gets its own workspaces. Device copies are claimed, and copies the server no longer lists are dropped.
   // Nothing is pulled from the server here. Pulling the head into a local copy, and merging, is always a manual step.
   // If the server cannot be reached, the account keeps its copies and only its local vault is claimed.
-  const syncAccountWorkspaces = useEffectEvent(async (token: string, accountId: string): Promise<AccountSnapshot> => {
+  const runAccountSync = useEffectEvent(async (token: string, accountId: string): Promise<AccountSnapshot> => {
     const stored = (await workspaceStorageService.listWorkspaces()).map(normalizeStoredWorkspace)
     const listed = await cloudWorkspaceService.list(token).catch(() => null)
     const entries = listed
@@ -206,6 +208,12 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     await Promise.all([...changed.values()].map((item) => workspaceStorageService.saveWorkspace(item)))
     return { workspaces: visible, listed, keptLocal: gone.kept.length > 0 }
   })
+
+  // StrictMode and a cloud refresh can start a second sync while the first is still running. Queued, the second one reads what the first saved,
+  // so it does not create the same copy or vault again.
+  const syncAccountWorkspaces = useEffectEvent((token: string, accountId: string) =>
+    enqueueAccountSync(() => runAccountSync(token, accountId)),
+  )
 
   const applyAccountSnapshot = useEffectEvent((result: AccountSnapshot) => {
     if (result.listed) {
@@ -342,10 +350,11 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     })
   }, [storageLoaded, user?.id, setSyncStatus])
 
+  const userId = user?.id ?? null
   useEffect(() => {
-    if (!sessionToken || !user || !storageLoaded) return
+    if (!sessionToken || !userId || !storageLoaded) return
     let active = true
-    void syncAccountWorkspaces(sessionToken, user.id)
+    void syncAccountWorkspaces(sessionToken, userId)
       .then((result) => {
         if (active) applyAccountSnapshot(result)
       })
@@ -355,7 +364,7 @@ export function useWorkspaceStorageViewModel(input: StorageInput) {
     return () => {
       active = false
     }
-  }, [sessionToken, user, storageLoaded, setSyncStatus])
+  }, [sessionToken, userId, storageLoaded, setSyncStatus])
 
   // The cloud list is refreshed while the app runs. A workspace the server stops listing (deleted or access removed) is dropped here too.
   const dropUnlistedCloudWorkspaces = useEffectEvent((listedIds: string[]) => {

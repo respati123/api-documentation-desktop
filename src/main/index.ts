@@ -10,8 +10,8 @@ import { isRecord } from '../renderer/src/shared/utils/record'
 import { CHANNELS } from '../shared/ipc/channels'
 import { connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
 import { assertTrustedSender, isTrustedPage } from './ipc-guard'
-import { type LoopbackSignIn, startLoopbackSignIn } from './loopback-auth'
 import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
+import { attemptMatches, openSignInBox, parseSignInLink, type SignInAttempt, signInUrl, startSignInAttempt } from './sign-in'
 import { localVaultId, removeWorkspaceRows } from './workspace-removal'
 import { WorkspaceRows } from './workspace-rows'
 
@@ -99,7 +99,37 @@ let localDatabase: DatabaseSync | undefined
 const workspaceRows = new WorkspaceRows()
 let mainWindow: BrowserWindow | undefined
 let pendingInviteToken: string | undefined
-let activeSignIn: LoopbackSignIn | undefined
+let activeSignIn: SignInAttempt | undefined
+
+// Routes api-docs:// links the operating system hands to the app: invites, and the end of a browser sign-in.
+function receiveDeepLink(link: string): void {
+  if (link.startsWith('api-docs://auth/')) {
+    receiveSignInLink(link)
+    return
+  }
+  receiveInviteLink(link)
+}
+
+// Ends a browser sign-in. A link that does not match the attempt in progress is ignored, so a stale or forged link does nothing.
+function receiveSignInLink(link: string): void {
+  const parsed = parseSignInLink(link)
+  if (!parsed || !attemptMatches(activeSignIn, parsed.state)) return
+  const attempt = activeSignIn
+  activeSignIn = undefined
+  if (!attempt) return
+  let token: string
+  try {
+    token = openSignInBox(attempt.privateKey, parsed.box)
+  } catch {
+    sendToWindow(CHANNELS.auth.failed, 'sign-in-failed')
+    return
+  }
+  sendToWindow(CHANNELS.auth.session, token)
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+  }
+}
 
 // Handles api-docs://invite?token=... links.
 function receiveInviteLink(link: string): void {
@@ -551,19 +581,8 @@ ipcMain.handle(CHANNELS.auth.begin, async (event, ...args: unknown[]) => {
     throw new TypeError('Invalid cloud URL.')
   }
   if (base.protocol !== 'http:' && base.protocol !== 'https:') throw new TypeError('Cloud URL must be http or https.')
-  activeSignIn?.close()
-  activeSignIn = await startLoopbackSignIn((code) => {
-    activeSignIn = undefined
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(CHANNELS.auth.code, code)
-      if (mainWindow.isMinimized()) mainWindow.restore()
-      mainWindow.focus()
-    }
-  })
-  const target = new URL('/desktop-login', base)
-  target.searchParams.set('desktopLoginState', activeSignIn.state)
-  target.searchParams.set('redirect', activeSignIn.redirectUri)
-  await shell.openExternal(target.toString())
+  activeSignIn = startSignInAttempt()
+  await shell.openExternal(signInUrl(activeSignIn, base))
 })
 
 ipcMain.handle(CHANNELS.session.load, (event, ...args: unknown[]) => {
@@ -746,20 +765,20 @@ app.on('before-quit', () => {
 
 app.on('open-url', (event, url) => {
   event.preventDefault()
-  receiveInviteLink(url)
+  receiveDeepLink(url)
 })
 
 app.on('second-instance', (_event, commandLine) => {
   const link = commandLine.find((argument) => argument.startsWith('api-docs://'))
-  if (link) receiveInviteLink(link)
+  if (link) receiveDeepLink(link)
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
   }
 })
 
-const launchInviteLink = process.argv.find((argument) => argument.startsWith('api-docs://'))
-if (launchInviteLink) receiveInviteLink(launchInviteLink)
+const launchLink = process.argv.find((argument) => argument.startsWith('api-docs://'))
+if (launchLink) receiveDeepLink(launchLink)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

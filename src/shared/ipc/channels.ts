@@ -12,7 +12,7 @@ export const CHANNELS = {
   },
   commit: { save: 'commit:save', list: 'commit:list' },
   secret: { available: 'secret:available' },
-  auth: { begin: 'auth:begin', code: 'auth:code' },
+  auth: { begin: 'auth:begin', session: 'auth:session', failed: 'auth:failed' },
   session: { load: 'session:load', save: 'session:save', clear: 'session:clear' },
   account: { setActive: 'account:set-active' },
   invite: { token: 'invite:token' },

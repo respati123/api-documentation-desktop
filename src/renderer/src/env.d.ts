@@ -105,6 +105,7 @@ interface Window {
           | { state: 'error'; version: string; message: string },
       ) => void,
     ): () => void
-    onAuthCode(handler: (code: string) => void): () => void
+    onAuthSession(handler: (token: string) => void): () => void
+    onAuthFailed(handler: (reason: string) => void): () => void
   }
 }
