@@ -24,7 +24,7 @@ export type PendingMergeState = {
 
 export type Choices = Record<string, 'local' | 'remote'>
 
-export type PullKey = 'upToDate' | 'blocked' | 'conflicts' | 'failed' | 'pulled' | 'merged' | 'resolved'
+export type PullKey = 'upToDate' | 'blocked' | 'conflicts' | 'failed' | 'pulled' | 'merged' | 'resolved' | 'saveRefused'
 
 // What the pull workflow needs from its caller. Storage and network are injected, so the decisions are testable.
 export type PullDeps = {
@@ -36,7 +36,8 @@ export type PullDeps = {
   translate: (key: PullKey) => string
   pullCloud: (input: { token: string; cloudId: string }) => Promise<{ headCommitId: string; tree: unknown[]; variables: unknown }>
   listCommits: (workspaceId: string) => Promise<LocalCommit[]>
-  saveWorkspace: (workspace: LocalWorkspace) => Promise<void>
+  // False when the app refused the save, because the workspace changed outside it. The pull then applies nothing.
+  saveWorkspace: (workspace: LocalWorkspace) => Promise<boolean>
   saveCommit: (workspaceId: string, commit: LocalCommit) => Promise<void>
 }
 
@@ -95,7 +96,7 @@ export async function pullWorkspaceChanges(deps: PullDeps): Promise<PullOutcome>
         baseCommitId: remote.headCommitId,
         localHeadId: remote.headCommitId,
       }
-      await deps.saveWorkspace(updated)
+      if (!(await deps.saveWorkspace(updated))) return { kind: 'failed', message: deps.translate('saveRefused') }
       return {
         kind: 'applied',
         message: deps.translate('pulled'),
@@ -156,7 +157,7 @@ export async function pullWorkspaceChanges(deps: PullDeps): Promise<PullOutcome>
       baseCommitId: remote.headCommitId,
       localHeadId: mergeCommit.id,
     }
-    await deps.saveWorkspace(updated)
+    if (!(await deps.saveWorkspace(updated))) return { kind: 'failed', message: deps.translate('saveRefused') }
     return {
       kind: 'applied',
       message: deps.translate('merged'),
@@ -180,7 +181,10 @@ export type ResolveDeps = Omit<PullDeps, 'pullCloud' | 'listCommits' | 'token' |
   workspace: LocalWorkspace
 }
 
-export type ResolveOutcome = { kind: 'incomplete' } | { kind: 'resolved'; message: string; applied: Applied }
+export type ResolveOutcome =
+  | { kind: 'incomplete' }
+  | { kind: 'refused'; message: string }
+  | { kind: 'resolved'; message: string; applied: Applied }
 
 // Applies the user's choices to a pending merge. Nothing happens until every conflict has a choice.
 export async function resolvePendingMerge(deps: ResolveDeps): Promise<ResolveOutcome> {
@@ -218,7 +222,7 @@ export async function resolvePendingMerge(deps: ResolveDeps): Promise<ResolveOut
     baseCommitId: pending.remoteHeadId,
     localHeadId: commit.id,
   }
-  await deps.saveWorkspace(updated)
+  if (!(await deps.saveWorkspace(updated))) return { kind: 'refused', message: deps.translate('saveRefused') }
   return {
     kind: 'resolved',
     message: deps.translate('resolved'),

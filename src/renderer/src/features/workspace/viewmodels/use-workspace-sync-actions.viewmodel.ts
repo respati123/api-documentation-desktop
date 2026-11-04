@@ -176,9 +176,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       translate: (key) => tSync(SYNC_TEXT.pull[key]),
       pullCloud: (input) => syncService.pull(input),
       listCommits: (workspaceId) => workspaceStorageService.listCommits(workspaceId),
-      saveWorkspace: async (workspace) => {
-        await workspaceStorageService.saveWorkspace(workspace)
-      },
+      saveWorkspace: (workspace) => workspaceStorageService.saveWorkspace(workspace),
       saveCommit: (workspaceId, commit) => workspaceStorageService.saveCommit(workspaceId, commit),
     })
     if (outcome.kind === 'applied') applyPulledState(outcome.applied)
@@ -237,9 +235,7 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       variables: workspaceVariables,
       translate: (key) => tSync(SYNC_TEXT.push[key]),
       listCommits: (workspaceId) => workspaceStorageService.listCommits(workspaceId),
-      saveWorkspace: async (workspace) => {
-        await workspaceStorageService.saveWorkspace(workspace)
-      },
+      saveWorkspace: (workspace) => workspaceStorageService.saveWorkspace(workspace),
       saveCommit: (workspaceId, commit) => workspaceStorageService.saveCommit(workspaceId, commit),
       createCloud: (input) => cloudWorkspaceService.create(input),
       push: (input) => syncService.push(input),
@@ -290,12 +286,14 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
       workspace: activeWorkspace,
       activeEnvironmentId,
       translate: (key) => tSync(SYNC_TEXT.pull[key]),
-      saveWorkspace: async (workspace) => {
-        await workspaceStorageService.saveWorkspace(workspace)
-      },
+      saveWorkspace: (workspace) => workspaceStorageService.saveWorkspace(workspace),
       saveCommit: (workspaceId, commit) => workspaceStorageService.saveCommit(workspaceId, commit),
     })
     if (outcome.kind === 'incomplete') return
+    if (outcome.kind === 'refused') {
+      setSyncStatus(outcome.message)
+      return
+    }
     applyPulledState(outcome.applied)
     setPendingMerge(null)
     setSyncStatus(outcome.message)

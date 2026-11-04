@@ -36,7 +36,7 @@ function deps(overrides: Partial<PushDeps> = {}): PushDeps {
     variables: { globals: [], environments: [] },
     translate,
     listCommits: vi.fn(async () => [commit('a'), commit('b', true)]),
-    saveWorkspace: vi.fn(async () => undefined),
+    saveWorkspace: vi.fn(async () => true),
     saveCommit: vi.fn(async () => undefined),
     createCloud: vi.fn(async () => ({
       id: 'cloud-new',
@@ -64,6 +64,12 @@ describe('pushWorkspaceCommits', () => {
     const outcome = await pushWorkspaceCommits(d)
     expect(outcome).toEqual({ kind: 'nothing', message: 'nothing' })
     expect(d.push).not.toHaveBeenCalled()
+  })
+
+  it('does not report a push as saved when the local save is refused', async () => {
+    const outcome = await pushWorkspaceCommits(deps({ saveWorkspace: vi.fn(async () => false) }))
+    expect(outcome.kind).toBe('error')
+    expect(outcome.message).toBe('saveRefused')
   })
 
   it('sends only the unpushed commits and marks them pushed on success', async () => {

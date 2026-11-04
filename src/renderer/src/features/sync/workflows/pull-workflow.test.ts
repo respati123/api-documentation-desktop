@@ -34,7 +34,7 @@ function deps(overrides: Partial<PullDeps> = {}): PullDeps {
     translate,
     pullCloud: vi.fn(async () => ({ headCommitId: 'head-2', tree: [], variables: empty })),
     listCommits: vi.fn(async () => []),
-    saveWorkspace: vi.fn(async () => undefined),
+    saveWorkspace: vi.fn(async () => true),
     saveCommit: vi.fn(async () => undefined),
     ...overrides,
   }
@@ -92,6 +92,12 @@ describe('pullWorkspaceChanges', () => {
     const outcome = await pullWorkspaceChanges(deps({ listCommits: vi.fn(async () => [commit]), tree: [local] }))
 
     expect(outcome.kind).not.toBe('blocked')
+  })
+
+  it('does not report an applied pull when the save is refused, because nothing was saved', async () => {
+    const outcome = await pullWorkspaceChanges(deps({ saveWorkspace: vi.fn(async () => false) }))
+    expect(outcome.kind).toBe('failed')
+    expect(outcome.message).toBe('saveRefused')
   })
 
   it('fast-forwards when nothing local is unpublished', async () => {
@@ -152,7 +158,7 @@ function resolveDeps(overrides: Partial<ResolveDeps> = {}): ResolveDeps {
     workspace: base,
     activeEnvironmentId: null,
     translate,
-    saveWorkspace: vi.fn(async () => undefined),
+    saveWorkspace: vi.fn(async () => true),
     saveCommit: vi.fn(async () => undefined),
     ...overrides,
   }

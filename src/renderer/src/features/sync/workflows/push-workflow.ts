@@ -13,9 +13,10 @@ export type PushDeps = {
   workspace: LocalWorkspace
   tree: ApiNode[]
   variables: WorkspaceVariables
-  translate: (key: 'viewer' | 'nothing' | 'conflictOnCloud' | 'conflictPublished' | 'pushed' | 'failed') => string
+  translate: (key: 'viewer' | 'nothing' | 'conflictOnCloud' | 'conflictPublished' | 'pushed' | 'failed' | 'saveRefused') => string
   listCommits: (workspaceId: string) => Promise<LocalCommit[]>
-  saveWorkspace: (workspace: LocalWorkspace) => Promise<void>
+  // False when the app refused the save, because the workspace changed outside it.
+  saveWorkspace: (workspace: LocalWorkspace) => Promise<boolean>
   saveCommit: (workspaceId: string, commit: LocalCommit) => Promise<void>
   createCloud: (input: { token: string; name: string; tree: ApiNode[]; variables: unknown }) => Promise<CloudWorkspaceRecord>
   push: (input: { token: string; cloudId: string; commits: LocalCommit[] }) => Promise<string>
@@ -65,7 +66,10 @@ export async function pushWorkspaceCommits(deps: PushDeps): Promise<PushOutcome>
         baseVariables: cloudBaseVariables,
         baseCommitId: cloud.headCommitId,
       }
-      await deps.saveWorkspace(target)
+      if (!(await deps.saveWorkspace(target))) {
+        const rebased = rebaseOntoCloudHead(pending, cloud.headCommitId)
+        return { kind: 'error', message: deps.translate('saveRefused'), published: { workspace: target, cloud, rebased } }
+      }
       pending = rebaseOntoCloudHead(pending, cloud.headCommitId)
       await Promise.all(pending.map((commit) => deps.saveCommit(deps.workspace.id, commit)))
       published = { workspace: target, cloud, rebased: pending }
@@ -92,7 +96,8 @@ export async function pushWorkspaceCommits(deps: PushDeps): Promise<PushOutcome>
       baseCommitId: headCommitId,
       localHeadId: headCommitId,
     }
-    await deps.saveWorkspace(updated)
+    // The commits are already on the cloud. Only the local record was refused, so the outcome says so.
+    if (!(await deps.saveWorkspace(updated))) return { kind: 'error', message: deps.translate('saveRefused'), published }
     return { kind: 'pushed', message: deps.translate('pushed'), workspace: updated, pushed, published }
   } catch (error) {
     if (error instanceof ApiError && error.status === 409) {
