@@ -1,6 +1,7 @@
 export * from '@/features/sync/constants/sync-text.constants'
 export * from '@/features/sync/lib/change-status'
 export * from '@/features/sync/lib/invite'
+export * from '@/features/sync/lib/revert'
 export * from '@/features/sync/models/cloud-history.model'
 export * from '@/features/sync/models/cloud-workspace.model'
 export * from '@/features/sync/pages/auth-dialog.page'

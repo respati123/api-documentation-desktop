@@ -2,6 +2,7 @@ import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SYNC_TEXT } from '@/features/sync/constants/sync-text.constants'
 import { changeStatusCode, changeStatusKey } from '@/features/sync/lib/change-status'
+import { canRevertTo } from '@/features/sync/lib/revert'
 import type { CommitTab } from '@/features/sync/viewmodels/use-commit-dialog-state.viewmodel'
 import type { TextDiffRow } from '@/lib/text-diff'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
@@ -21,6 +22,8 @@ export type CommitDialogInput = {
   message: string
   readOnly: boolean
   cloudConnected: boolean
+  // The commit the cloud head points to. Reverting to it would do nothing, so the button stays off.
+  cloudHeadId?: string | null
   changeCount: number
   staged: WorkspaceChange[]
   unstaged: WorkspaceChange[]
@@ -219,7 +222,11 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
       diffEmpty: historyDiffEmpty,
       revert: {
         label: t(SYNC_TEXT.history.revert),
-        disabled: input.readOnly || !input.cloudConnected || history.selectedCommit?.source !== 'cloud',
+        disabled:
+          input.readOnly ||
+          !input.cloudConnected ||
+          history.selectedCommit?.source !== 'cloud' ||
+          !canRevertTo(history.selectedCommit?.id ?? '', input.cloudHeadId ?? null),
         onRevert: () => actions.onRevertHistoryCommit(history.selectedCommit?.id ?? ''),
       },
     },
