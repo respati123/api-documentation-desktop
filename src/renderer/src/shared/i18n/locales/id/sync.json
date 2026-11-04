@@ -15,7 +15,7 @@
   },
   "createWorkspace": {
     "title": "Buat workspace cloud",
-    "description": "Publikasikan workspace lokal ini agar tim kamu bisa bergabung.",
+    "description": "Membuat workspace cloud yang kosong agar tim kamu bisa bergabung. Workspace lokal tetap seperti sekarang.",
     "nameLabel": "Nama workspace",
     "namePlaceholder": "mis. Platform API",
     "submit": "Buat workspace",
