@@ -73,9 +73,8 @@ export function useResponseContractViewModel({
     onMediaTypeChange: (id: string, contentId: string, mediaType: string) => updateContent(id, contentId, { mediaType }),
     onSchemaChange: (id: string, contentId: string, schema: string) => updateContent(id, contentId, { schema }),
     onExampleChange: (id: string, contentId: string, example: string) => updateContent(id, contentId, { example }),
-    onFormatExample: (id: string, contentId: string) => {
-      const response = responses.find((item) => item.id === id)
-      const example = response?.content.find((item) => item.id === contentId)?.example ?? ''
+    // Takes the text the field holds now. Called when the field loses focus, so the value is not yet in `responses`.
+    onFormatExample: (id: string, contentId: string, example: string) => {
       const formatted = formatJsonText(example)
       if (formatted !== null) updateContent(id, contentId, { example: formatted })
     },

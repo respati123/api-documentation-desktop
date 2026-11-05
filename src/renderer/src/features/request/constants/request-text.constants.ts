@@ -206,6 +206,7 @@ export const REQUEST_TEXT = {
     exampleAria: 'contract.exampleAria',
     addContent: 'contract.addContent',
     formatExample: 'contract.formatExample',
+    formatHint: 'contract.formatHint',
     defaultDescription: 'contract.defaultDescription',
     statusPlaceholder: 'contract.statusPlaceholder',
     descriptionPlaceholder: 'contract.descriptionPlaceholder',
