@@ -21,6 +21,7 @@ export const REQUEST_TEXT = {
     preScriptLabel: 'workbench.preScriptLabel',
     postScriptLabel: 'workbench.postScriptLabel',
     scriptPlaceholder: 'workbench.scriptPlaceholder',
+    scriptsLoading: 'workbench.scriptsLoading',
   },
   tabs: {
     label: 'tabs.label',
@@ -226,7 +227,6 @@ export const REQUEST_TEXT = {
     examplePlaceholder: 'contract.examplePlaceholder',
   },
   completion: {
-    label: 'completion.label',
     apidocs: 'completion.apidocs',
     vars: 'completion.vars',
     req: 'completion.req',

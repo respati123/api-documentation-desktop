@@ -70,11 +70,15 @@ export function useRequestWorkbenchViewModel({
     phase: 'pre',
     value: request.preScript ?? '',
     onChange: (script: string) => onChange({ preScript: script }),
+    readOnly,
+    ariaLabel: t(REQUEST_TEXT.workbench.preScriptLabel),
   })
   const postScript = useScriptEditorViewModel({
     phase: 'post',
     value: request.postScript ?? '',
     onChange: (script: string) => onChange({ postScript: script }),
+    readOnly,
+    ariaLabel: t(REQUEST_TEXT.workbench.postScriptLabel),
   })
   const sender = useSendRequestViewModel({ readRequest: readLatestRequest, scriptContext, resetKey })
   const timers = useSendTimersViewModel({ readRequest: readLatestRequest, send: sender.send })

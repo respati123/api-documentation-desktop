@@ -20,7 +20,8 @@
     "scriptsNote": "Scripts are saved with the request. They run once script support is turned on in the app.",
     "preScriptLabel": "Pre-request script",
     "postScriptLabel": "Post-response script",
-    "scriptPlaceholder": "// JavaScript. Use apidocs.vars, apidocs.req, apidocs.res, apidocs.check, and apidocs.log."
+    "scriptPlaceholder": "// JavaScript. Use apidocs.vars, apidocs.req, apidocs.res, apidocs.check, and apidocs.log.",
+    "scriptsLoading": "Loading editor…"
   },
   "tabs": {
     "label": "Request configuration",
@@ -230,7 +231,6 @@
     "invalidJson": "Not valid JSON. It stays as you typed it."
   },
   "completion": {
-    "label": "Script suggestions",
     "apidocs": "The script API for this request.",
     "vars": "Variables in the active environment and in globals.",
     "req": "The request before it is sent. Pre-request scripts only.",

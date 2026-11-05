@@ -214,27 +214,11 @@ export function RequestWorkbenchView({
               </div>
               <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="request-pre-script">{t(REQUEST_TEXT.workbench.preScriptLabel)}</Label>
-                <ScriptEditorView
-                  {...scripts.pre}
-                  id="request-pre-script"
-                  testId={REQUEST_TEST_IDS.preScriptField}
-                  ariaLabel={t(REQUEST_TEXT.workbench.preScriptLabel)}
-                  placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
-                  readOnly={readOnly}
-                  maxLength={50000}
-                />
+                <ScriptEditorView {...scripts.pre} id="request-pre-script" testId={REQUEST_TEST_IDS.preScriptField} />
               </div>
               <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="request-post-script">{t(REQUEST_TEXT.workbench.postScriptLabel)}</Label>
-                <ScriptEditorView
-                  {...scripts.post}
-                  id="request-post-script"
-                  testId={REQUEST_TEST_IDS.postScriptField}
-                  ariaLabel={t(REQUEST_TEXT.workbench.postScriptLabel)}
-                  placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
-                  readOnly={readOnly}
-                  maxLength={50000}
-                />
+                <ScriptEditorView {...scripts.post} id="request-post-script" testId={REQUEST_TEST_IDS.postScriptField} />
               </div>
             </div>
           </TabsContent>

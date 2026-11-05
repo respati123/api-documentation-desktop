@@ -20,7 +20,8 @@
     "scriptsNote": "Script disimpan bersama request. Script akan berjalan setelah dukungan script diaktifkan di app.",
     "preScriptLabel": "Script sebelum request",
     "postScriptLabel": "Script setelah respons",
-    "scriptPlaceholder": "// JavaScript. Gunakan apidocs.vars, apidocs.req, apidocs.res, apidocs.check, dan apidocs.log."
+    "scriptPlaceholder": "// JavaScript. Gunakan apidocs.vars, apidocs.req, apidocs.res, apidocs.check, dan apidocs.log.",
+    "scriptsLoading": "Memuat editor…"
   },
   "tabs": {
     "label": "Konfigurasi request",
@@ -226,7 +227,6 @@
     "invalidJson": "Belum valid JSON. Tetap seperti yang kamu ketik."
   },
   "completion": {
-    "label": "Saran script",
     "apidocs": "API script untuk request ini.",
     "vars": "Variabel di environment yang aktif dan di global.",
     "req": "Request sebelum dikirim. Hanya untuk script pre-request.",
