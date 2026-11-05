@@ -9,6 +9,8 @@ export const REQUEST_TEST_IDS = {
   url: 'request-workbench-url-input',
   docsField: 'request-workbench-docs-input',
   docsPreview: 'request-workbench-docs-preview',
+  docsModeMarkdown: 'request-workbench-docs-mode-markdown',
+  docsModePreview: 'request-workbench-docs-mode-preview',
   tab: (name: string) => `request-workbench-${name}-tab`,
   send: {
     submit: 'request-send-submit-button',

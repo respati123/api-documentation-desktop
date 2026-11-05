@@ -12,7 +12,10 @@
     "docsLabel": "Dokumentasi request",
     "docsPlaceholder": "Jelaskan endpoint ini, inputnya, dan respons yang diharapkan.",
     "previewLabel": "Pratinjau",
-    "previewEmpty": "Belum ada dokumentasi. Tulis markdown di kiri untuk melihat hasilnya di sini."
+    "previewEmpty": "Belum ada dokumentasi. Tulis markdown di kiri untuk melihat hasilnya di sini.",
+    "docsModeLabel": "Tampilan docs",
+    "modeMarkdown": "Markdown",
+    "modePreview": "Pratinjau"
   },
   "tabs": {
     "label": "Konfigurasi request",

@@ -13,6 +13,9 @@ export const REQUEST_TEXT = {
     docsPlaceholder: 'workbench.docsPlaceholder',
     previewLabel: 'workbench.previewLabel',
     previewEmpty: 'workbench.previewEmpty',
+    docsModeLabel: 'workbench.docsModeLabel',
+    modeMarkdown: 'workbench.modeMarkdown',
+    modePreview: 'workbench.modePreview',
   },
   tabs: {
     label: 'tabs.label',

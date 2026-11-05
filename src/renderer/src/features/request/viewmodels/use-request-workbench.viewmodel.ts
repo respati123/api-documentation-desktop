@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import { requestTabIndicators } from '@/features/request/lib/request-tab-indicators'
@@ -32,6 +32,9 @@ export interface RequestWorkbenchInput {
 }
 
 // Composes the request builder: heading, URL line, send control, the six tabs, and the response panel.
+// The Docs tab shows the markdown source or the rendered preview.
+export type DocsMode = 'markdown' | 'preview'
+
 export function useRequestWorkbenchViewModel({
   request,
   readLatestRequest,
@@ -46,6 +49,7 @@ export function useRequestWorkbenchViewModel({
   onVariableClick,
 }: RequestWorkbenchInput) {
   const { t } = useTranslation('request')
+  const [docsMode, setDocsMode] = useState<DocsMode>('markdown')
   const editorInput = { request, readOnly, suggestions, onVariableClick, onChange }
 
   const params = useParamsEditorViewModel(editorInput)
@@ -104,7 +108,12 @@ export function useRequestWorkbenchViewModel({
       headersText: t(REQUEST_TEXT.tabs.headersActive, { count: indicators.headers }),
       responses: indicators.responses,
     },
-    docs: { value: request.documentation ?? '', onChange: (documentation: string) => onChange({ documentation }) },
+    docs: {
+      value: request.documentation ?? '',
+      onChange: (documentation: string) => onChange({ documentation }),
+      mode: docsMode,
+      onModeChange: setDocsMode,
+    },
     params,
     body,
     auth,
