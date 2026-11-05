@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { WORKSPACE_TEXT } from '@/features/workspace/constants/workspace-text.constants'
+import { maxRestoreAttempts, restoreRetryMs, sessionRestoreFailure } from '@/features/workspace/lib/session-restore'
 import type { ApiUser } from '@/features/workspace/models/cloud-session.model'
 import { cloudAuthService } from '@/features/workspace/services/cloud-auth.service'
 import { sessionService } from '@/features/workspace/services/session.service'
@@ -74,22 +75,31 @@ export function useWorkspaceSessionViewModel(input: SessionInput) {
   // A saved session is checked with the cloud before it counts as signed in.
   useEffect(() => {
     let active = true
-    void sessionService
-      .load()
-      .then(async (token) => {
-        if (!token || !active) return
-        try {
-          const me = await cloudAuthService.me(token)
-          if (!active) return
-          setSessionToken(token)
-          setUser(me)
-        } catch {
+    let attempts = 0
+    let retryTimer: number | undefined
+    // The saved session is cleared only when the server rejects it. An unreachable server keeps it for the next check.
+    const restore = async () => {
+      const token = await sessionService.load().catch(() => null)
+      if (!token || !active) return
+      try {
+        const me = await cloudAuthService.me(token)
+        if (!active) return
+        setSessionToken(token)
+        setUser(me)
+      } catch (error) {
+        if (!active) return
+        if (sessionRestoreFailure(error) === 'clear') {
           await sessionService.clear()
+          return
         }
-      })
-      .catch(() => undefined)
+        attempts += 1
+        if (attempts < maxRestoreAttempts) retryTimer = window.setTimeout(() => void restore(), restoreRetryMs)
+      }
+    }
+    void restore()
     return () => {
       active = false
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer)
     }
   }, [])
 
