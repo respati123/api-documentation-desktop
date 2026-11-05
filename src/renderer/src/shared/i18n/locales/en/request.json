@@ -17,10 +17,11 @@
     "modeMarkdown": "Markdown",
     "modePreview": "Preview",
     "scriptsLabel": "Request scripts",
-    "scriptsNote": "Scripts are saved with the request. They run once script support is turned on in the app.",
+    "scriptsNote": "Scripts are saved with the request. The pre-request script runs before the send, and the post-response script runs after the response arrives.",
     "preScriptLabel": "Pre-request script",
     "postScriptLabel": "Post-response script",
-    "scriptPlaceholder": "// JavaScript. Use apidocs.vars, apidocs.req, apidocs.res, apidocs.check, and apidocs.log."
+    "scriptPlaceholder": "// JavaScript. Use apidocs.vars, apidocs.req, apidocs.res, apidocs.check, and apidocs.log.",
+    "scriptsLoading": "Loading editor…"
   },
   "tabs": {
     "label": "Request configuration",
@@ -41,6 +42,7 @@
   "send": {
     "send": "Send",
     "sending": "Sending…",
+    "preScriptFailed": "The pre-request script stopped the request, so it was not sent.",
     "optionsLabel": "Send options",
     "menuLabel": "Send request options",
     "sectionBasic": "Basic",
@@ -227,5 +229,44 @@
     "formatExample": "Format JSON",
     "formatHint": "Formats when you leave the field, if it is valid JSON.",
     "invalidJson": "Not valid JSON. It stays as you typed it."
+  },
+  "reference": {
+    "title": "Script API",
+    "groupVars": "Variables",
+    "groupRequest": "Request",
+    "groupResponse": "Response",
+    "groupChecks": "Checks and logs",
+    "groupAssert": "Assertions",
+    "preOnly": "Pre-request only",
+    "postOnly": "Post-response only"
+  },
+  "completion": {
+    "apidocs": "The script API for this request.",
+    "vars": "Variables in the active environment and in globals.",
+    "req": "The request before it is sent. Pre-request scripts only.",
+    "res": "The response. Post-response scripts only.",
+    "check": "Adds a named test. It passes when the function does not throw.",
+    "assert": "Starts an assertion on a value.",
+    "log": "Writes values to the Console tab.",
+    "varsGet": "Reads a variable. Looks in the active environment, then globals.",
+    "varsSet": "Saves a variable. Pass { scope: 'global' } to save a global.",
+    "varsHas": "Tells whether a variable exists.",
+    "varsRemove": "Removes a variable.",
+    "reqUrl": "The URL. A pre-request script can change it.",
+    "reqMethod": "The HTTP method. A pre-request script can change it.",
+    "reqSetHeader": "Sets an enabled header, replacing one with the same name.",
+    "reqDropHeader": "Removes a header from the request.",
+    "resStatus": "The HTTP status code.",
+    "resElapsed": "How long the request took, in milliseconds.",
+    "resHeader": "Reads a response header by name.",
+    "resText": "The response body as text.",
+    "resData": "The response body parsed as JSON.",
+    "assertEquals": "Passes when the value equals the expected value.",
+    "assertIsTrue": "Passes when the value is true.",
+    "assertIsFalse": "Passes when the value is false.",
+    "assertIncludes": "Passes when the value contains the item.",
+    "assertBelow": "Passes when the value is below the maximum.",
+    "assertAbove": "Passes when the value is above the minimum.",
+    "assertHasKey": "Passes when the object has the key."
   }
 }

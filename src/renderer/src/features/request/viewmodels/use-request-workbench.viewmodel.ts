@@ -2,6 +2,8 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import { requestTabIndicators } from '@/features/request/lib/request-tab-indicators'
+import { scriptApiEntries, scriptApiGroups } from '@/features/request/lib/script-api'
+import type { ScriptContext } from '@/features/request/lib/script-run'
 import { httpMethods } from '@/features/request/models/request.model'
 import { useAuthEditorViewModel } from '@/features/request/viewmodels/use-auth-editor.viewmodel'
 import { useBodyEditorViewModel } from '@/features/request/viewmodels/use-body-editor.viewmodel'
@@ -9,6 +11,7 @@ import { useClientCodeViewModel } from '@/features/request/viewmodels/use-client
 import { useHeadersEditorViewModel } from '@/features/request/viewmodels/use-headers-editor.viewmodel'
 import { useParamsEditorViewModel } from '@/features/request/viewmodels/use-params-editor.viewmodel'
 import { useResponseContractViewModel } from '@/features/request/viewmodels/use-response-contract.viewmodel'
+import { useScriptEditorViewModel } from '@/features/request/viewmodels/use-script-editor.viewmodel'
 import { useSendRequestViewModel } from '@/features/request/viewmodels/use-send-request.viewmodel'
 import { useSendTimersViewModel } from '@/features/request/viewmodels/use-send-timers.viewmodel'
 import { useResponseViewModel } from '@/features/response'
@@ -24,6 +27,8 @@ export interface RequestWorkbenchInput {
   statusText: string
   suggestions: VariableSuggestion[]
   resolvedVariables: Record<string, string>
+  // The variables and the environment the scripts read and write.
+  scriptContext: ScriptContext
   // Changes whenever another request opens. Used to reset the response and the URL and name drafts.
   resetKey: string
   onChange: (patch: Partial<RequestNode>) => void
@@ -43,6 +48,7 @@ export function useRequestWorkbenchViewModel({
   statusText,
   suggestions,
   resolvedVariables,
+  scriptContext,
   resetKey,
   onChange,
   onOpenDocs,
@@ -61,11 +67,47 @@ export function useRequestWorkbenchViewModel({
     readOnly,
     onChange: (responses) => onChange({ responses }),
   })
-  const sender = useSendRequestViewModel({ readRequest: readLatestRequest, resolvedVariables, resetKey })
+  const sender = useSendRequestViewModel({ readRequest: readLatestRequest, scriptContext, resetKey })
+  // The editors mark the line where their script failed in the last run, so they read that run.
+  const preRun = sender.scripts?.pre ?? null
+  const postRun = sender.scripts?.post ?? null
+  const preScript = useScriptEditorViewModel({
+    phase: 'pre',
+    value: request.preScript ?? '',
+    onChange: (script: string) => onChange({ preScript: script }),
+    readOnly,
+    ariaLabel: t(REQUEST_TEXT.workbench.preScriptLabel),
+    runErrorLine: preRun && !preRun.ok ? preRun.errorLine : null,
+    runErrorMessage: preRun?.error ?? '',
+  })
+  const postScript = useScriptEditorViewModel({
+    phase: 'post',
+    value: request.postScript ?? '',
+    onChange: (script: string) => onChange({ postScript: script }),
+    readOnly,
+    ariaLabel: t(REQUEST_TEXT.workbench.postScriptLabel),
+    runErrorLine: postRun && !postRun.ok ? postRun.errorLine : null,
+    runErrorMessage: postRun?.error ?? '',
+  })
   const timers = useSendTimersViewModel({ readRequest: readLatestRequest, send: sender.send })
   const clientCode = useClientCodeViewModel({ readRequest: readLatestRequest, resolvedVariables })
-  const response = useResponseViewModel({ response: sender.response })
+  const response = useResponseViewModel({ response: sender.response, scripts: sender.scripts })
   const indicators = requestTabIndicators(request)
+  const scriptReference = {
+    title: t(REQUEST_TEXT.reference.title),
+    groups: scriptApiGroups.map((group) => ({
+      key: group.key,
+      title: t(group.titleKey),
+      entries: scriptApiEntries
+        .filter((entry) => entry.group === group.key)
+        .map((entry) => ({
+          signature: entry.signature,
+          description: t(entry.descriptionKey),
+          phase:
+            entry.phase === 'pre' ? t(REQUEST_TEXT.reference.preOnly) : entry.phase === 'post' ? t(REQUEST_TEXT.reference.postOnly) : '',
+        })),
+    })),
+  }
 
   return {
     readOnly,
@@ -114,10 +156,7 @@ export function useRequestWorkbenchViewModel({
       mode: docsMode,
       onModeChange: setDocsMode,
     },
-    scripts: {
-      pre: { value: request.preScript ?? '', onChange: (preScript: string) => onChange({ preScript }) },
-      post: { value: request.postScript ?? '', onChange: (postScript: string) => onChange({ postScript }) },
-    },
+    scripts: { pre: preScript, post: postScript, reference: scriptReference },
     params,
     body,
     auth,

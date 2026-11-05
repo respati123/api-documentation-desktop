@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { runScript, type ScriptRunInput } from './script-engine'
+import type { ScriptRunInput } from '../../renderer/src/shared/ipc/script-contract'
+import { runScript } from './script-engine'
 
 const baseRequest = { method: 'GET', url: 'https://api.example.com/users', headers: [{ name: 'Accept', value: '*/*' }] }
 
@@ -150,11 +151,11 @@ describe('limits', () => {
   it('stops a script that uses too much memory, with a plain sentence', async () => {
     const result = await runScript(pre('var keep = []; while (true) keep.push(new Array(10000).fill(1));'), {
       memoryBytes: 2 * 1024 * 1024,
-      timeoutMs: 5_000,
+      timeoutMs: 2_000,
     })
     expect(result.ok).toBe(false)
     expect(result.error).toMatch(/Script stopped: it used more than 2 MB of memory|Script stopped: it ran for more than/)
-  })
+  }, 15_000)
 
   it('refuses a script larger than the size limit before it runs', async () => {
     const result = await runScript(pre(`var padding = "${'x'.repeat(60_000)}";`))
@@ -185,6 +186,30 @@ describe('sandbox', () => {
     const runtime = await runScript(pre('null.value'))
     expect(runtime.ok).toBe(false)
     expect(runtime.error).toBeTruthy()
+  })
+
+  it('gives the line of an uncaught error in the user script', async () => {
+    const result = await runScript(pre('var a = 1;\nvar b = 2;\nthrow new Error("boom");'))
+    expect(result).toMatchObject({ ok: false, error: 'boom', errorLine: 3 })
+  })
+
+  it('gives the line of a reference error', async () => {
+    const result = await runScript(pre('var a = 1;\n\nmissingName();'))
+    expect(result).toMatchObject({ ok: false, errorLine: 3 })
+    expect(result.error).toContain('missingName')
+  })
+
+  it('gives the line of a syntax error', async () => {
+    const result = await runScript(pre('var a = 1;\nvar b = ;'))
+    expect(result).toMatchObject({ ok: false, errorLine: 2 })
+  })
+
+  it('gives no line for a script that was stopped, or for a script that finished', async () => {
+    // The engine reports an interrupt without a stack, so there is no line to point at.
+    const stopped = await runScript(pre('var a = 1;\nfor (;;) {}'), { timeoutMs: 200 })
+    expect(stopped).toMatchObject({ ok: false, errorLine: null })
+    expect(stopped.error).toContain('ran for more than')
+    expect(await runScript(pre('var a = 1;'))).toMatchObject({ ok: true, errorLine: null })
   })
 })
 

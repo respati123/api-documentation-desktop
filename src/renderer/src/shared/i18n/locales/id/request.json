@@ -17,10 +17,11 @@
     "modeMarkdown": "Markdown",
     "modePreview": "Pratinjau",
     "scriptsLabel": "Script request",
-    "scriptsNote": "Script disimpan bersama request. Script akan berjalan setelah dukungan script diaktifkan di app.",
+    "scriptsNote": "Script disimpan bersama request. Script pre-request berjalan sebelum request dikirim, dan script post-response berjalan setelah respons datang.",
     "preScriptLabel": "Script sebelum request",
     "postScriptLabel": "Script setelah respons",
-    "scriptPlaceholder": "// JavaScript. Gunakan apidocs.vars, apidocs.req, apidocs.res, apidocs.check, dan apidocs.log."
+    "scriptPlaceholder": "// JavaScript. Gunakan apidocs.vars, apidocs.req, apidocs.res, apidocs.check, dan apidocs.log.",
+    "scriptsLoading": "Memuat editor…"
   },
   "tabs": {
     "label": "Konfigurasi request",
@@ -39,6 +40,7 @@
   "send": {
     "send": "Kirim",
     "sending": "Mengirim…",
+    "preScriptFailed": "Script sebelum request menghentikan request, jadi request tidak dikirim.",
     "optionsLabel": "Opsi kirim",
     "menuLabel": "Opsi kirim request",
     "sectionBasic": "Dasar",
@@ -223,5 +225,44 @@
     "formatExample": "Rapikan JSON",
     "formatHint": "Dirapikan saat keluar dari kolom, jika JSON-nya valid.",
     "invalidJson": "Belum valid JSON. Tetap seperti yang kamu ketik."
+  },
+  "reference": {
+    "title": "API script",
+    "groupVars": "Variabel",
+    "groupRequest": "Request",
+    "groupResponse": "Respons",
+    "groupChecks": "Tes dan log",
+    "groupAssert": "Pengecekan",
+    "preOnly": "Hanya pre-request",
+    "postOnly": "Hanya post-response"
+  },
+  "completion": {
+    "apidocs": "API script untuk request ini.",
+    "vars": "Variabel di environment yang aktif dan di global.",
+    "req": "Request sebelum dikirim. Hanya untuk script pre-request.",
+    "res": "Respons. Hanya untuk script post-response.",
+    "check": "Menambahkan tes bernama. Lolos jika fungsi tidak melempar error.",
+    "assert": "Memulai pengecekan pada sebuah nilai.",
+    "log": "Menulis nilai ke tab Konsol.",
+    "varsGet": "Membaca variabel. Dicari di environment yang aktif, lalu di global.",
+    "varsSet": "Menyimpan variabel. Beri { scope: 'global' } untuk menyimpan global.",
+    "varsHas": "Mengecek apakah variabel ada.",
+    "varsRemove": "Menghapus variabel.",
+    "reqUrl": "URL. Script pre-request bisa mengubahnya.",
+    "reqMethod": "Metode HTTP. Script pre-request bisa mengubahnya.",
+    "reqSetHeader": "Mengatur header yang aktif, menggantikan yang namanya sama.",
+    "reqDropHeader": "Menghapus header dari request.",
+    "resStatus": "Kode status HTTP.",
+    "resElapsed": "Lama request berjalan, dalam milidetik.",
+    "resHeader": "Membaca header respons berdasarkan nama.",
+    "resText": "Body respons sebagai teks.",
+    "resData": "Body respons yang diurai sebagai JSON.",
+    "assertEquals": "Lolos jika nilai sama dengan nilai yang diharapkan.",
+    "assertIsTrue": "Lolos jika nilai true.",
+    "assertIsFalse": "Lolos jika nilai false.",
+    "assertIncludes": "Lolos jika nilai memuat item.",
+    "assertBelow": "Lolos jika nilai di bawah maksimum.",
+    "assertAbove": "Lolos jika nilai di atas minimum.",
+    "assertHasKey": "Lolos jika objek memiliki key tersebut."
   }
 }

@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, useLayoutEffect, useRef } from 'react'
 import { type indexTree, isFolder, isRequest, updateNode } from '@/features/collection'
-import { replaceUrlParams, syncUrlParams } from '@/features/request'
+import { replaceUrlParams, type ScriptContext, syncUrlParams } from '@/features/request'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
 import type { ApiNode, RequestNode } from '@/shared/models/api-node.model'
@@ -16,6 +16,7 @@ export type RequestInput = {
   activeWorkspaceTab: WorkspaceTab | undefined
   variableSuggestions: VariableSuggestion[]
   resolvedVariables: Record<string, string>
+  scriptContext: ScriptContext
   openDocsTab: (requestId: string) => void
   openVariableEditor: (name: string, sourceValue: string) => void
 }
@@ -33,6 +34,7 @@ export function useWorkspaceRequestViewModel(input: RequestInput) {
     activeWorkspaceTab,
     variableSuggestions,
     resolvedVariables,
+    scriptContext,
     openDocsTab,
     openVariableEditor,
   } = input
@@ -74,6 +76,7 @@ export function useWorkspaceRequestViewModel(input: RequestInput) {
         statusText: activeWorkspace?.cloudId ? (activeWorkspace.role ?? '') : 'Saved locally',
         suggestions: variableSuggestions,
         resolvedVariables,
+        scriptContext,
         onChange: updateActiveRequest,
         onOpenDocs: () => openDocsTab(builderRequest.id),
         onVariableClick: openVariableEditor,

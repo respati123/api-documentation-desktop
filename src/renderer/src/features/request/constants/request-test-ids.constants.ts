@@ -11,6 +11,7 @@ export const REQUEST_TEST_IDS = {
   docsPreview: 'request-workbench-docs-preview',
   preScriptField: 'request-workbench-pre-script-input',
   postScriptField: 'request-workbench-post-script-input',
+  scriptReference: 'request-workbench-script-reference',
   docsModeMarkdown: 'request-workbench-docs-mode-markdown',
   docsModePreview: 'request-workbench-docs-mode-preview',
   tab: (name: string) => `request-workbench-${name}-tab`,

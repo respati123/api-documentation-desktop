@@ -9,6 +9,7 @@ import { HeadersEditorView } from '@/features/request/views/headers-editor.view'
 import { ParamsEditorView } from '@/features/request/views/params-editor.view'
 import { ClientCodeDialogView, DelayDialogView, RepeatDialogView } from '@/features/request/views/request-dialogs.view'
 import { ResponseContractView } from '@/features/request/views/response-contract.view'
+import { ScriptEditorView } from '@/features/request/views/script-editor.view'
 import { SendControlView } from '@/features/request/views/send-control.view'
 import { ResponseView } from '@/features/response'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
@@ -213,34 +214,31 @@ export function RequestWorkbenchView({
               </div>
               <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="request-pre-script">{t(REQUEST_TEXT.workbench.preScriptLabel)}</Label>
-                <DebouncedTextarea
-                  id="request-pre-script"
-                  data-testid={REQUEST_TEST_IDS.preScriptField}
-                  aria-label={t(REQUEST_TEXT.workbench.preScriptLabel)}
-                  className="min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5"
-                  maxLength={50000}
-                  spellCheck={false}
-                  placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
-                  value={scripts.pre.value}
-                  readOnly={readOnly}
-                  onValueChange={scripts.pre.onChange}
-                />
+                <ScriptEditorView {...scripts.pre} id="request-pre-script" testId={REQUEST_TEST_IDS.preScriptField} />
               </div>
               <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="request-post-script">{t(REQUEST_TEXT.workbench.postScriptLabel)}</Label>
-                <DebouncedTextarea
-                  id="request-post-script"
-                  data-testid={REQUEST_TEST_IDS.postScriptField}
-                  aria-label={t(REQUEST_TEXT.workbench.postScriptLabel)}
-                  className="min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5"
-                  maxLength={50000}
-                  spellCheck={false}
-                  placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
-                  value={scripts.post.value}
-                  readOnly={readOnly}
-                  onValueChange={scripts.post.onChange}
-                />
+                <ScriptEditorView {...scripts.post} id="request-post-script" testId={REQUEST_TEST_IDS.postScriptField} />
               </div>
+              <section className="grid min-w-0 gap-4" data-testid={REQUEST_TEST_IDS.scriptReference}>
+                <h3 className="text-sm font-semibold text-foreground">{scripts.reference.title}</h3>
+                {scripts.reference.groups.map((group) => (
+                  <div className="grid min-w-0 gap-1.5" key={group.key}>
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</h4>
+                    <dl className="m-0 grid gap-2">
+                      {group.entries.map((entry) => (
+                        <div className="grid min-w-0 gap-0.5" key={entry.signature}>
+                          <dt className="flex min-w-0 flex-wrap items-baseline gap-2">
+                            <code className="font-mono text-xs [overflow-wrap:anywhere]">{entry.signature}</code>
+                            {entry.phase && <span className="text-[11px] text-muted-foreground">{entry.phase}</span>}
+                          </dt>
+                          <dd className="m-0 text-xs text-muted-foreground [overflow-wrap:anywhere]">{entry.description}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+              </section>
             </div>
           </TabsContent>
           <TabsContent value="docs" className="editor-pane">

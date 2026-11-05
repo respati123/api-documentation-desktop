@@ -20,6 +20,8 @@ export const RESPONSE_TEXT = {
     body: 'tabs.body',
     headers: 'tabs.headers',
     cookies: 'tabs.cookies',
+    tests: 'tabs.tests',
+    console: 'tabs.console',
   },
   body: {
     empty: 'body.empty',
@@ -30,5 +32,19 @@ export const RESPONSE_TEXT = {
   cookies: {
     empty: 'cookies.empty',
     fallbackName: 'cookies.fallbackName',
+  },
+  tests: {
+    empty: 'tests.empty',
+    passed: 'tests.passed',
+    failed: 'tests.failed',
+  },
+  console: {
+    empty: 'console.empty',
+    pre: 'console.pre',
+    post: 'console.post',
+    truncated: 'console.truncated',
+    skippedNoEnvironment: 'console.skippedNoEnvironment',
+    skippedSecret: 'console.skippedSecret',
+    errorAtLine: 'console.errorAtLine',
   },
 } as const

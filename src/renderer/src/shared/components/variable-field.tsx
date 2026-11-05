@@ -46,6 +46,8 @@ export function useDebouncedEditorValue(
   const draftRef = useRef(value)
   const parentValueRef = useRef(value)
   const callbackRef = useRef(onValueChange)
+  // The callback of the value a draft was typed in. When the value changes to another request, the draft is saved to this one.
+  const targetRef = useRef(onValueChange)
   const pendingRef = useRef(false)
   const debounceTimerRef = useRef<number | undefined>(undefined)
   const maxWaitTimerRef = useRef<number | undefined>(undefined)
@@ -57,11 +59,12 @@ export function useDebouncedEditorValue(
     pendingRef.current = false
     clearTimers()
     parentValueRef.current = draftRef.current
-    callbackRef.current(draftRef.current)
+    targetRef.current(draftRef.current)
   }
   const update = (nextValue: string) => {
     draftRef.current = nextValue
     setDraft(nextValue)
+    targetRef.current = callbackRef.current
     pendingRef.current = true
     if (debounceTimerRef.current !== undefined) window.clearTimeout(debounceTimerRef.current)
     debounceTimerRef.current = window.setTimeout(flush, delay)
@@ -70,9 +73,14 @@ export function useDebouncedEditorValue(
 
   useEffect(() => {
     if (value === parentValueRef.current) return
+    // A draft still waiting to be saved was typed in the previous value, so it is saved there before the new value comes in.
+    if (pendingRef.current) {
+      pendingRef.current = false
+      clearDraftTimers(debounceTimerRef, maxWaitTimerRef)
+      targetRef.current(draftRef.current)
+    }
     parentValueRef.current = value
     if (value === draftRef.current) return
-    pendingRef.current = false
     clearDraftTimers(debounceTimerRef, maxWaitTimerRef)
     draftRef.current = value
     setDraft(value)

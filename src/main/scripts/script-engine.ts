@@ -1,56 +1,9 @@
 import { getQuickJS, shouldInterruptAfterDeadline } from 'quickjs-emscripten'
 import { z } from 'zod'
+import type { ScriptRunInput, ScriptRunResult } from '../../renderer/src/shared/ipc/script-contract'
 import { preludeSource } from './prelude'
 import { redactSecrets } from './redact'
 import { defaultScriptLimits, type ScriptLimits } from './script-limits'
-
-export type ScriptScope = 'environment' | 'global'
-
-export interface ScriptHeader {
-  name: string
-  value: string
-}
-
-export interface ScriptRequest {
-  method: string
-  url: string
-  headers: ScriptHeader[]
-}
-
-export interface ScriptResponse {
-  status: number
-  elapsedMs: number
-  headers: Record<string, string>
-  body: string
-}
-
-export interface ScriptRunInput {
-  phase: 'pre' | 'post'
-  source: string
-  // Values the script may read. Secret values are included, so the script can use them. They are redacted from everything the script returns.
-  variables: { environment: Record<string, string>; globals: Record<string, string> }
-  secretValues: string[]
-  request: ScriptRequest
-  response?: ScriptResponse
-}
-
-export interface ScriptCheck {
-  name: string
-  passed: boolean
-  message?: string
-}
-
-export interface ScriptRunResult {
-  ok: boolean
-  error: string | null
-  logs: string[]
-  logsTruncated: boolean
-  checks: ScriptCheck[]
-  writes: Array<{ scope: ScriptScope; name: string; value: string }>
-  removals: Array<{ scope: ScriptScope; name: string }>
-  // The request after a pre-request script, or null for a post-response script.
-  request: ScriptRequest | null
-}
 
 const stateSchema = z.object({
   logs: z.array(z.string()),
@@ -67,8 +20,30 @@ const stateSchema = z.object({
     .nullable(),
 })
 
-function emptyResult(error: string | null): ScriptRunResult {
-  return { ok: false, error, logs: [], logsTruncated: false, checks: [], writes: [], removals: [], request: null }
+function emptyResult(error: string | null, errorLine: number | null = null): ScriptRunResult {
+  return { ok: false, error, errorLine, logs: [], logsTruncated: false, checks: [], writes: [], removals: [], request: null }
+}
+
+// The file name the user's script is evaluated under, so QuickJS reports its errors as `user-script.js:line:column`.
+const scriptFileName = 'user-script.js'
+
+const quickJsErrorSchema = z.object({ message: z.unknown().optional(), stack: z.string().optional(), lineNumber: z.number().optional() })
+
+// The message of a dumped QuickJS error. A script can throw a plain value, so anything else is turned into text.
+function messageOf(dumped: unknown): string {
+  if (typeof dumped === 'string') return dumped
+  const parsed = quickJsErrorSchema.safeParse(dumped)
+  return parsed.success && parsed.data.message !== undefined ? String(parsed.data.message) : String(dumped)
+}
+
+// The line of the user's script where the error happened. Syntax errors give it directly. A runtime error gives it in the first stack frame in the script.
+// Lines are not shifted, because the wrapper starts on the same line as the script.
+function errorLineOf(dumped: unknown): number | null {
+  const parsed = quickJsErrorSchema.safeParse(dumped)
+  if (!parsed.success) return null
+  if (parsed.data.lineNumber !== undefined) return parsed.data.lineNumber
+  const frame = new RegExp(`${scriptFileName.replace('.', '\\.')}:(\\d+):\\d+`).exec(parsed.data.stack ?? '')
+  return frame ? Number(frame[1]) : null
 }
 
 // Only the first matching message is turned into a plain sentence. Anything else is reported as the engine said it.
@@ -109,7 +84,16 @@ export async function runScript(input: ScriptRunInput, limitOverrides: Partial<S
     payloadHandle.dispose()
 
     context.unwrapResult(context.evalCode(preludeSource)).dispose()
-    context.unwrapResult(context.evalCode(`(function () {\n${input.source}\n})();`)).dispose()
+    const script = context.evalCode(`(function () { ${input.source}\n})();`, scriptFileName)
+    if ('error' in script && script.error) {
+      const dumped = context.dump(script.error)
+      script.error.dispose()
+      const message = messageOf(dumped)
+      // A script the engine stopped has no reliable line: the interrupt reports where the check ran, not where the loop was.
+      const stopped = message.includes('interrupted') || message.includes('out of memory')
+      return emptyResult(redact(explainFailure(message, limits)), stopped ? null : errorLineOf(dumped))
+    }
+    context.unwrapResult(script).dispose()
 
     const stateHandle = context.unwrapResult(context.evalCode('JSON.stringify(globalThis.__apidocsState)'))
     const parsed = stateSchema.safeParse(JSON.parse(String(context.dump(stateHandle))))
@@ -119,6 +103,7 @@ export async function runScript(input: ScriptRunInput, limitOverrides: Partial<S
     return {
       ok: true,
       error: null,
+      errorLine: null,
       logs: parsed.data.logs.map(redact),
       logsTruncated: parsed.data.logsTruncated,
       checks: parsed.data.checks.map((check) => ({

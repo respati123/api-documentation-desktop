@@ -52,6 +52,7 @@ ipcRenderer.on(CHANNELS.auth.failed, (_event, reason: string) => {
 
 contextBridge.exposeInMainWorld('apiDesktop', {
   sendRequest: (request: ApiRequest) => ipcRenderer.invoke(CHANNELS.request.send, request),
+  runScript: (input: unknown) => ipcRenderer.invoke(CHANNELS.scripts.run, input),
   selectFile: (): Promise<{ path: string; name: string } | null> => ipcRenderer.invoke(CHANNELS.file.select),
   loadWorkspace: (legacyTree: unknown[]) => ipcRenderer.invoke(CHANNELS.workspace.load, legacyTree),
   saveWorkspace: (workspace: LocalWorkspace, options?: { overwrite: boolean }): Promise<boolean> =>
