@@ -11,7 +11,8 @@ export type Point = { x: number; y: number }
 
 export function contextMenuHeight(targetKind: 'folder' | 'request' | null): number {
   if (targetKind === null) return 92
-  return targetKind === 'folder' ? 168 : 132
+  // A folder and a request both list four items and a divider.
+  return 168
 }
 
 export function menuPositionAtPointer(pointer: Point, height: number, viewport: Viewport): Point {

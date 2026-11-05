@@ -13,7 +13,8 @@
     "createRequest": "Buat request",
     "renameFolder": "Ganti nama folder",
     "deleteFolder": "Hapus folder",
-    "deleteRequest": "Hapus request"
+    "deleteRequest": "Hapus request",
+    "duplicateRequest": "Duplikat request"
   },
   "createDialog": {
     "title": "Buat folder",

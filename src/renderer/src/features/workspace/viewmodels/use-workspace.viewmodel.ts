@@ -641,6 +641,7 @@ export function useWorkspaceViewModel() {
     actions: {
       selectFolder,
       toggleFolderExpanded,
+      duplicateRequest,
       openRequest: openRequestTab,
       openDocs: openDocsTab,
       createFolder: createFolderInTree,
