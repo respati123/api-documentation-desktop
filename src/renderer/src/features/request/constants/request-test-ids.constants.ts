@@ -8,6 +8,7 @@ export const REQUEST_TEST_IDS = {
   method: 'request-workbench-method-select',
   url: 'request-workbench-url-input',
   docsField: 'request-workbench-docs-input',
+  docsPreview: 'request-workbench-docs-preview',
   tab: (name: string) => `request-workbench-${name}-tab`,
   send: {
     submit: 'request-send-submit-button',
@@ -110,5 +111,6 @@ export const REQUEST_TEST_IDS = {
     removeContent: (id: string) => `request-contract-remove-content-button-${slug(id)}`,
     schema: (id: string) => `request-contract-schema-input-${slug(id)}`,
     example: (id: string) => `request-contract-example-input-${slug(id)}`,
+    formatExample: (id: string) => `request-contract-format-example-button-${slug(id)}`,
   },
 } as const

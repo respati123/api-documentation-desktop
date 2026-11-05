@@ -10,7 +10,9 @@
     "noRequestTitle": "Belum ada request dipilih",
     "noRequestDescription": "Pilih request atau buat satu di folder yang dipilih.",
     "docsLabel": "Dokumentasi request",
-    "docsPlaceholder": "Jelaskan endpoint ini, inputnya, dan respons yang diharapkan."
+    "docsPlaceholder": "Jelaskan endpoint ini, inputnya, dan respons yang diharapkan.",
+    "previewLabel": "Pratinjau",
+    "previewEmpty": "Belum ada dokumentasi. Tulis markdown di kiri untuk melihat hasilnya di sini."
   },
   "tabs": {
     "label": "Konfigurasi request",
@@ -208,6 +210,7 @@
     "descriptionPlaceholder": "Respons berhasil",
     "contentTypePlaceholder": "application/json",
     "schemaPlaceholder": "{\n  \"type\": \"object\",\n  \"properties\": {}\n}",
-    "examplePlaceholder": "{\n  \"id\": 123\n}"
+    "examplePlaceholder": "{\n  \"id\": 123\n}",
+    "formatExample": "Rapikan JSON"
   }
 }
