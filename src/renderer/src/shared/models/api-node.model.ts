@@ -69,6 +69,8 @@ export const requestNodeSchema = z.object({
   pathParams: z.array(paramFieldSchema).optional(),
   auth: requestAuthSchema.optional(),
   documentation: z.string().optional(),
+  preScript: z.string().optional(),
+  postScript: z.string().optional(),
   responses: z.array(responseDefinitionSchema).optional(),
   openApiSchemas: z.record(z.string(), z.unknown()).optional(),
   deprecated: z.boolean().optional(),

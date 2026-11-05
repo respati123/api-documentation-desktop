@@ -52,6 +52,8 @@ export function nodeDiffText(node: ApiNode | undefined): string {
       bodyMimeType: shared.bodyMimeType,
       bodyFileName: shared.bodyFileName,
       documentation: shared.documentation ?? '',
+      preScript: shared.preScript ?? '',
+      postScript: shared.postScript ?? '',
       responses: shared.responses ?? [],
       openApiSchemas: shared.openApiSchemas,
     },

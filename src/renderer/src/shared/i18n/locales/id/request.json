@@ -15,7 +15,12 @@
     "previewEmpty": "Belum ada dokumentasi. Tulis markdown di kiri untuk melihat hasilnya di sini.",
     "docsModeLabel": "Tampilan docs",
     "modeMarkdown": "Markdown",
-    "modePreview": "Pratinjau"
+    "modePreview": "Pratinjau",
+    "scriptsLabel": "Script request",
+    "scriptsNote": "Script disimpan bersama request. Script akan berjalan setelah dukungan script diaktifkan di app.",
+    "preScriptLabel": "Script sebelum request",
+    "postScriptLabel": "Script setelah respons",
+    "scriptPlaceholder": "// JavaScript. Gunakan apidocs.vars, apidocs.req, apidocs.res, apidocs.check, dan apidocs.log."
   },
   "tabs": {
     "label": "Konfigurasi request",
@@ -28,7 +33,8 @@
     "headers": "Header",
     "headersActive_other": "{{count}} header aktif",
     "responses": "Respons",
-    "docs": "Dokumentasi"
+    "docs": "Dokumentasi",
+    "scripts": "Script"
   },
   "send": {
     "send": "Kirim",

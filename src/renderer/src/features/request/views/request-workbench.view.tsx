@@ -14,6 +14,7 @@ import { ResponseView } from '@/features/response'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
 import { MarkdownView } from '@/shared/components/markdown-view'
 import { Button } from '@/shared/components/ui/button'
+import { Label } from '@/shared/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { VariableUrlField } from '@/shared/components/variable-field'
@@ -41,6 +42,7 @@ export function RequestWorkbenchView({
   send,
   tabs,
   docs,
+  scripts,
   params,
   body,
   auth,
@@ -184,6 +186,9 @@ export function RequestWorkbenchView({
             <TabsTrigger value="docs" data-testid={REQUEST_TEST_IDS.tab('docs')}>
               {t(REQUEST_TEXT.tabs.docs)}
             </TabsTrigger>
+            <TabsTrigger value="scripts" data-testid={REQUEST_TEST_IDS.tab('scripts')}>
+              {t(REQUEST_TEXT.tabs.scripts)}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="params" className="editor-pane">
             <ParamsEditorView {...params} />
@@ -199,6 +204,44 @@ export function RequestWorkbenchView({
           </TabsContent>
           <TabsContent value="responses" className="editor-pane">
             <ResponseContractView {...contract} />
+          </TabsContent>
+          <TabsContent value="scripts" className="editor-pane">
+            <div className="grid min-w-0 content-start gap-6">
+              <div className="grid gap-1">
+                <h3 className="text-sm font-semibold text-foreground">{t(REQUEST_TEXT.workbench.scriptsLabel)}</h3>
+                <p className="text-sm text-muted-foreground">{t(REQUEST_TEXT.workbench.scriptsNote)}</p>
+              </div>
+              <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="request-pre-script">{t(REQUEST_TEXT.workbench.preScriptLabel)}</Label>
+                <DebouncedTextarea
+                  id="request-pre-script"
+                  data-testid={REQUEST_TEST_IDS.preScriptField}
+                  aria-label={t(REQUEST_TEXT.workbench.preScriptLabel)}
+                  className="min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5"
+                  maxLength={50000}
+                  spellCheck={false}
+                  placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
+                  value={scripts.pre.value}
+                  readOnly={readOnly}
+                  onValueChange={scripts.pre.onChange}
+                />
+              </div>
+              <div className="grid min-w-0 gap-1.5">
+                <Label htmlFor="request-post-script">{t(REQUEST_TEXT.workbench.postScriptLabel)}</Label>
+                <DebouncedTextarea
+                  id="request-post-script"
+                  data-testid={REQUEST_TEST_IDS.postScriptField}
+                  aria-label={t(REQUEST_TEXT.workbench.postScriptLabel)}
+                  className="min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5"
+                  maxLength={50000}
+                  spellCheck={false}
+                  placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
+                  value={scripts.post.value}
+                  readOnly={readOnly}
+                  onValueChange={scripts.post.onChange}
+                />
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="docs" className="editor-pane">
             <div className="grid min-w-0 content-start gap-4">

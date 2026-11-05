@@ -114,6 +114,10 @@ export function useRequestWorkbenchViewModel({
       mode: docsMode,
       onModeChange: setDocsMode,
     },
+    scripts: {
+      pre: { value: request.preScript ?? '', onChange: (preScript: string) => onChange({ preScript }) },
+      post: { value: request.postScript ?? '', onChange: (postScript: string) => onChange({ postScript }) },
+    },
     params,
     body,
     auth,
