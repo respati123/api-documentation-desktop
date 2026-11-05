@@ -39,6 +39,7 @@
   "send": {
     "send": "Kirim",
     "sending": "Mengirim…",
+    "preScriptFailed": "Script sebelum request menghentikan request, jadi request tidak dikirim.",
     "optionsLabel": "Opsi kirim",
     "menuLabel": "Opsi kirim request",
     "sectionBasic": "Dasar",

@@ -390,6 +390,7 @@ export function useWorkspaceViewModel() {
     onSave: saveQuickVariable,
   })
 
+  const scriptContext = { variables: workspaceVariables, activeEnvironmentId, updateVariables: updateWorkspaceVariables }
   const { activeRequest, updateActiveRequest, requestWorkbench } = useWorkspaceRequestViewModel({
     selectedRequestId,
     activeFolder,
@@ -403,6 +404,7 @@ export function useWorkspaceViewModel() {
     resolvedVariables,
     openDocsTab,
     openVariableEditor,
+    scriptContext,
   })
 
   const syncActions = useWorkspaceSyncActionsViewModel({

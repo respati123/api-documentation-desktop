@@ -3,8 +3,24 @@
   "empty": { "title": "No response yet", "description": "Send the request to inspect status, headers, timing, and body." },
   "loading": { "title": "Sending request", "description": "Waiting for the server response." },
   "error": { "title": "Request failed" },
-  "tabs": { "label": "Response details", "body": "Body", "headers": "Headers", "cookies": "Cookies" },
+  "tabs": {
+    "label": "Response details",
+    "body": "Body",
+    "headers": "Headers",
+    "cookies": "Cookies",
+    "tests": "Tests",
+    "console": "Console"
+  },
   "body": { "empty": "Response body is empty." },
   "headers": { "empty": "The server did not return any headers." },
-  "cookies": { "empty": "No Set-Cookie headers were returned.", "fallbackName": "Cookie {{position}}" }
+  "cookies": { "empty": "No Set-Cookie headers were returned.", "fallbackName": "Cookie {{position}}" },
+  "tests": { "empty": "No checks ran for this request.", "passed": "Passed", "failed": "Failed" },
+  "console": {
+    "empty": "No script ran for this request.",
+    "pre": "Pre-request script",
+    "post": "Post-response script",
+    "truncated": "Output was cut off after the line limit.",
+    "skippedNoEnvironment": "Variable \"{{name}}\" was not saved because no environment is active.",
+    "skippedSecret": "Variable \"{{name}}\" was not changed because it is a secret."
+  }
 }

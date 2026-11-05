@@ -39,6 +39,7 @@ export const REQUEST_TEXT = {
   send: {
     send: 'send.send',
     sending: 'send.sending',
+    preScriptFailed: 'send.preScriptFailed',
     optionsLabel: 'send.optionsLabel',
     menuLabel: 'send.menuLabel',
     sectionBasic: 'send.sectionBasic',

@@ -41,6 +41,7 @@
   "send": {
     "send": "Send",
     "sending": "Sending…",
+    "preScriptFailed": "The pre-request script stopped the request, so it was not sent.",
     "optionsLabel": "Send options",
     "menuLabel": "Send request options",
     "sectionBasic": "Basic",

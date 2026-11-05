@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import { requestTabIndicators } from '@/features/request/lib/request-tab-indicators'
+import type { ScriptContext } from '@/features/request/lib/script-run'
 import { httpMethods } from '@/features/request/models/request.model'
 import { useAuthEditorViewModel } from '@/features/request/viewmodels/use-auth-editor.viewmodel'
 import { useBodyEditorViewModel } from '@/features/request/viewmodels/use-body-editor.viewmodel'
@@ -24,6 +25,8 @@ export interface RequestWorkbenchInput {
   statusText: string
   suggestions: VariableSuggestion[]
   resolvedVariables: Record<string, string>
+  // The variables and the environment the scripts read and write.
+  scriptContext: ScriptContext
   // Changes whenever another request opens. Used to reset the response and the URL and name drafts.
   resetKey: string
   onChange: (patch: Partial<RequestNode>) => void
@@ -43,6 +46,7 @@ export function useRequestWorkbenchViewModel({
   statusText,
   suggestions,
   resolvedVariables,
+  scriptContext,
   resetKey,
   onChange,
   onOpenDocs,
@@ -61,10 +65,10 @@ export function useRequestWorkbenchViewModel({
     readOnly,
     onChange: (responses) => onChange({ responses }),
   })
-  const sender = useSendRequestViewModel({ readRequest: readLatestRequest, resolvedVariables, resetKey })
+  const sender = useSendRequestViewModel({ readRequest: readLatestRequest, scriptContext, resetKey })
   const timers = useSendTimersViewModel({ readRequest: readLatestRequest, send: sender.send })
   const clientCode = useClientCodeViewModel({ readRequest: readLatestRequest, resolvedVariables })
-  const response = useResponseViewModel({ response: sender.response })
+  const response = useResponseViewModel({ response: sender.response, scripts: sender.scripts })
   const indicators = requestTabIndicators(request)
 
   return {
