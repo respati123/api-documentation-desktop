@@ -207,6 +207,7 @@ export const REQUEST_TEXT = {
     addContent: 'contract.addContent',
     formatExample: 'contract.formatExample',
     formatHint: 'contract.formatHint',
+    invalidJson: 'contract.invalidJson',
     defaultDescription: 'contract.defaultDescription',
     statusPlaceholder: 'contract.statusPlaceholder',
     descriptionPlaceholder: 'contract.descriptionPlaceholder',

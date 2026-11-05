@@ -51,6 +51,8 @@ export function useResponseContractViewModel({
           schemaLabel: t(REQUEST_TEXT.contract.schemaAria, { position: index + 1, content: contentIndex + 1 }),
           exampleLabel: t(REQUEST_TEXT.contract.exampleAria, { position: index + 1, content: contentIndex + 1 }),
           canFormat: formatJsonText(item.example) !== null,
+          // Text that is not empty and not valid JSON. It stays as typed, and the field says so.
+          isInvalidJson: item.example.trim() !== '' && formatJsonText(item.example) === null,
         })),
       }
     }),

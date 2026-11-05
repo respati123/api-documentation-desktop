@@ -216,6 +216,7 @@
     "schemaPlaceholder": "{\n  \"type\": \"object\",\n  \"properties\": {}\n}",
     "examplePlaceholder": "{\n  \"id\": 123\n}",
     "formatExample": "Format JSON",
-    "formatHint": "Formats when you leave the field, if it is valid JSON."
+    "formatHint": "Formats when you leave the field, if it is valid JSON.",
+    "invalidJson": "Not valid JSON. It stays as you typed it."
   }
 }

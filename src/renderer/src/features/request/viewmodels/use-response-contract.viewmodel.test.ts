@@ -27,4 +27,22 @@ describe('useResponseContractViewModel.onFormatExample', () => {
     result.current.onFormatExample('response-1', 'content-1', '{ a: 1 }')
     expect(onChange).not.toHaveBeenCalled()
   })
+
+  it('flags an example that is not empty and not valid JSON, and not one that is empty or valid', () => {
+    const onChange = vi.fn()
+    const invalid = [{ ...responses[0], content: [{ ...responses[0].content[0], example: '{ a: 1 }' }] }]
+    const empty = [{ ...responses[0], content: [{ ...responses[0].content[0], example: '  ' }] }]
+    expect(
+      renderHook(() => useResponseContractViewModel({ responses: invalid, readOnly: false, onChange })).result.current.items[0].content[0]
+        .isInvalidJson,
+    ).toBe(true)
+    expect(
+      renderHook(() => useResponseContractViewModel({ responses: empty, readOnly: false, onChange })).result.current.items[0].content[0]
+        .isInvalidJson,
+    ).toBe(false)
+    expect(
+      renderHook(() => useResponseContractViewModel({ responses, readOnly: false, onChange })).result.current.items[0].content[0]
+        .isInvalidJson,
+    ).toBe(false)
+  })
 })

@@ -18,8 +18,8 @@ function statusVariant(statusClass: string): 'secondary' | 'outline' | 'destruct
   return 'secondary'
 }
 
-// Code fields share one look: monospace, a tinted surface, and room to read a whole payload.
-const codeField = 'min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5'
+// Code fields share one look: monospace on a tinted surface. Each sets its own starting height.
+const codeField = 'resize-y bg-muted/40 font-mono text-xs leading-5'
 
 export function ResponseContractView({
   readOnly,
@@ -138,14 +138,14 @@ export function ResponseContractView({
                 </Button>
               </div>
 
-              <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+              <div className="grid min-w-0 gap-4">
                 <div className="grid min-w-0 gap-1.5">
                   <Label htmlFor={`schema-${item.id}`}>{t(REQUEST_TEXT.contract.schema)}</Label>
                   <DebouncedTextarea
                     id={`schema-${item.id}`}
                     data-testid={REQUEST_TEST_IDS.contract.schema(item.id)}
                     aria-label={item.schemaLabel}
-                    className={codeField}
+                    className={`${codeField} min-h-28`}
                     value={item.schema}
                     readOnly={readOnly}
                     spellCheck={false}
@@ -172,7 +172,7 @@ export function ResponseContractView({
                     id={`example-${item.id}`}
                     data-testid={REQUEST_TEST_IDS.contract.example(item.id)}
                     aria-label={item.exampleLabel}
-                    className={codeField}
+                    className={`${codeField} min-h-56`}
                     value={item.example}
                     readOnly={readOnly}
                     spellCheck={false}
@@ -180,7 +180,9 @@ export function ResponseContractView({
                     onValueChange={(value) => onExampleChange(response.id, item.id, value)}
                     onBlur={(event) => onFormatExample(response.id, item.id, event.currentTarget.value)}
                   />
-                  <p className="text-xs text-muted-foreground">{t(REQUEST_TEXT.contract.formatHint)}</p>
+                  <p className={item.isInvalidJson ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
+                    {t(item.isInvalidJson ? REQUEST_TEXT.contract.invalidJson : REQUEST_TEXT.contract.formatHint)}
+                  </p>
                 </div>
               </div>
             </section>
