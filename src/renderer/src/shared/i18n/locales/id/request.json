@@ -211,6 +211,8 @@
     "contentTypePlaceholder": "application/json",
     "schemaPlaceholder": "{\n  \"type\": \"object\",\n  \"properties\": {}\n}",
     "examplePlaceholder": "{\n  \"id\": 123\n}",
-    "formatExample": "Rapikan JSON"
+    "formatExample": "Rapikan JSON",
+    "formatHint": "Dirapikan saat keluar dari kolom, jika JSON-nya valid.",
+    "invalidJson": "Belum valid JSON. Tetap seperti yang kamu ketik."
   }
 }
