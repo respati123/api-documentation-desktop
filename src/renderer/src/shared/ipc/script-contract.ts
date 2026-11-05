@@ -40,6 +40,8 @@ export const scriptVariableScopeSchema = z.enum(['environment', 'global'])
 export const scriptRunResultSchema = z.object({
   ok: z.boolean(),
   error: z.string().nullable(),
+  // The line of the user's script where the error happened, when the engine knows it. A stopped script has none.
+  errorLine: z.number().int().positive().nullable(),
   logs: z.array(z.string()),
   logsTruncated: z.boolean(),
   checks: z.array(scriptCheckSchema),

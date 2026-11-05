@@ -16,6 +16,7 @@ function scriptRun(overrides: Partial<ScriptRunResult> = {}): ScriptRunResult {
   return {
     ok: true,
     error: null,
+    errorLine: null,
     logs: [],
     logsTruncated: false,
     checks: [],

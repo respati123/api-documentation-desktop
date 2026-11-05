@@ -46,7 +46,12 @@ export function useResponseViewModel({ response, scripts = null }: { response: R
     label,
     lines: result.logs,
     truncated: result.logsTruncated,
-    error: result.error ?? '',
+    error:
+      result.error === null
+        ? ''
+        : result.errorLine === null
+          ? result.error
+          : t(RESPONSE_TEXT.console.errorAtLine, { line: result.errorLine, message: result.error }),
   }))
   const skippedNotes = (scripts?.skipped ?? []).map((item) =>
     t(item.reason === 'secret' ? RESPONSE_TEXT.console.skippedSecret : RESPONSE_TEXT.console.skippedNoEnvironment, { name: item.name }),

@@ -226,6 +226,16 @@ export const REQUEST_TEXT = {
     schemaPlaceholder: 'contract.schemaPlaceholder',
     examplePlaceholder: 'contract.examplePlaceholder',
   },
+  reference: {
+    title: 'reference.title',
+    groupVars: 'reference.groupVars',
+    groupRequest: 'reference.groupRequest',
+    groupResponse: 'reference.groupResponse',
+    groupChecks: 'reference.groupChecks',
+    groupAssert: 'reference.groupAssert',
+    preOnly: 'reference.preOnly',
+    postOnly: 'reference.postOnly',
+  },
   completion: {
     apidocs: 'completion.apidocs',
     vars: 'completion.vars',

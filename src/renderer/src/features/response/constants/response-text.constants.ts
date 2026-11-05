@@ -45,5 +45,6 @@ export const RESPONSE_TEXT = {
     truncated: 'console.truncated',
     skippedNoEnvironment: 'console.skippedNoEnvironment',
     skippedSecret: 'console.skippedSecret',
+    errorAtLine: 'console.errorAtLine',
   },
 } as const

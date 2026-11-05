@@ -14,6 +14,7 @@
     "post": "Script setelah respons",
     "truncated": "Output dipotong karena melewati batas jumlah baris.",
     "skippedNoEnvironment": "Variabel \"{{name}}\" tidak disimpan karena tidak ada environment yang aktif.",
-    "skippedSecret": "Variabel \"{{name}}\" tidak diubah karena berupa secret."
+    "skippedSecret": "Variabel \"{{name}}\" tidak diubah karena berupa secret.",
+    "errorAtLine": "Baris {{line}}: {{message}}"
   }
 }

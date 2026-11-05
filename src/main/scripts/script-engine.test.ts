@@ -187,6 +187,30 @@ describe('sandbox', () => {
     expect(runtime.ok).toBe(false)
     expect(runtime.error).toBeTruthy()
   })
+
+  it('gives the line of an uncaught error in the user script', async () => {
+    const result = await runScript(pre('var a = 1;\nvar b = 2;\nthrow new Error("boom");'))
+    expect(result).toMatchObject({ ok: false, error: 'boom', errorLine: 3 })
+  })
+
+  it('gives the line of a reference error', async () => {
+    const result = await runScript(pre('var a = 1;\n\nmissingName();'))
+    expect(result).toMatchObject({ ok: false, errorLine: 3 })
+    expect(result.error).toContain('missingName')
+  })
+
+  it('gives the line of a syntax error', async () => {
+    const result = await runScript(pre('var a = 1;\nvar b = ;'))
+    expect(result).toMatchObject({ ok: false, errorLine: 2 })
+  })
+
+  it('gives no line for a script that was stopped, or for a script that finished', async () => {
+    // The engine reports an interrupt without a stack, so there is no line to point at.
+    const stopped = await runScript(pre('var a = 1;\nfor (;;) {}'), { timeoutMs: 200 })
+    expect(stopped).toMatchObject({ ok: false, errorLine: null })
+    expect(stopped.error).toContain('ran for more than')
+    expect(await runScript(pre('var a = 1;'))).toMatchObject({ ok: true, errorLine: null })
+  })
 })
 
 describe('secret redaction', () => {
