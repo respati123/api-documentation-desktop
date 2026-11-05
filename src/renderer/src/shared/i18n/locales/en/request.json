@@ -15,7 +15,12 @@
     "previewEmpty": "Nothing documented yet. Write markdown on the left to see it here.",
     "docsModeLabel": "Docs view",
     "modeMarkdown": "Markdown",
-    "modePreview": "Preview"
+    "modePreview": "Preview",
+    "scriptsLabel": "Request scripts",
+    "scriptsNote": "Scripts are saved with the request. They run once script support is turned on in the app.",
+    "preScriptLabel": "Pre-request script",
+    "postScriptLabel": "Post-response script",
+    "scriptPlaceholder": "// JavaScript. Use apidocs.vars, apidocs.req, apidocs.res, apidocs.check, and apidocs.log."
   },
   "tabs": {
     "label": "Request configuration",
@@ -30,7 +35,8 @@
     "headersActive_one": "{{count}} active header",
     "headersActive_other": "{{count}} active headers",
     "responses": "Responses",
-    "docs": "Docs"
+    "docs": "Docs",
+    "scripts": "Scripts"
   },
   "send": {
     "send": "Send",

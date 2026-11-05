@@ -50,6 +50,8 @@ export function migrateNode(value: unknown): ApiNode | null {
         : [{ id: crypto.randomUUID(), name: 'Accept', value: '*/*', enabled: true }],
       pathParams: Array.isArray(item.pathParams) ? item.pathParams.filter(isParamField) : [],
       documentation: typeof item.documentation === 'string' ? item.documentation : '',
+      preScript: typeof item.preScript === 'string' ? item.preScript : undefined,
+      postScript: typeof item.postScript === 'string' ? item.postScript : undefined,
       responses: normalizeResponseDefinitions(item.responses),
       openApiSchemas: isRecord(item.openApiSchemas) ? item.openApiSchemas : undefined,
     })
