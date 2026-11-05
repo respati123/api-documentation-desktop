@@ -110,9 +110,25 @@ export async function getAiConnectStatus(userDataDir: string): Promise<AiConnect
 
 export type AiLogLine = (line: string) => void
 
+// On Windows, npm and the CLIs are .cmd files, so they run through cmd.exe. Node joins the file and the arguments with spaces
+// and does not quote them, so a path such as C:\Program Files\nodejs\npm.cmd is cut at its first space.
+// This builds the command line with each part quoted. A double quote in a part is refused, because cmd.exe cannot carry it safely.
+export function windowsCommandLine(file: string, args: string[]): string {
+  return [file, ...args]
+    .map((part) => {
+      if (part.includes('"')) throw new Error(`A command part cannot contain a double quote: ${part}`)
+      return /[\s&()^|<>]/.test(part) ? `"${part}"` : part
+    })
+    .join(' ')
+}
+
 function runCommand(file: string, args: string[], env: NodeJS.ProcessEnv, onLine: AiLogLine, cwd?: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    const child = spawn(file, args, { env, cwd, shell: process.platform === 'win32', stdio: ['ignore', 'pipe', 'pipe'] })
+    const stdio: ['ignore', 'pipe', 'pipe'] = ['ignore', 'pipe', 'pipe']
+    const child =
+      process.platform === 'win32'
+        ? spawn(windowsCommandLine(file, args), { env, cwd, shell: true, stdio })
+        : spawn(file, args, { env, cwd, stdio })
     const forward = (chunk: Buffer) => {
       for (const line of chunk.toString().split(/\r?\n/)) if (line.trim()) onLine(line)
     }
