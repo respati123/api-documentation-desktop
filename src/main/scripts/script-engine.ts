@@ -1,56 +1,9 @@
 import { getQuickJS, shouldInterruptAfterDeadline } from 'quickjs-emscripten'
 import { z } from 'zod'
+import type { ScriptRunInput, ScriptRunResult } from '../../renderer/src/shared/ipc/script-contract'
 import { preludeSource } from './prelude'
 import { redactSecrets } from './redact'
 import { defaultScriptLimits, type ScriptLimits } from './script-limits'
-
-export type ScriptScope = 'environment' | 'global'
-
-export interface ScriptHeader {
-  name: string
-  value: string
-}
-
-export interface ScriptRequest {
-  method: string
-  url: string
-  headers: ScriptHeader[]
-}
-
-export interface ScriptResponse {
-  status: number
-  elapsedMs: number
-  headers: Record<string, string>
-  body: string
-}
-
-export interface ScriptRunInput {
-  phase: 'pre' | 'post'
-  source: string
-  // Values the script may read. Secret values are included, so the script can use them. They are redacted from everything the script returns.
-  variables: { environment: Record<string, string>; globals: Record<string, string> }
-  secretValues: string[]
-  request: ScriptRequest
-  response?: ScriptResponse
-}
-
-export interface ScriptCheck {
-  name: string
-  passed: boolean
-  message?: string
-}
-
-export interface ScriptRunResult {
-  ok: boolean
-  error: string | null
-  logs: string[]
-  logsTruncated: boolean
-  checks: ScriptCheck[]
-  writes: Array<{ scope: ScriptScope; name: string; value: string }>
-  removals: Array<{ scope: ScriptScope; name: string }>
-  // The request after a pre-request script, or null for a post-response script.
-  request: ScriptRequest | null
-}
 
 const stateSchema = z.object({
   logs: z.array(z.string()),

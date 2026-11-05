@@ -5,12 +5,14 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'e
 import updaterModule from 'electron-updater'
 import { z } from 'zod'
 import type { WorkspaceVariable, WorkspaceVariables } from '../renderer/src/lib/workspace-variables'
+import { scriptRunInputSchema } from '../renderer/src/shared/ipc/script-contract'
 import { bodyModeSchema } from '../renderer/src/shared/models/api-node.model'
 import { isRecord } from '../renderer/src/shared/utils/record'
 import { CHANNELS } from '../shared/ipc/channels'
 import { connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
 import { assertTrustedSender, isTrustedPage } from './ipc-guard'
 import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
+import { runScript } from './scripts/script-engine'
 import { attemptMatches, openSignInBox, parseSignInLink, type SignInAttempt, signInUrl, startSignInAttempt } from './sign-in'
 import { localVaultId, removeWorkspaceRows } from './workspace-removal'
 import { WorkspaceRows } from './workspace-rows'
@@ -471,6 +473,12 @@ ipcMain.handle(CHANNELS.request.send, async (event, ...args: unknown[]) => {
         : cookieList(response.headers.get('set-cookie')),
     body,
   }
+})
+
+ipcMain.handle(CHANNELS.scripts.run, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [input] = z.tuple([scriptRunInputSchema]).parse(args)
+  return runScript(input)
 })
 
 ipcMain.handle(CHANNELS.file.select, async (event, ...args: unknown[]) => {

@@ -72,6 +72,7 @@ type NodeInstallProgress = { stage: 'checking' | 'downloading' | 'verifying' | '
 interface Window {
   apiDesktop: {
     sendRequest(request: ApiRequest): Promise<ApiResponse>
+    runScript(input: import('@/shared/ipc/script-contract').ScriptRunInput): Promise<unknown>
     selectFile(): Promise<{ path: string; name: string } | null>
     loadWorkspace(legacyTree: unknown[]): Promise<LocalWorkspace>
     saveWorkspace(workspace: LocalWorkspace, options?: { overwrite: boolean }): Promise<boolean>

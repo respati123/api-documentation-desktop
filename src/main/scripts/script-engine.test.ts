@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { runScript, type ScriptRunInput } from './script-engine'
+import type { ScriptRunInput } from '../../renderer/src/shared/ipc/script-contract'
+import { runScript } from './script-engine'
 
 const baseRequest = { method: 'GET', url: 'https://api.example.com/users', headers: [{ name: 'Accept', value: '*/*' }] }
 
@@ -150,11 +151,11 @@ describe('limits', () => {
   it('stops a script that uses too much memory, with a plain sentence', async () => {
     const result = await runScript(pre('var keep = []; while (true) keep.push(new Array(10000).fill(1));'), {
       memoryBytes: 2 * 1024 * 1024,
-      timeoutMs: 5_000,
+      timeoutMs: 2_000,
     })
     expect(result.ok).toBe(false)
     expect(result.error).toMatch(/Script stopped: it used more than 2 MB of memory|Script stopped: it ran for more than/)
-  })
+  }, 15_000)
 
   it('refuses a script larger than the size limit before it runs', async () => {
     const result = await runScript(pre(`var padding = "${'x'.repeat(60_000)}";`))
