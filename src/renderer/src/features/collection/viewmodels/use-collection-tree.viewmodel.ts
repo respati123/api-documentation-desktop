@@ -22,6 +22,7 @@ export type CollectionActions = {
   createRequest: (folderId: string) => void
   renameFolder: (folderId: string, name: string) => void
   deleteItem: (id: string) => void
+  duplicateRequest: (requestId: string) => void
   moveItem: (sourceId: string, targetId: string | null) => void
 }
 
@@ -156,6 +157,13 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
     actions.createRequest(parentFolderId)
   }
 
+  function handleDuplicateFromMenu() {
+    if (!contextMenu?.targetNodeId) return
+    const { targetNodeId } = contextMenu
+    setContextMenu(null)
+    actions.duplicateRequest(targetNodeId)
+  }
+
   function handleRenameFromMenu() {
     if (!contextMenu?.targetNodeId) return
     const folder = treeIndex.nodeById.get(contextMenu.targetNodeId)
@@ -247,6 +255,8 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
           renameFolder: t(COLLECTION_TEXT.menu.renameFolder),
           deleteFolder: t(COLLECTION_TEXT.menu.deleteFolder),
           deleteRequest: t(COLLECTION_TEXT.menu.deleteRequest),
+          duplicateRequest: t(COLLECTION_TEXT.menu.duplicateRequest),
+          onDuplicate: handleDuplicateFromMenu,
           onCreateFolder: () => openCreateFolder(contextMenu.parentFolderId),
           onCreateRequest: handleCreateRequestFromMenu,
           onRename: handleRenameFromMenu,

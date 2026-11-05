@@ -14,6 +14,7 @@ export const COLLECTION_TEXT = {
     renameFolder: 'menu.renameFolder',
     deleteFolder: 'menu.deleteFolder',
     deleteRequest: 'menu.deleteRequest',
+    duplicateRequest: 'menu.duplicateRequest',
   },
   createDialog: {
     title: 'createDialog.title',

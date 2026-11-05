@@ -16,9 +16,11 @@ export function CollectionMenuView({
   renameFolder,
   deleteFolder,
   deleteRequest,
+  duplicateRequest,
   onCreateFolder,
   onCreateRequest,
   onRename,
+  onDuplicate,
   onDelete,
   onDismiss,
   onKey,
@@ -84,6 +86,16 @@ export function CollectionMenuView({
           <>
             {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
             <div className={CONTEXT_MENU_SEPARATOR} role="separator" />
+            <Button
+              type="button"
+              variant="ghost"
+              role="menuitem"
+              className={MENU_ITEM}
+              data-testid="collection-menu-duplicate-request"
+              onClick={onDuplicate}
+            >
+              {duplicateRequest}
+            </Button>
             <Button
               type="button"
               variant="ghost"

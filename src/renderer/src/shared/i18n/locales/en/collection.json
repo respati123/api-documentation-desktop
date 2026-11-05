@@ -13,7 +13,8 @@
     "createRequest": "Create request",
     "renameFolder": "Rename folder",
     "deleteFolder": "Delete folder",
-    "deleteRequest": "Delete request"
+    "deleteRequest": "Delete request",
+    "duplicateRequest": "Duplicate request"
   },
   "createDialog": {
     "title": "Create folder",

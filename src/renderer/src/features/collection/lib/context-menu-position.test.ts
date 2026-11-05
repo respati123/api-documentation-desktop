@@ -4,9 +4,9 @@ import { contextMenuHeight, menuPositionAtAnchor, menuPositionAtPointer, menuWid
 const viewport = { width: 1000, height: 700 }
 
 describe('contextMenuHeight', () => {
-  it('is shortest for the root, taller for a request, tallest for a folder', () => {
+  it('is shortest for the root, and the same for a request and a folder, which both list four items', () => {
     expect(contextMenuHeight(null)).toBe(92)
-    expect(contextMenuHeight('request')).toBe(132)
+    expect(contextMenuHeight('request')).toBe(168)
     expect(contextMenuHeight('folder')).toBe(168)
   })
 })

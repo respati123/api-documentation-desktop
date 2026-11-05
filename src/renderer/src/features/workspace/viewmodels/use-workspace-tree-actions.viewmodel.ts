@@ -11,6 +11,7 @@ import {
   removeNode,
   renameFolder,
 } from '@/features/collection'
+import { copyName } from '@/features/workspace/lib/copy-name'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { ApiNode, FolderNode, RequestNode } from '@/shared/models/api-node.model'
@@ -128,7 +129,16 @@ export function useWorkspaceTreeActionsViewModel(input: TreeActionsInput) {
     const source = treeIndex.nodeById.get(requestId)
     if (!source || !isRequest(source)) return
     const parentId = treeIndex.parentFolderById.get(requestId) ?? ''
-    const copy: RequestNode = { ...structuredClone(source), id: crypto.randomUUID(), name: `${source.name}_copy` }
+    const parent = parentId ? treeIndex.nodeById.get(parentId) : undefined
+    const siblings = parent && isFolder(parent) ? parent.children : parentId ? [] : tree
+    const copy: RequestNode = {
+      ...structuredClone(source),
+      id: crypto.randomUUID(),
+      name: copyName(
+        source.name,
+        siblings.map((node) => node.name),
+      ),
+    }
     setTree((current) => addToTree(current, parentId, copy))
     const tab: WorkspaceTab = { kind: 'request', id: copy.id }
     setWorkspaceTabs((current) => [...current, tab])
