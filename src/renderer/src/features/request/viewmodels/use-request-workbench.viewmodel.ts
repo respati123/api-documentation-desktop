@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import { requestTabIndicators } from '@/features/request/lib/request-tab-indicators'
+import { scriptApiEntries, scriptApiGroups } from '@/features/request/lib/script-api'
 import type { ScriptContext } from '@/features/request/lib/script-run'
 import { httpMethods } from '@/features/request/models/request.model'
 import { useAuthEditorViewModel } from '@/features/request/viewmodels/use-auth-editor.viewmodel'
@@ -66,12 +67,18 @@ export function useRequestWorkbenchViewModel({
     readOnly,
     onChange: (responses) => onChange({ responses }),
   })
+  const sender = useSendRequestViewModel({ readRequest: readLatestRequest, scriptContext, resetKey })
+  // The editors mark the line where their script failed in the last run, so they read that run.
+  const preRun = sender.scripts?.pre ?? null
+  const postRun = sender.scripts?.post ?? null
   const preScript = useScriptEditorViewModel({
     phase: 'pre',
     value: request.preScript ?? '',
     onChange: (script: string) => onChange({ preScript: script }),
     readOnly,
     ariaLabel: t(REQUEST_TEXT.workbench.preScriptLabel),
+    runErrorLine: preRun && !preRun.ok ? preRun.errorLine : null,
+    runErrorMessage: preRun?.error ?? '',
   })
   const postScript = useScriptEditorViewModel({
     phase: 'post',
@@ -79,12 +86,28 @@ export function useRequestWorkbenchViewModel({
     onChange: (script: string) => onChange({ postScript: script }),
     readOnly,
     ariaLabel: t(REQUEST_TEXT.workbench.postScriptLabel),
+    runErrorLine: postRun && !postRun.ok ? postRun.errorLine : null,
+    runErrorMessage: postRun?.error ?? '',
   })
-  const sender = useSendRequestViewModel({ readRequest: readLatestRequest, scriptContext, resetKey })
   const timers = useSendTimersViewModel({ readRequest: readLatestRequest, send: sender.send })
   const clientCode = useClientCodeViewModel({ readRequest: readLatestRequest, resolvedVariables })
   const response = useResponseViewModel({ response: sender.response, scripts: sender.scripts })
   const indicators = requestTabIndicators(request)
+  const scriptReference = {
+    title: t(REQUEST_TEXT.reference.title),
+    groups: scriptApiGroups.map((group) => ({
+      key: group.key,
+      title: t(group.titleKey),
+      entries: scriptApiEntries
+        .filter((entry) => entry.group === group.key)
+        .map((entry) => ({
+          signature: entry.signature,
+          description: t(entry.descriptionKey),
+          phase:
+            entry.phase === 'pre' ? t(REQUEST_TEXT.reference.preOnly) : entry.phase === 'post' ? t(REQUEST_TEXT.reference.postOnly) : '',
+        })),
+    })),
+  }
 
   return {
     readOnly,
@@ -133,7 +156,7 @@ export function useRequestWorkbenchViewModel({
       mode: docsMode,
       onModeChange: setDocsMode,
     },
-    scripts: { pre: preScript, post: postScript },
+    scripts: { pre: preScript, post: postScript, reference: scriptReference },
     params,
     body,
     auth,

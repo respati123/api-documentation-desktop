@@ -220,6 +220,25 @@ export function RequestWorkbenchView({
                 <Label htmlFor="request-post-script">{t(REQUEST_TEXT.workbench.postScriptLabel)}</Label>
                 <ScriptEditorView {...scripts.post} id="request-post-script" testId={REQUEST_TEST_IDS.postScriptField} />
               </div>
+              <section className="grid min-w-0 gap-4" data-testid={REQUEST_TEST_IDS.scriptReference}>
+                <h3 className="text-sm font-semibold text-foreground">{scripts.reference.title}</h3>
+                {scripts.reference.groups.map((group) => (
+                  <div className="grid min-w-0 gap-1.5" key={group.key}>
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</h4>
+                    <dl className="m-0 grid gap-2">
+                      {group.entries.map((entry) => (
+                        <div className="grid min-w-0 gap-0.5" key={entry.signature}>
+                          <dt className="flex min-w-0 flex-wrap items-baseline gap-2">
+                            <code className="font-mono text-xs [overflow-wrap:anywhere]">{entry.signature}</code>
+                            {entry.phase && <span className="text-[11px] text-muted-foreground">{entry.phase}</span>}
+                          </dt>
+                          <dd className="m-0 text-xs text-muted-foreground [overflow-wrap:anywhere]">{entry.description}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+              </section>
             </div>
           </TabsContent>
           <TabsContent value="docs" className="editor-pane">

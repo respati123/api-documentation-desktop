@@ -14,13 +14,24 @@ export type ScriptEditorInput = {
   onChange: (value: string) => void
   readOnly: boolean
   ariaLabel: string
+  // The line where the last run of this script failed, and the message. Null when that run did not fail with a line.
+  runErrorLine: number | null
+  runErrorMessage: string
 }
 
 // Every editor gets its own model, so each script keeps its own undo history and markers.
 let modelCount = 0
 
 // Owns one script field: a Monaco editor with JavaScript diagnostics, and the apidocs declarations it completes from.
-export function useScriptEditorViewModel({ phase, value, onChange, readOnly, ariaLabel }: ScriptEditorInput) {
+export function useScriptEditorViewModel({
+  phase,
+  value,
+  onChange,
+  readOnly,
+  ariaLabel,
+  runErrorLine,
+  runErrorMessage,
+}: ScriptEditorInput) {
   const { t } = useTranslation('request')
   const [draft, updateDraft, flushDraft] = useDebouncedEditorValue(value, onChange)
   // The tab hides this field when it is not open, so the container is known only when it is on screen.
@@ -93,6 +104,29 @@ export function useScriptEditorViewModel({ phase, value, onChange, readOnly, ari
   useEffect(() => {
     editorRef.current?.updateOptions({ readOnly })
   }, [readOnly])
+
+  // The line where the last run failed is marked. A later run replaces the mark, and a run with no line clears it.
+  useEffect(() => {
+    if (!ready) return
+    void loadScriptMonaco().then((monaco) => {
+      const model = editorRef.current?.getModel()
+      if (!model) return
+      const markers =
+        runErrorLine === null
+          ? []
+          : [
+              {
+                severity: monaco.MarkerSeverity.Error,
+                message: runErrorMessage,
+                startLineNumber: Math.min(runErrorLine, model.getLineCount()),
+                startColumn: 1,
+                endLineNumber: Math.min(runErrorLine, model.getLineCount()),
+                endColumn: model.getLineMaxColumn(Math.min(runErrorLine, model.getLineCount())),
+              },
+            ]
+      monaco.editor.setModelMarkers(model, 'apidocs-run', markers)
+    })
+  }, [ready, runErrorLine, runErrorMessage])
 
   // The declarations follow the app language, so the descriptions in the completions match the rest of the screen.
   useEffect(() => {

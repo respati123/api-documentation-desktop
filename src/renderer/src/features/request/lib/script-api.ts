@@ -42,3 +42,12 @@ export const scriptApiEntries: ScriptApiEntry[] = [
   { group: 'assert', signature: 'apidocs.assert(value).above(min)', descriptionKey: completion.assertAbove },
   { group: 'assert', signature: 'apidocs.assert(value).hasKey(key)', descriptionKey: completion.assertHasKey },
 ]
+
+// The groups of the reference, in the order the reference shows them, with the key of each group's title.
+export const scriptApiGroups: { key: ScriptApiGroup; titleKey: string }[] = [
+  { key: 'vars', titleKey: REQUEST_TEXT.reference.groupVars },
+  { key: 'request', titleKey: REQUEST_TEXT.reference.groupRequest },
+  { key: 'response', titleKey: REQUEST_TEXT.reference.groupResponse },
+  { key: 'checks', titleKey: REQUEST_TEXT.reference.groupChecks },
+  { key: 'assert', titleKey: REQUEST_TEXT.reference.groupAssert },
+]
