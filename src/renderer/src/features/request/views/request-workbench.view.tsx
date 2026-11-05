@@ -9,6 +9,7 @@ import { HeadersEditorView } from '@/features/request/views/headers-editor.view'
 import { ParamsEditorView } from '@/features/request/views/params-editor.view'
 import { ClientCodeDialogView, DelayDialogView, RepeatDialogView } from '@/features/request/views/request-dialogs.view'
 import { ResponseContractView } from '@/features/request/views/response-contract.view'
+import { ScriptEditorView } from '@/features/request/views/script-editor.view'
 import { SendControlView } from '@/features/request/views/send-control.view'
 import { ResponseView } from '@/features/response'
 import { DebouncedInput, DebouncedTextarea } from '@/shared/components/debounced-field'
@@ -213,32 +214,26 @@ export function RequestWorkbenchView({
               </div>
               <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="request-pre-script">{t(REQUEST_TEXT.workbench.preScriptLabel)}</Label>
-                <DebouncedTextarea
+                <ScriptEditorView
+                  {...scripts.pre}
                   id="request-pre-script"
-                  data-testid={REQUEST_TEST_IDS.preScriptField}
-                  aria-label={t(REQUEST_TEXT.workbench.preScriptLabel)}
-                  className="min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5"
-                  maxLength={50000}
-                  spellCheck={false}
+                  testId={REQUEST_TEST_IDS.preScriptField}
+                  ariaLabel={t(REQUEST_TEXT.workbench.preScriptLabel)}
                   placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
-                  value={scripts.pre.value}
                   readOnly={readOnly}
-                  onValueChange={scripts.pre.onChange}
+                  maxLength={50000}
                 />
               </div>
               <div className="grid min-w-0 gap-1.5">
                 <Label htmlFor="request-post-script">{t(REQUEST_TEXT.workbench.postScriptLabel)}</Label>
-                <DebouncedTextarea
+                <ScriptEditorView
+                  {...scripts.post}
                   id="request-post-script"
-                  data-testid={REQUEST_TEST_IDS.postScriptField}
-                  aria-label={t(REQUEST_TEXT.workbench.postScriptLabel)}
-                  className="min-h-48 resize-y bg-muted/40 font-mono text-xs leading-5"
-                  maxLength={50000}
-                  spellCheck={false}
+                  testId={REQUEST_TEST_IDS.postScriptField}
+                  ariaLabel={t(REQUEST_TEXT.workbench.postScriptLabel)}
                   placeholder={t(REQUEST_TEXT.workbench.scriptPlaceholder)}
-                  value={scripts.post.value}
                   readOnly={readOnly}
-                  onValueChange={scripts.post.onChange}
+                  maxLength={50000}
                 />
               </div>
             </div>

@@ -34,7 +34,7 @@ type InputProps = CommonProps & Omit<InputHTMLAttributes<HTMLInputElement>, 'val
 type TextareaProps = CommonProps & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange'>
 
 type Match = { start: number; cursor: number; prefix: string }
-type MenuPosition = { left: number; top: number; width: number }
+export type MenuPosition = { left: number; top: number; width: number }
 
 export function useDebouncedEditorValue(
   value: string,
@@ -97,7 +97,7 @@ function getMatch(value: string, cursor: number): Match | null {
   return { start: match.index, cursor, prefix: match[1] }
 }
 
-function getMenuPosition(element: HTMLElement): MenuPosition {
+export function getMenuPosition(element: HTMLElement): MenuPosition {
   const rect = element.getBoundingClientRect()
   const width = Math.min(Math.max(rect.width, 220), 300, window.innerWidth - 16)
   const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))

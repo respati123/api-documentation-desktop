@@ -10,6 +10,7 @@ import { useClientCodeViewModel } from '@/features/request/viewmodels/use-client
 import { useHeadersEditorViewModel } from '@/features/request/viewmodels/use-headers-editor.viewmodel'
 import { useParamsEditorViewModel } from '@/features/request/viewmodels/use-params-editor.viewmodel'
 import { useResponseContractViewModel } from '@/features/request/viewmodels/use-response-contract.viewmodel'
+import { useScriptEditorViewModel } from '@/features/request/viewmodels/use-script-editor.viewmodel'
 import { useSendRequestViewModel } from '@/features/request/viewmodels/use-send-request.viewmodel'
 import { useSendTimersViewModel } from '@/features/request/viewmodels/use-send-timers.viewmodel'
 import { useResponseViewModel } from '@/features/response'
@@ -65,6 +66,16 @@ export function useRequestWorkbenchViewModel({
     readOnly,
     onChange: (responses) => onChange({ responses }),
   })
+  const preScript = useScriptEditorViewModel({
+    phase: 'pre',
+    value: request.preScript ?? '',
+    onChange: (script: string) => onChange({ preScript: script }),
+  })
+  const postScript = useScriptEditorViewModel({
+    phase: 'post',
+    value: request.postScript ?? '',
+    onChange: (script: string) => onChange({ postScript: script }),
+  })
   const sender = useSendRequestViewModel({ readRequest: readLatestRequest, scriptContext, resetKey })
   const timers = useSendTimersViewModel({ readRequest: readLatestRequest, send: sender.send })
   const clientCode = useClientCodeViewModel({ readRequest: readLatestRequest, resolvedVariables })
@@ -118,10 +129,7 @@ export function useRequestWorkbenchViewModel({
       mode: docsMode,
       onModeChange: setDocsMode,
     },
-    scripts: {
-      pre: { value: request.preScript ?? '', onChange: (preScript: string) => onChange({ preScript }) },
-      post: { value: request.postScript ?? '', onChange: (postScript: string) => onChange({ postScript }) },
-    },
+    scripts: { pre: preScript, post: postScript },
     params,
     body,
     auth,

@@ -248,6 +248,10 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .variable-suggestion-mark { color: #1d4ed8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
 .variable-suggestion-name { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .variable-suggestion-scope { color: #64748b; font-size: 10px; }
+.script-suggestion { grid-template-columns: auto minmax(0, 1fr); height: auto; min-height: 36px; padding: 6px 8px; }
+.script-suggestion-text { min-width: 0; display: grid; gap: 2px; }
+.script-suggestion-text code { overflow: hidden; color: #172033; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.script-suggestion-text small { overflow: hidden; color: #64748b; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .request-docs-field { min-height: 180px; resize: vertical; font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; font-size: 13px; line-height: 1.6; }
 .editor-pane { min-height: 0; margin-top: 16px; overflow: auto; }
 .code-field { line-height: 1.65; }
