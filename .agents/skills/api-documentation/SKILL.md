@@ -25,6 +25,7 @@ Include every applicable item when its facts are available. Leave out an item th
 - **Variables:** `{{baseUrl}}`, `{{apiPrefix}}`, and similar references for values that change between environments. Keep fixed endpoint data literal.
 - **Responses:** each known success and relevant error status, with description, content type, schema, and an example when known. Use an empty content list for a response with no body.
 - **Documentation:** purpose, behavior, validation rules, side effects, and integration notes that the fields above do not cover.
+- **Scripts:** a `preScript` or `postScript` only when the request needs setup before the send, or checks after the response. Say in the documentation what each script does and why. Never write a real secret in a script, and read a secret only through `apidocs.vars.get`.
 
 Verify facts before writing them. Read the project source, OpenAPI specs, or existing examples first. Ask the user for route, auth, body shape, or response contract when they cannot be verified. Never invent parameters, headers, schemas, status codes, or example values. If the user asks for a draft with unknown details, record only verified facts, and list each gap in `documentation` and in the preview summary.
 
@@ -42,7 +43,7 @@ Verify facts before writing them. Read the project source, OpenAPI specs, or exi
 ## Changing collections
 
 - Use `changes_preview` before every change to a collection: create, update, move, rename, deprecate, or delete. It accepts `create_folder`, `create_request`, `update_request`, `rename_folder`, `move_node`, `deprecate_request`, and `delete_node`.
-- Show the preview in chat before applying. Include the workspace name, the full folder path of each item, each action, and the target. For a request, show method, URL, params, headers, auth type, body mode and body, responses, and documentation. For an edit, show each changed field as before → after. For a move or rename, show old → new. For a deletion, name the exact item and, for a folder, count every nested item that will be removed. Name the variables the user still has to define. Redact secret values, and never paste raw tool JSON as the only preview.
+- Show the preview in chat before applying. Include the workspace name, the full folder path of each item, each action, and the target. For a request, show method, URL, params, headers, auth type, body mode and body, responses, documentation, and the pre-request and post-response scripts. For an edit, show each changed field as before → after. For a move or rename, show old → new. For a deletion, name the exact item and, for a folder, count every nested item that will be removed. Name the variables the user still has to define. Redact secret values, and never paste raw tool JSON as the only preview.
 - End with a request for approval of that exact preview, then stop. A request to make a change is not approval. Call `changes_apply` only after the user approves the displayed preview. `changes_apply` refuses a preview whose workspace has changed since, so re-preview after any change.
 - Deleting a folder or request is a collection change: put `delete_node` in `changes_preview`, then `changes_apply`. Deleting an environment or a variable uses `environment_delete` or `variable_delete`, which need `confirm: true`. Set it only after the user explicitly asks for that deletion.
 - Environment and variable commands have no preview step. Show the intended change in chat and get approval before running them.
@@ -55,6 +56,7 @@ Verify facts before writing them. Read the project source, OpenAPI specs, or exi
 - Only the active account's workspaces are visible. Workspaces that predate accounts are visible to everyone on the device.
 - Viewer workspaces refuse writes.
 - `request_send` sends JSON, text, XML, YAML, GraphQL, and urlencoded bodies with bearer, basic, or API-key auth. Multipart and file bodies must be sent from the app. Path parameters are not substituted yet.
+- Scripts run only in the desktop app. The MCP server stores `preScript` and `postScript` but never runs them, and `request_send` does not run them either. When the user expects a script to run, say that it runs only when the request is sent from the app.
 
 Sending reaches a real server, so it takes two steps. First call `request_send` with `dryRun: true`. It returns the URL the request would call, with secret query values removed. Show that URL to the user and wait for approval. Then call `request_send` with `confirmUrl` set to exactly that URL. The server refuses the send if the URL has changed since the dry run. Without `dryRun` or `confirmUrl`, the MCP server refuses to send.
 - The app must be open to see changes. Keep the app idle while the server writes, and check the workspace again after an apply.
