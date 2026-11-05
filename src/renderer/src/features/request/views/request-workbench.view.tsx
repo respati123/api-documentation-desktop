@@ -201,25 +201,53 @@ export function RequestWorkbenchView({
             <ResponseContractView {...contract} />
           </TabsContent>
           <TabsContent value="docs" className="editor-pane">
-            <div className="grid min-h-0 gap-4 md:grid-cols-2">
-              <DebouncedTextarea
-                data-testid={REQUEST_TEST_IDS.docsField}
-                aria-label={t(REQUEST_TEXT.workbench.docsLabel)}
-                className="request-docs-field min-h-[320px] font-mono text-xs"
-                maxLength={100000}
-                placeholder={t(REQUEST_TEXT.workbench.docsPlaceholder)}
-                value={docs.value}
-                readOnly={readOnly}
-                onValueChange={docs.onChange}
-              />
-              <section className="grid min-w-0 content-start gap-2" aria-label={t(REQUEST_TEXT.workbench.previewLabel)}>
-                <p className="text-xs font-medium text-muted-foreground">{t(REQUEST_TEXT.workbench.previewLabel)}</p>
-                {docs.value.trim() === '' ? (
-                  <p className="text-sm text-muted-foreground">{t(REQUEST_TEXT.workbench.previewEmpty)}</p>
-                ) : (
+            <div className="grid min-w-0 content-start gap-4">
+              {/* biome-ignore lint/a11y/useSemanticElements: a segmented control groups two toggle buttons, and a fieldset would add a form-style border */}
+              <div
+                role="group"
+                aria-label={t(REQUEST_TEXT.workbench.docsModeLabel)}
+                className="inline-flex w-fit items-center gap-1 rounded-md border border-border bg-muted/40 p-1"
+              >
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={docs.mode === 'markdown' ? 'secondary' : 'ghost'}
+                  aria-pressed={docs.mode === 'markdown'}
+                  data-testid={REQUEST_TEST_IDS.docsModeMarkdown}
+                  onClick={() => docs.onModeChange('markdown')}
+                >
+                  {t(REQUEST_TEXT.workbench.modeMarkdown)}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={docs.mode === 'preview' ? 'secondary' : 'ghost'}
+                  aria-pressed={docs.mode === 'preview'}
+                  data-testid={REQUEST_TEST_IDS.docsModePreview}
+                  onClick={() => docs.onModeChange('preview')}
+                >
+                  {t(REQUEST_TEXT.workbench.modePreview)}
+                </Button>
+              </div>
+
+              {docs.mode === 'markdown' ? (
+                <DebouncedTextarea
+                  data-testid={REQUEST_TEST_IDS.docsField}
+                  aria-label={t(REQUEST_TEXT.workbench.docsLabel)}
+                  className="request-docs-field min-h-[60vh] font-mono text-xs"
+                  maxLength={100000}
+                  placeholder={t(REQUEST_TEXT.workbench.docsPlaceholder)}
+                  value={docs.value}
+                  readOnly={readOnly}
+                  onValueChange={docs.onChange}
+                />
+              ) : docs.value.trim() === '' ? (
+                <p className="text-sm text-muted-foreground">{t(REQUEST_TEXT.workbench.previewEmpty)}</p>
+              ) : (
+                <section aria-label={t(REQUEST_TEXT.workbench.previewLabel)} className="max-w-3xl">
                   <MarkdownView source={docs.value} testId={REQUEST_TEST_IDS.docsPreview} />
-                )}
-              </section>
+                </section>
+              )}
             </div>
           </TabsContent>
         </Tabs>

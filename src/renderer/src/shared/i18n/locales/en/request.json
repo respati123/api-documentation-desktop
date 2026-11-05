@@ -12,7 +12,10 @@
     "docsLabel": "Request documentation",
     "docsPlaceholder": "Describe this endpoint, its inputs, and expected response.",
     "previewLabel": "Preview",
-    "previewEmpty": "Nothing documented yet. Write markdown on the left to see it here."
+    "previewEmpty": "Nothing documented yet. Write markdown on the left to see it here.",
+    "docsModeLabel": "Docs view",
+    "modeMarkdown": "Markdown",
+    "modePreview": "Preview"
   },
   "tabs": {
     "label": "Request configuration",
