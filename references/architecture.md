@@ -47,7 +47,7 @@ Create only the folders the feature needs.
 
 ```
 shared/
-├── ui/               synced copy of the UI library (bun run sync-ui). Never edited here
+├── ui/               re-export of the published UI library package. Never edited here
 ├── components/       reusable components used by two or more features
 ├── constants/        shared text keys
 ├── errors/           error boundary, fallback, ApiError helpers

@@ -40,7 +40,6 @@
       "!release/**",
       "!dist/**",
       "!node_modules/**",
-      "!src/renderer/src/shared/ui/**",
       "!src/**/*.css"
     ]
   }

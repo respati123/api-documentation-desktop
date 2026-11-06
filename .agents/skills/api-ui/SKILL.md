@@ -11,7 +11,7 @@ The shared component library for the desktop app. The cloud and web apps use the
 ## Sources of truth
 
 1. **`DESIGN.md`** in the desktop folder: colors, type, radius, spacing, and the rules for when to use each color.
-2. **The library** is developed in `api-documentation/storybook` (outside this repo, until it is published as a package). The desktop app uses a copy in `src/renderer/src/shared/ui/`, imported as `@/shared/ui`. Refresh the copy with `bun run sync-ui`; never edit it by hand. Every component has a story, and its docs page is the usage reference.
+2. **The library** is developed in `api-documentation/storybook` and published as `@respati123/api-documentation-ui` on GitHub Packages. The desktop app depends on that package, re-exported from `src/renderer/src/shared/ui/index.ts` and imported as `@/shared/ui`. To get a library change, publish a new version and bump the dependency; never edit `shared/ui/` to patch components. Every component has a story, and its docs page is the usage reference.
 3. **`docs/atomic-design.md`** in that project: how a component is classified and the variant rules.
 
 When this skill and `DESIGN.md` disagree, `DESIGN.md` wins. Fix the skill.

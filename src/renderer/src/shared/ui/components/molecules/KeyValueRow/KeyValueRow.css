@@ -1,6 +1,0 @@
-.kv-row {
-  display: grid;
-  grid-template-columns: 26px minmax(120px, 1fr) minmax(0, 1.4fr) 30px;
-  align-items: center;
-  gap: var(--space-sm);
-}

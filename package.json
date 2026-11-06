@@ -8,7 +8,6 @@
     "dev": "electron-vite --noSandbox",
     "build": "electron-vite build",
     "preview": "electron-vite preview --noSandbox",
-    "sync-ui": "node scripts/sync-ui.mjs",
     "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
     "test": "vitest run && vitest run --config vitest.main.config.ts",
     "lint": "biome check src",
@@ -74,6 +73,7 @@
   "dependencies": {
     "@fontsource/fira-code": "^5.3.0",
     "@fontsource/poppins": "^5.3.0",
+    "@respati123/api-documentation-ui": "0.1.0",
     "@tanstack/react-query": "^5.105.0",
     "clsx": "^2.1.1",
     "electron-updater": "^6.8.11",

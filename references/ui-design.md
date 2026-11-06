@@ -16,24 +16,24 @@ If it is missing: `bunx impeccable install -y --project --providers=codex --no-h
 
 ## Components: the UI library only
 
-- The UI comes from the API Documentation UI library, imported from `@/shared/ui`. `src/renderer/src/shared/ui/` is a copy of `api-documentation/storybook/src`, made by `bun run sync-ui`. The source and the docs (Storybook pages) stay in the storybook project, until it is published as a package.
+- The UI comes from the API Documentation UI library, imported from `@/shared/ui`. `src/renderer/src/shared/ui/index.ts` re-exports the published package `@respati123/api-documentation-ui`. The source and the docs (Storybook pages) stay in the storybook project.
 - Views and pages never contain raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, or `a`. Use the library's `Button`, `Input`, `Select`, `Textarea`, `Label`, `Table`, `Separator`, and `Button variant="link"`.
 - Notices and errors use `Alert`. Status labels use `Badge`. Panels use `Card`. Loading uses `Skeleton`.
 - Dialogs, selects, menus, and tabs use the library's Radix-based components. Do not rebuild their focus or keyboard behavior in a view.
 - Button variants describe importance: `primary` (one per view), `secondary`, `ghost`, `destructive`, `link`, and `send` (the Send action only). Size is separate: `sm`, `md`, `lg`, `icon`.
 - Electric green is used only for Send.
-- A missing component or a fix is made in the storybook project first, with a story and a test, then copied with `bun run sync-ui`. Never edit `shared/ui/` by hand: the next sync overwrites it. Do not add a second copy elsewhere in the app.
+- A missing component or a fix is made in the storybook project first, with a story and a test, then published as a new package version and bumped here. Do not add a copy of a component in the app.
 - A custom element is allowed only when no library component fits. Say so in the handoff.
 - No other UI library.
 
-Enforced by `app/ui-rules.test.ts`, which skips `shared/ui/` (the library itself).
+Enforced by `app/ui-rules.test.ts`, which skips `shared/ui/` (the library re-export).
 
 ## Styling
 
 - Tailwind v4 through `@tailwindcss/vite`, for layout and spacing. The only app stylesheet is `src/renderer/src/index.css`, imported once in `main.tsx`.
-- The library's tokens and component styles load with `@/shared/ui` (each component imports its own CSS), so `main.tsx` imports nothing extra.
+- The library's tokens and component styles (`style.css` of the package) load with `@/shared/ui`, so `main.tsx` imports nothing extra.
 - `index.css` holds `@import "tailwindcss"`, the theme tokens (mapped from `DESIGN.md`), and `@font-face` rules.
-- No other `.css`, `.scss`, or `.module.css` files in the app. Component styles live in the library (`shared/ui/`).
+- No other `.css`, `.scss`, or `.module.css` files in the app. Component styles live in the library package.
 - Colors, type, radius, and spacing come from the theme tokens in `DESIGN.md` (`bg-background`, `text-muted-foreground`, and so on). No hex values in components.
 - No inline `style` except for values computed at runtime, such as a resizable panel width or a tree depth.
 - Merge classes with `cn()`.
