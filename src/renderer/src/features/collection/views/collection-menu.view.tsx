@@ -1,11 +1,12 @@
-import type { CSSProperties, ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import type { useCollectionTreeViewModel } from '@/features/collection/viewmodels/use-collection-tree.viewmodel'
-import { CONTEXT_MENU_PANEL, CONTEXT_MENU_SEPARATOR, CONTEXT_MENU_ITEM as MENU_ITEM } from '@/shared/components/context-menu'
-import { Button } from '@/shared/components/ui/button'
+import { styleWithVariables } from '@/shared/components/css-variables'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/ui'
 
 export type CollectionMenuViewProps = NonNullable<ReturnType<typeof useCollectionTreeViewModel>['menu']>
 
-// The right-click and actions menu for the tree. Items depend on whether the target is a folder, a request, or the workspace root.
+// The right-click menu for the tree. The menu opens at the click point and closes when the user clicks outside it.
+// Items depend on whether the target is a folder, a request, or the workspace root.
 export function CollectionMenuView({
   x,
   y,
@@ -23,92 +24,46 @@ export function CollectionMenuView({
   onDuplicate,
   onDelete,
   onDismiss,
-  onKey,
 }: CollectionMenuViewProps): ReactElement {
   return (
-    <>
-      <div className="fixed inset-0 z-[70]" aria-hidden="true" onMouseDown={onDismiss} />
-      <div
-        className={`fixed z-[71] ${CONTEXT_MENU_PANEL}`}
-        role="menu"
-        aria-label={label}
-        style={{ left: x, top: y } satisfies CSSProperties}
-        onKeyDown={onKey}
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          role="menuitem"
-          className={MENU_ITEM}
-          data-testid="collection-menu-create-folder"
-          autoFocus
-          onClick={onCreateFolder}
-        >
+    <DropdownMenu open onOpenChange={(open) => !open && onDismiss()}>
+      <DropdownMenuTrigger asChild>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none fixed top-[var(--menu-y)] left-[var(--menu-x)] size-px"
+          style={styleWithVariables({ '--menu-x': `${x}px`, '--menu-y': `${y}px` })}
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" aria-label={label}>
+        <DropdownMenuItem data-testid="collection-menu-create-folder" onSelect={onCreateFolder}>
           {createFolder}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          role="menuitem"
-          className={MENU_ITEM}
-          data-testid="collection-menu-create-request"
-          onClick={onCreateRequest}
-        >
+        </DropdownMenuItem>
+        <DropdownMenuItem data-testid="collection-menu-create-request" onSelect={onCreateRequest}>
           {createRequest}
-        </Button>
+        </DropdownMenuItem>
         {targetKind === 'folder' && (
           <>
-            {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
-            <div className={CONTEXT_MENU_SEPARATOR} role="separator" />
-            <Button
-              type="button"
-              variant="ghost"
-              role="menuitem"
-              className={MENU_ITEM}
-              data-testid="collection-menu-rename"
-              onClick={onRename}
-            >
+            <DropdownMenuSeparator />
+            <DropdownMenuItem data-testid="collection-menu-rename" onSelect={onRename}>
               {renameFolder}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              role="menuitem"
-              className={MENU_ITEM}
-              data-testid="collection-menu-delete-folder"
-              onClick={onDelete}
-            >
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" data-testid="collection-menu-delete-folder" onSelect={onDelete}>
               {deleteFolder}
-            </Button>
+            </DropdownMenuItem>
           </>
         )}
         {targetKind === 'request' && (
           <>
-            {/* biome-ignore lint/a11y/useSemanticElements: a menu divider uses the separator role inside the menu */}
-            <div className={CONTEXT_MENU_SEPARATOR} role="separator" />
-            <Button
-              type="button"
-              variant="ghost"
-              role="menuitem"
-              className={MENU_ITEM}
-              data-testid="collection-menu-duplicate-request"
-              onClick={onDuplicate}
-            >
+            <DropdownMenuSeparator />
+            <DropdownMenuItem data-testid="collection-menu-duplicate-request" onSelect={onDuplicate}>
               {duplicateRequest}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              role="menuitem"
-              className={MENU_ITEM}
-              data-testid="collection-menu-delete-request"
-              onClick={onDelete}
-            >
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" data-testid="collection-menu-delete-request" onSelect={onDelete}>
               {deleteRequest}
-            </Button>
+            </DropdownMenuItem>
           </>
         )}
-      </div>
-    </>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

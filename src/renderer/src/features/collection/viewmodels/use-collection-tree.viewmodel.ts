@@ -24,6 +24,7 @@ export type CollectionActions = {
   deleteItem: (id: string) => void
   duplicateRequest: (requestId: string) => void
   moveItem: (sourceId: string, targetId: string | null) => void
+  setExpandedFolders: (folderIds: Set<string>) => void
 }
 
 export type CollectionInput = {
@@ -37,6 +38,9 @@ export type CollectionInput = {
   actions: CollectionActions
 }
 
+// The field the Ctrl K shortcut focuses.
+export const COLLECTION_FILTER_INPUT_ID = 'collection-filter-input'
+
 const viewport = () => ({ width: window.innerWidth, height: window.innerHeight })
 
 // Owns the collection tree's interaction state: the context menu, the create and delete dialogs, rename, and drag.
@@ -46,6 +50,7 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
   const { tree, isReadOnly, actions } = input
   const treeIndex = indexTree(tree)
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
   const [folderName, setFolderName] = useState('')
@@ -65,17 +70,35 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
     }
   }
 
-  function buildRows(nodes: ApiNode[], depth: number): TreeRow[] {
+  const query = filter.trim().toLowerCase()
+  const matchesFilter = (node: ApiNode): boolean =>
+    isFolder(node) ? node.children.some(matchesFilter) : `${node.name} ${node.method} ${node.url}`.toLowerCase().includes(query)
+
+  const requestOpen = input.activeTabKind === 'request' || input.activeTabKind === 'docs'
+  // The folders on the way up from the open request. Their icons are colored.
+  const activeAncestors = new Set<string>()
+  if (requestOpen) {
+    let parent = treeIndex.parentFolderById.get(input.selectedRequestId)
+    while (parent && !activeAncestors.has(parent)) {
+      activeAncestors.add(parent)
+      parent = treeIndex.parentFolderById.get(parent)
+    }
+  }
+
+  function buildRows(allNodes: ApiNode[], depth: number): TreeRow[] {
+    const nodes = query ? allNodes.filter(matchesFilter) : allNodes
     return nodes.map((node): TreeRow => {
       if (isFolder(node)) {
-        const expanded = input.expandedFolders.has(node.id)
+        // A filter shows every match, so it opens the folders that hold one.
+        const expanded = query !== '' || input.expandedFolders.has(node.id)
         return {
           kind: 'folder',
           id: node.id,
           name: node.name,
           depth,
           expanded,
-          selected: input.selectedFolderId === node.id,
+          selected: !requestOpen && input.selectedFolderId === node.id,
+          containsActive: activeAncestors.has(node.id),
           dragging: draggedId === node.id,
           renaming: renamingFolderId === node.id,
           requestCount: treeIndex.requestCountByFolderId.get(node.id) ?? 0,
@@ -90,7 +113,7 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
         name: node.name,
         method: node.method,
         depth,
-        selected: (input.activeTabKind === 'request' || input.activeTabKind === 'docs') && input.selectedRequestId === node.id,
+        selected: requestOpen && input.selectedRequestId === node.id,
         dragging: draggedId === node.id,
         change: changeOf(node.id, node.name),
       }
@@ -236,8 +259,8 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
     }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
     const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-    const active = document.activeElement
-    const activeIndex = items.findIndex((item) => item === active)
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const activeIndex = active ? items.indexOf(active) : -1
     event.preventDefault()
     const direction = event.key === 'ArrowDown' ? 1 : -1
     items[(activeIndex + direction + items.length) % items.length]?.focus()
@@ -270,9 +293,21 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
     ? (treeIndex.nodeById.get(folderParentId)?.name ?? t(COLLECTION_TEXT.createDialog.selectedFolder))
     : t(COLLECTION_TEXT.createDialog.workspaceName)
 
+  const rows = buildRows(tree, 0)
+
   return {
-    rows: buildRows(tree, 0),
+    rows,
     isEmpty: tree.length === 0,
+    filter: {
+      value: filter,
+      onChange: setFilter,
+      placeholder: t(COLLECTION_TEXT.tree.filterPlaceholder),
+      label: t(COLLECTION_TEXT.tree.filterPlaceholder),
+      shortcut: t(COLLECTION_TEXT.tree.filterShortcut),
+      inputId: COLLECTION_FILTER_INPUT_ID,
+      testId: 'collection-tree-filter-input',
+    },
+    noMatches: query !== '' && rows.length === 0 ? t(COLLECTION_TEXT.tree.noMatches, { query: filter.trim() }) : null,
     draggedId,
     readOnly: isReadOnly,
     labels: {
@@ -282,6 +317,11 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
       workspaceActions: t(COLLECTION_TEXT.tree.workspaceActions),
       actionsFor: (name: string) => t(COLLECTION_TEXT.tree.actionsFor, { name }),
       newRequestIn: (name: string) => t(COLLECTION_TEXT.tree.newRequestIn, { name }),
+      add: t(COLLECTION_TEXT.tree.add),
+      createRequest: t(COLLECTION_TEXT.menu.createRequest),
+      createFolder: t(COLLECTION_TEXT.menu.createFolder),
+      expandAll: t(COLLECTION_TEXT.tree.expandAll),
+      collapseAll: t(COLLECTION_TEXT.tree.collapseAll),
     },
     rename: {
       draft: renameDraft,
@@ -324,6 +364,8 @@ export function useCollectionTreeViewModel(input: CollectionInput) {
     },
     handlers: {
       selectFolder: actions.selectFolder,
+      expandAll: () => actions.setExpandedFolders(new Set([...treeIndex.nodeById.values()].filter(isFolder).map((node) => node.id))),
+      collapseAll: () => actions.setExpandedFolders(new Set()),
       toggleFolder: (folderId: string) => {
         actions.selectFolder(folderId)
         actions.toggleFolderExpanded(folderId)

@@ -2,6 +2,12 @@ export const COLLECTION_TEXT = {
   tree: {
     empty: 'tree.empty',
     emptyFolder: 'tree.emptyFolder',
+    filterPlaceholder: 'tree.filterPlaceholder',
+    filterShortcut: 'tree.filterShortcut',
+    noMatches: 'tree.noMatches',
+    add: 'tree.add',
+    expandAll: 'tree.expandAll',
+    collapseAll: 'tree.collapseAll',
     actionsFor: 'tree.actionsFor',
     newRequestIn: 'tree.newRequestIn',
     folderNameLabel: 'tree.folderNameLabel',

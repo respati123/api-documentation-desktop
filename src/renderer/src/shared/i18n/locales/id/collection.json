@@ -6,7 +6,13 @@
     "folderNameLabel": "Nama folder",
     "menuLabel": "Aksi item koleksi",
     "workspaceActions": "Aksi workspace",
-    "newRequestIn": "Request baru di {{name}}"
+    "newRequestIn": "Request baru di {{name}}",
+    "filterPlaceholder": "Filter request",
+    "filterShortcut": "Ctrl K",
+    "noMatches": "Tidak ada request yang cocok dengan \"{{query}}\".",
+    "add": "Tambah ke koleksi",
+    "expandAll": "Buka semua",
+    "collapseAll": "Tutup semua"
   },
   "menu": {
     "createFolder": "Buat folder",

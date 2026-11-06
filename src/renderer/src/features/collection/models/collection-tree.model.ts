@@ -8,6 +8,7 @@ export type FolderRow = {
   depth: number
   expanded: boolean
   selected: boolean
+  containsActive: boolean
   dragging: boolean
   renaming: boolean
   requestCount: number
