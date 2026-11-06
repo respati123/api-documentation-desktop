@@ -12,32 +12,32 @@ Read this before any UI, design, or styling change in the renderer.
 
 If it is missing: `bunx impeccable install -y --project --providers=codex --no-hooks`. Do not copy it by hand. `scripts/bin/` is gitignored.
 
-**shadcn** (`.agents/skills/shadcn/SKILL.md`), for every component change:
+**api-ui** (`.agents/skills/api-ui/SKILL.md`), for every component change: the library's levels, variant rules, and the Radix notes.
 
-1. Read `SKILL.md` and the matching `rules/` files (`composition.md`, `forms.md`, `styling.md`, `icons.md`).
-2. Check what is installed: `npx shadcn@latest info --json`.
-3. Read the docs before use: `npx shadcn@latest docs <component>`.
+## Components: the UI library only
 
-## Components: shadcn/ui only
-
-- Views and pages never contain raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, or `a`. Use `Button`, `Input`, `Select`, `Textarea`, `Label`, `Table`, `Separator`, and `Button variant="link"`.
-- Notices and errors use `Alert`. Empty states use `Empty`. Panels use `Card`. Status labels use `Badge`. Loading uses `Skeleton`.
-- Add components only with `npx shadcn@latest add <name> -y`. They go in `shared/components/ui/`. Never hand-edit them. Wrap one in `shared/components/` if it needs a different look.
-- After every `add`, fix the `cn` import to `@/shared/utils/cn`.
-- A custom element is allowed only when no shadcn component fits. Say so in the handoff.
+- The UI comes from the API Documentation UI library, imported from `@/shared/ui`. `src/renderer/src/shared/ui/` is a copy of `api-documentation/storybook/src`, made by `bun run sync-ui`. The source and the docs (Storybook pages) stay in the storybook project, until it is published as a package.
+- Views and pages never contain raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, or `a`. Use the library's `Button`, `Input`, `Select`, `Textarea`, `Label`, `Table`, `Separator`, and `Button variant="link"`.
+- Notices and errors use `Alert`. Status labels use `Badge`. Panels use `Card`. Loading uses `Skeleton`.
+- Dialogs, selects, menus, and tabs use the library's Radix-based components. Do not rebuild their focus or keyboard behavior in a view.
+- Button variants describe importance: `primary` (one per view), `secondary`, `ghost`, `destructive`, `link`, and `send` (the Send action only). Size is separate: `sm`, `md`, `lg`, `icon`.
+- Electric green is used only for Send.
+- A missing component or a fix is made in the storybook project first, with a story and a test, then copied with `bun run sync-ui`. Never edit `shared/ui/` by hand: the next sync overwrites it. Do not add a second copy elsewhere in the app.
+- A custom element is allowed only when no library component fits. Say so in the handoff.
 - No other UI library.
 
-Enforced by `app/ui-rules.test.ts`.
+Enforced by `app/ui-rules.test.ts`, which skips `shared/ui/` (the library itself).
 
 ## Styling
 
-- Tailwind v4 through `@tailwindcss/vite`. The only stylesheet is `src/renderer/src/index.css`, imported once in `main.tsx`.
-- `index.css` holds only `@import "tailwindcss"`, the theme tokens (`:root` and `.dark`), the shadcn base layer, and `@font-face` rules.
-- No other `.css`, `.scss`, or `.module.css` files.
-- Colors come from theme tokens (`bg-background`, `text-muted-foreground`). No hex values in components.
-- No inline `style` except for values computed at runtime, such as a resizable panel width.
+- Tailwind v4 through `@tailwindcss/vite`, for layout and spacing. The only app stylesheet is `src/renderer/src/index.css`, imported once in `main.tsx`.
+- The library's tokens and component styles load with `@/shared/ui` (each component imports its own CSS), so `main.tsx` imports nothing extra.
+- `index.css` holds `@import "tailwindcss"`, the theme tokens (mapped from `DESIGN.md`), and `@font-face` rules.
+- No other `.css`, `.scss`, or `.module.css` files in the app. Component styles live in the library (`shared/ui/`).
+- Colors, type, radius, and spacing come from the theme tokens in `DESIGN.md` (`bg-background`, `text-muted-foreground`, and so on). No hex values in components.
+- No inline `style` except for values computed at runtime, such as a resizable panel width or a tree depth.
 - Merge classes with `cn()`.
-- Light and dark themes share one token set.
+- The app has one dark palette. The `dark:` variants are inert.
 
 ## Scrolling
 

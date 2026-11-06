@@ -75,7 +75,7 @@ type InviteState =
 - Icon-only buttons have a translated `aria-label`.
 - Every form field has a visible `Label`.
 - Focus stays visible.
-- Dialogs use shadcn `Dialog`, which traps focus and closes on Escape.
+- Dialogs use the library `Dialog`, which traps focus and closes on Escape.
 
 ## Commits
 

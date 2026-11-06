@@ -1,6 +1,6 @@
 # Repository Guidelines (desktop)
 
-Electron desktop app. Renderer: React, Vite, shadcn/ui, Tailwind v4, TanStack Query, zod, i18next.
+Electron desktop app. Renderer: React, Vite, the API Documentation UI component library, Tailwind v4 for layout, TanStack Query, zod, i18next.
 Read the matching guide in `references/` before you start a task.
 
 ## Project
@@ -18,7 +18,7 @@ main.tsx          React entry
 index.css         the only stylesheet
 app/              providers, routes, error boundary wiring, ui-rules.test.ts
 features/<name>/  one folder per product area
-shared/           code used by two or more features
+shared/           code used by two or more features. shared/ui is a synced copy of the UI library: never edit it, run `bun run sync-ui`
 lib/              pure domain logic shared by features (merge, diff, variables, OpenAPI)
 ```
 
@@ -33,6 +33,7 @@ Run from this folder. Install with `bun install` (lockfile `bun.lock`).
 - `bun run typecheck`: main, preload, renderer
 - `bun run test`: Vitest
 - `bun run i18n-check`: locale key parity
+- `bun run sync-ui [path]`: copy the UI library from `api-documentation/storybook` into `shared/ui`
 - `bun run lint` / `bun run format`: Biome check / write
 - `bun run dist:linux` | `dist:mac` | `dist:win`: installers
 
@@ -41,7 +42,7 @@ Run from this folder. Install with `bun install` (lockfile `bun.lock`).
 1. **Library docs.** Before using a library API you have not verified in this session, look it up with Context7. If Context7 is unavailable, use the official docs and say so.
 2. **MVVM.** Pages call one ViewModel and render one View. Views only render props. All state, effects, handlers, fetching, and derived values live in the ViewModel. → `architecture.md`
 3. **Data.** Services validate every response with zod. Queries and mutations live only in ViewModels. Never fetch in `useEffect`. Never fetch the same data twice. → `data-and-state.md`
-4. **UI.** Views use shadcn/ui components only, never raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, `a`. Tailwind only, theme tokens only. Use the impeccable and shadcn skills. → `ui-design.md`
+4. **UI.** Views use components from the API Documentation UI library only, imported from `@/shared/ui` (`api-ui` skill), never raw `button`, `input`, `select`, `textarea`, `label`, `table`, `hr`, `a`. Colors, type, radius, and spacing follow `DESIGN.md`. Tailwind is for layout only. Use the impeccable and api-ui skills. → `ui-design.md`
 5. **Text.** No literals in views or viewmodels. Call `t(CONSTANT)`. Every key exists in `id` and `en`. → `i18n.md`
 6. **Errors.** Show the backend `error` message. Never invent error text or codes. Every page has an error boundary. → `error-handling.md`
 7. **Imports.** Absolute `@/` only. Features import each other only through `@/features/<name>`.
@@ -82,7 +83,7 @@ In `.agents/skills/`. Read the `SKILL.md` before you use one.
 | `new-feature` | a new feature folder or a new screen (scaffold script) |
 | `new-ipc-channel` | anything the renderer needs from the main process |
 | `finish-change` | the handoff checks and report |
-| `impeccable`, `shadcn` | all UI work (`ui-design.md`) |
+| `impeccable`, `api-ui` | all UI work (`ui-design.md`) |
 | `vercel-react-best-practices` | performance work (`performance.md`) |
 | `karpathy-guidelines` | writing, reviewing, or refactoring code: state assumptions, keep it simple, change only what the task needs, define success criteria |
 

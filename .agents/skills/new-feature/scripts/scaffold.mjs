@@ -136,9 +136,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { ${F.pascal}Item } from '${featureImport}/models/${feature}.model'
 import { ${F.screaming}_TEXT } from '${featureImport}/constants/${feature}-text.constants'
-import { Alert, AlertDescription } from '@/shared/components/ui/alert'
-import { Button } from '@/shared/components/ui/button'
-import { Skeleton } from '@/shared/components/ui/skeleton'
+import { Alert, AlertDescription, Button, Skeleton } from '@/shared/ui'
 
 export interface ${V.pascal}ViewProps {
   status: 'pending' | 'error' | 'success'

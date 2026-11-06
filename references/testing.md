@@ -35,7 +35,7 @@ Rule tests read the source with `@babel/parser` and `@babel/types` (dev dependen
 |---|---|
 | `app/ui-rules.test.ts` | no raw elements or text literals in views |
 | `app/architecture-rules.test.ts` | `@/` imports, feature boundaries, no hooks or services in views, `window.apiDesktop` only in services |
-| `app/testid-rules.test.ts` | `data-testid` on interactive shadcn elements, id format |
+| `app/testid-rules.test.ts` | `data-testid` on interactive library elements, id format |
 | `src/main/security-rules.test.ts` | `webPreferences`, navigation guards, IPC channels, input parsing, sender check, no `sendSync`, no exposed `ipcRenderer` |
 
 Fix the code, never the rule test. If a rule is wrong, ask.
