@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  packages: read
 
 concurrency:
   group: release
@@ -48,6 +49,8 @@ jobs:
           bun-version: 1.4.2
 
       - run: bun install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: bun run typecheck
       - run: bun run lint
       - run: bun run i18n-check
@@ -106,6 +109,8 @@ jobs:
         run: npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - run: bun install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: bun run ${{ matrix.script }} --publish never
 

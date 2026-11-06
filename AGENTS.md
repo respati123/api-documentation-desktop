@@ -18,7 +18,7 @@ main.tsx          React entry
 index.css         the only stylesheet
 app/              providers, routes, error boundary wiring, ui-rules.test.ts
 features/<name>/  one folder per product area
-shared/           code used by two or more features. shared/ui is a synced copy of the UI library: never edit it, run `bun run sync-ui`
+shared/           code used by two or more features. shared/ui re-exports the published UI library package `@respati123/api-documentation-ui`: change the library there, then bump the version
 lib/              pure domain logic shared by features (merge, diff, variables, OpenAPI)
 ```
 
@@ -33,7 +33,7 @@ Run from this folder. Install with `bun install` (lockfile `bun.lock`).
 - `bun run typecheck`: main, preload, renderer
 - `bun run test`: Vitest
 - `bun run i18n-check`: locale key parity
-- `bun run sync-ui [path]`: copy the UI library from `api-documentation/storybook` into `shared/ui`
+- Install needs `NODE_AUTH_TOKEN` set to a GitHub token with `read:packages`, because the UI library is on GitHub Packages (`.npmrc`)
 - `bun run lint` / `bun run format`: Biome check / write
 - `bun run dist:linux` | `dist:mac` | `dist:win`: installers
 

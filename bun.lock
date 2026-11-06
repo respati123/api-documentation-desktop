@@ -7,6 +7,7 @@
       "dependencies": {
         "@fontsource/fira-code": "^5.3.0",
         "@fontsource/poppins": "^5.3.0",
+        "@respati123/api-documentation-ui": "0.1.0",
         "@tanstack/react-query": "^5.105.0",
         "clsx": "^2.1.1",
         "electron-updater": "^6.8.11",
@@ -371,6 +372,8 @@
     "@radix-ui/react-visually-hidden": ["@radix-ui/react-visually-hidden@1.2.13", "", { "dependencies": { "@radix-ui/react-primitive": "2.2.0" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-feijiN1oPk4rck4u9Dm9tsU4mT6Wp9oeEEhaz1WUEs1VuqLf8xzsFG+Qk+uWq6TnMH9O+WRECRg0NftyP9E4Fw=="],
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.3", "", {}, "sha512-JtyZR+mqgBibTo8xea3B6ZRmzZiM/YeVBtUkas6zMuXjAlfIFIW2FgqeM9eLyvEaYX66vr6DJMK+4U6LV0KhNw=="],
+
+    "@respati123/api-documentation-ui": ["@respati123/api-documentation-ui@0.1.0", "https://npm.pkg.github.com/download/@respati123/api-documentation-ui/0.1.0/1924585c8ac63204b9ce2d1f0e7fcb1f60165afb", { "peerDependencies": { "radix-ui": "^1.8.1", "react": "^19.3.1", "react-dom": "^19.3.1" } }, "sha512-1JFi+SE82OGfrGhA5WqfXJ8iOo5IOs3qv4oBVtUbAEAwj+qhEyk6Br1gc8Uk1JQ+7DsSYlGFVoqJm/u73WNltw=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-rc.3", "", {}, "sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q=="],
 
