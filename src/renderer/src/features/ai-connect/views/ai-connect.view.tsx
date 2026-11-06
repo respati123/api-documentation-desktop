@@ -4,7 +4,7 @@ import { AI_CONNECT_TEST_IDS } from '@/features/ai-connect/constants/ai-connect-
 import { AI_CONNECT_TEXT } from '@/features/ai-connect/constants/ai-connect-text.constants'
 import type { useAiConnectViewModel } from '@/features/ai-connect/viewmodels/use-ai-connect.viewmodel'
 import { AppDialog } from '@/shared/components/app-dialog'
-import { Button } from '@/shared/components/ui/button'
+import { Button } from '@/shared/ui'
 
 export type AiConnectViewProps = ReturnType<typeof useAiConnectViewModel>
 
@@ -50,7 +50,7 @@ export function AiConnectView({
               {tool.showInstall && (
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   data-testid={AI_CONNECT_TEST_IDS.toolInstall(tool.id)}
                   disabled={tool.disabled}
                   onClick={tool.onInstall}

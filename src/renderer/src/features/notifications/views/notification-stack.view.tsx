@@ -1,8 +1,7 @@
 import { Bell, CheckCircle2, Info, X } from 'lucide-react'
 import type { ReactElement } from 'react'
 import type { AppNotification, NotificationTone } from '@/features/notifications/models/notification.model'
-import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
-import { Button } from '@/shared/components/ui/button'
+import { Alert, AlertDescription, AlertTitle, Button } from '@/shared/ui'
 
 export type NotificationStackViewProps = {
   items: AppNotification[]
