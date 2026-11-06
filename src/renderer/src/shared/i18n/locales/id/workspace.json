@@ -52,13 +52,21 @@
     "environmentsTab": "Environment",
     "environmentsHeading": "Environment",
     "manageVariables": "Kelola variable",
-    "noEnvironments": "Belum ada environment. Buat di Kelola variable.",
+    "noEnvironments": "Belum ada environment. Pilih + untuk menambah.",
     "newEnvironmentName": "Environment baru",
     "environmentActions": "Aksi environment",
     "setActive": "Jadikan aktif",
     "rename": "Ganti nama",
     "duplicate": "Duplikat",
-    "remove": "Hapus"
+    "remove": "Hapus",
+    "historyTab": "Riwayat",
+    "referenceTab": "Referensi API",
+    "syncTab": "Sinkronisasi",
+    "aiConnectTab": "AI Connect",
+    "historyEmpty": "Request yang kamu kirim muncul di sini.",
+    "referenceEmpty": "Request muncul di sini setelah kamu menambahkannya.",
+    "historyDetail": "{{status}} {{reason}}, {{ms}} ms, {{at}}",
+    "rootGroup": "Request"
   },
   "tabs": {
     "list": "Tab workspace terbuka",

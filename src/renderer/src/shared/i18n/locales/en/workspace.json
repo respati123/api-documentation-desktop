@@ -52,13 +52,21 @@
     "environmentsTab": "Environments",
     "environmentsHeading": "Environments",
     "manageVariables": "Manage variables",
-    "noEnvironments": "No environments yet. Create one in Manage variables.",
+    "noEnvironments": "No environments yet. Choose + to add one.",
     "newEnvironmentName": "New environment",
     "environmentActions": "Environment actions",
     "setActive": "Set active",
     "rename": "Rename",
     "duplicate": "Duplicate",
-    "remove": "Delete"
+    "remove": "Delete",
+    "historyTab": "History",
+    "referenceTab": "API Reference",
+    "syncTab": "Sync",
+    "aiConnectTab": "AI Connect",
+    "historyEmpty": "Requests you send appear here.",
+    "referenceEmpty": "Requests appear here once you add one.",
+    "historyDetail": "{{status}} {{reason}}, {{ms}} ms, {{at}}",
+    "rootGroup": "Requests"
   },
   "tabs": {
     "list": "Open workspace tabs",

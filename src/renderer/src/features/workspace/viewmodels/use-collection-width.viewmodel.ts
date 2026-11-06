@@ -13,13 +13,13 @@ export function useCollectionWidthViewModel() {
   const collectionWidthRef = useRef(collectionWidth)
   const pendingCollectionWidthRef = useRef(collectionWidth)
   const collectionResizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null)
-  const appShellRef = useRef<HTMLElement>(null)
+  const appShellRef = useRef<HTMLDivElement>(null)
 
   function commitCollectionWidth(width: number) {
     const nextWidth = clampCollectionWidth(width)
     collectionWidthRef.current = nextWidth
     pendingCollectionWidthRef.current = nextWidth
-    appShellRef.current?.style.setProperty('--sidebar-width', `${nextWidth}px`)
+    appShellRef.current?.style.setProperty('--app-sidebar-width', `${nextWidth}px`)
     setCollectionWidth(nextWidth)
     try {
       localStorage.setItem(collectionWidthStorageKey, String(nextWidth))
@@ -40,7 +40,7 @@ export function useCollectionWidthViewModel() {
     if (!resize || resize.pointerId !== event.pointerId) return
     const nextWidth = clampCollectionWidth(resize.startWidth + event.clientX - resize.startX)
     pendingCollectionWidthRef.current = nextWidth
-    appShellRef.current?.style.setProperty('--sidebar-width', `${nextWidth}px`)
+    appShellRef.current?.style.setProperty('--app-sidebar-width', `${nextWidth}px`)
   }
   function finishCollectionResize(event: PointerEvent<HTMLDivElement>) {
     if (collectionResizeRef.current?.pointerId !== event.pointerId) return

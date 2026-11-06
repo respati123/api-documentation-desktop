@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, useLayoutEffect, useRef } from 'react'
 import { type indexTree, isFolder, isRequest, updateNode } from '@/features/collection'
-import { replaceUrlParams, type ScriptContext, syncUrlParams } from '@/features/request'
+import { replaceUrlParams, type ScriptContext, type SentResult, syncUrlParams } from '@/features/request'
 import type { WorkspaceTab } from '@/features/workspace/models/workspace.model'
 import type { VariableSuggestion } from '@/shared/components/variable-field'
 import type { ApiNode, RequestNode } from '@/shared/models/api-node.model'
@@ -10,14 +10,13 @@ export type RequestInput = {
   activeFolder: ApiNode | undefined
   treeIndex: ReturnType<typeof indexTree>
   setTree: Dispatch<SetStateAction<ApiNode[]>>
-  activeWorkspace: LocalWorkspace | undefined
   currentWorkspaceId: string
   isReadOnly: boolean
   activeWorkspaceTab: WorkspaceTab | undefined
   variableSuggestions: VariableSuggestion[]
   resolvedVariables: Record<string, string>
   scriptContext: ScriptContext
-  openDocsTab: (requestId: string) => void
+  onSent: (result: SentResult) => void
   openVariableEditor: (name: string, sourceValue: string) => void
 }
 
@@ -28,14 +27,13 @@ export function useWorkspaceRequestViewModel(input: RequestInput) {
     activeFolder,
     treeIndex,
     setTree,
-    activeWorkspace,
     currentWorkspaceId,
     isReadOnly,
     activeWorkspaceTab,
     variableSuggestions,
     resolvedVariables,
     scriptContext,
-    openDocsTab,
+    onSent,
     openVariableEditor,
   } = input
   const activeRequest = treeIndex.nodeById.get(selectedRequestId)
@@ -73,12 +71,11 @@ export function useWorkspaceRequestViewModel(input: RequestInput) {
         readLatestRequest: () => readLatestRequest(builderRequest),
         readOnly: Boolean(isReadOnly),
         folderName: activeFolder && isFolder(activeFolder) ? activeFolder.name : '',
-        statusText: activeWorkspace?.cloudId ? (activeWorkspace.role ?? '') : 'Saved locally',
         suggestions: variableSuggestions,
         resolvedVariables,
         scriptContext,
         onChange: updateActiveRequest,
-        onOpenDocs: () => openDocsTab(builderRequest.id),
+        onSent,
         onVariableClick: openVariableEditor,
       }
     : null

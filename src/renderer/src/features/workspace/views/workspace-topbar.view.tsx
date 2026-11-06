@@ -1,113 +1,138 @@
-import type { ComponentProps, ReactElement, RefObject } from 'react'
+import type { ComponentProps, ReactElement } from 'react'
 import { WorkspaceStorageIcon } from '@/features/collection'
-import { AuthDialog } from '@/features/sync'
+import { AuthDialog, SyncMenuView } from '@/features/sync'
 import type { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
 import type { useWorkspaceSidebarViewModel } from '@/features/workspace/viewmodels/use-workspace-sidebar.viewmodel'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import { NO_ENVIRONMENT, type useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  TopBar,
+  TopBarAvatar,
+  TopBarPicker,
+} from '@/shared/ui'
 
 type ChromeViewModel = ReturnType<typeof useWorkspaceChromeViewModel>
 type WorkspacePickerViewModel = ReturnType<typeof useWorkspaceSidebarViewModel>['picker']
+type EnvironmentViewModel = ReturnType<typeof useWorkspaceTabbarViewModel>['environment']
 
+// The top bar: the workspace and environment pickers at the left, the update button, the account menu, and sign-in at the right.
 export function WorkspaceTopbarView({
   chrome,
-  accountMenuRef,
+  syncMenu,
   auth,
   picker,
+  environment,
+  sidebarToggle,
 }: {
   chrome: ChromeViewModel
-  accountMenuRef: RefObject<HTMLDivElement | null>
+  syncMenu: ComponentProps<typeof SyncMenuView>
   auth: ComponentProps<typeof AuthDialog>
   picker: WorkspacePickerViewModel
+  environment: EnvironmentViewModel
+  sidebarToggle: { label: string; expanded: boolean; onToggle: () => void }
 }): ReactElement {
+  const selectedEnvironment = environment.options.find((option) => option.value === environment.value)
+  const selectedWorkspace = picker.selected
+
   return (
-    <header className="col-span-full flex min-w-0 items-center justify-between bg-chrome px-6 [-webkit-app-region:drag] max-[720px]:sticky max-[720px]:top-0 max-[720px]:z-20 max-[720px]:min-h-[58px] max-[720px]:px-4">
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="text-[16px] font-bold tracking-[-0.02em] text-chrome-foreground">{chrome.wordmark}</div>
-        <div className="min-w-0 [-webkit-app-region:no-drag]">
-          <Select value={picker.value} onValueChange={picker.onChange}>
-            <SelectTrigger
-              aria-label={picker.ariaLabel}
-              className="h-[32px] min-h-[32px] w-[220px] rounded-md border-transparent bg-chrome-field text-[13px] font-medium text-chrome-foreground hover:bg-chrome-field/80 focus-visible:ring-0 max-[720px]:w-[160px]"
-              data-testid="workspace-topbar-picker"
-            >
-              <SelectValue placeholder={picker.placeholder}>
-                {picker.selected && (
-                  <span className="flex min-w-0 items-center gap-2">
-                    <WorkspaceStorageIcon kind={picker.selected.kind} />
-                    <span className="truncate">{picker.selected.name}</span>
-                  </span>
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {picker.options.map((option) => (
-                <SelectItem key={option.id} value={option.id} textValue={option.textValue}>
-                  <span className="flex min-w-0 items-center gap-2">
-                    <WorkspaceStorageIcon kind={option.kind} />
-                    <span className="truncate">{option.name}</span>
-                    <small className="text-[11px] text-muted-foreground">{option.storage}</small>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="flex min-w-0 items-center gap-2 [-webkit-app-region:no-drag] max-[720px]:max-w-[calc(100vw-150px)] max-[720px]:overflow-x-auto max-[720px]:[scrollbar-width:thin]">
-        {chrome.account && (
-          <div className="relative" ref={accountMenuRef}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-chrome-foreground hover:bg-chrome-field hover:text-chrome-foreground"
-              aria-haspopup="menu"
-              aria-expanded={chrome.account.open}
-              data-testid="workspace-topbar-account-trigger"
-              onClick={chrome.account.toggle}
-            >
-              <span
-                className="flex size-[22px] items-center justify-center rounded-full bg-chrome-field text-[11px] font-bold"
-                aria-hidden="true"
-              >
-                {chrome.account.initial}
-              </span>
-              <span className="max-w-[180px] truncate text-[12px] text-chrome-muted">{chrome.account.email}</span>
+    <TopBar
+      sidebarToggle={sidebarToggle}
+      actions={
+        <>
+          <SyncMenuView {...syncMenu} />
+          {chrome.updateButton && (
+            <Button variant="primary" size="sm" data-testid="workspace-topbar-update-button" onClick={chrome.updateButton.onClick}>
+              {chrome.updateButton.label}
             </Button>
-            {chrome.account.open && (
-              <div
-                className="absolute right-0 top-full z-50 mt-2 grid min-w-[200px] gap-0 rounded-md border border-border bg-popover p-2 shadow-md"
-                role="menu"
-                aria-label={chrome.account.label}
-              >
+          )}
+          {chrome.account && (
+            <DropdownMenu
+              open={chrome.account.open}
+              onOpenChange={(open) => {
+                if (open !== chrome.account?.open) chrome.account?.toggle()
+              }}
+            >
+              <DropdownMenuTrigger asChild>
+                <TopBarAvatar aria-label={chrome.account.label} data-testid="workspace-topbar-account-trigger" title={chrome.account.email}>
+                  {chrome.account.initial}
+                </TopBarAvatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" aria-label={chrome.account.label}>
                 {chrome.account.items.map((item) => (
-                  <Button
-                    key={item.key}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    role="menuitem"
-                    className="justify-start"
-                    data-testid={`workspace-topbar-account-${item.key}`}
-                    onClick={item.onSelect}
-                  >
+                  <DropdownMenuItem key={item.key} data-testid={`workspace-topbar-account-${item.key}`} onSelect={item.onSelect}>
                     {item.label}
-                  </Button>
+                  </DropdownMenuItem>
                 ))}
-              </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <AuthDialog {...auth} />
+        </>
+      }
+    >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <TopBarPicker aria-label={picker.ariaLabel} data-testid="workspace-topbar-picker">
+            {selectedWorkspace ? (
+              <span className="flex min-w-0 items-center gap-2">
+                <WorkspaceStorageIcon kind={selectedWorkspace.kind} />
+                <span className="truncate">{selectedWorkspace.name}</span>
+              </span>
+            ) : (
+              picker.placeholder
             )}
-          </div>
-        )}
-        {chrome.updateButton && (
-          <Button size="sm" data-testid="workspace-topbar-update-button" onClick={chrome.updateButton.onClick}>
-            {chrome.updateButton.label}
-          </Button>
-        )}
-        <AuthDialog {...auth} />
-      </div>
-    </header>
+          </TopBarPicker>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {picker.options.map((option) => (
+            <DropdownMenuItem
+              key={option.id}
+              data-testid={`workspace-topbar-picker-option-${option.id}`}
+              onSelect={() => picker.onChange(option.id)}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <WorkspaceStorageIcon kind={option.kind} />
+                <span className="truncate">{option.name}</span>
+                <small className="text-[11px] text-muted-foreground">{option.storage}</small>
+              </span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <TopBarPicker
+            aria-label={environment.ariaLabel}
+            dot={environment.value !== NO_ENVIRONMENT ? 'on' : 'off'}
+            data-testid="workspace-tabbar-environment-select"
+            disabled={environment.disabled}
+          >
+            {selectedEnvironment?.label ?? environment.placeholder}
+          </TopBarPicker>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {environment.options.map((option) => (
+            <DropdownMenuItem
+              key={option.value}
+              data-testid={`workspace-tabbar-environment-option-${option.value}`}
+              onSelect={() => environment.onChange(option.value)}
+            >
+              {option.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TopBar>
   )
 }
 
@@ -120,14 +145,14 @@ export function WorkspaceUpdateDialogView({ dialog }: { dialog: ChromeViewModel[
           <DialogDescription>{dialog.description}</DialogDescription>
         </DialogHeader>
         {dialog.failed ? (
-          <div className="dialog-form">
+          <div>
             <Button type="button" data-testid="workspace-update-close-button" onClick={dialog.onClose}>
               {dialog.closeLabel}
             </Button>
           </div>
         ) : (
           dialog.percent !== null && (
-            <div className="dialog-form">
+            <div className="grid gap-2">
               <div className="h-[8px] overflow-hidden rounded-full bg-muted">
                 <div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${dialog.percent}%` }} />
               </div>

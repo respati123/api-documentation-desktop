@@ -4,41 +4,37 @@ import { ApiReferencePage } from '@/features/docs'
 import { RequestWorkbenchPage } from '@/features/request'
 import { EnvironmentTabView } from '@/features/variables'
 import type { useWorkspaceTabbarViewModel } from '@/features/workspace/viewmodels/use-workspace-tabbar.viewmodel'
-import { CONTEXT_MENU_ITEM, CONTEXT_MENU_PANEL, CONTEXT_MENU_SEPARATOR } from '@/shared/components/context-menu'
-import { styleWithVariables } from '@/shared/components/css-variables'
-import { Button } from '@/shared/components/ui/button'
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
-import { cn } from '@/shared/utils/cn'
+  Icon,
+  MethodTag,
+  StatusDot,
+  TabStrip,
+  TabStripItem,
+} from '@/shared/ui'
 
 type TabbarViewModel = ReturnType<typeof useWorkspaceTabbarViewModel>
 
-// Right-click menu for a tab. It uses the same look as the collection menu. The trigger is a zero-size anchor at the click point, and the menu is controlled by the ViewModel.
+// Right-click menu for a tab. The trigger is a zero-size anchor at the click point, and the menu is controlled by the ViewModel.
 function TabContextMenuView({ menu }: { menu: TabbarViewModel['contextMenu'] }): ReactElement {
   return (
     <DropdownMenu open={menu.open} onOpenChange={menu.onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <span
-          aria-hidden="true"
-          className="pointer-events-none fixed top-[var(--menu-y)] left-[var(--menu-x)] size-px"
-          style={styleWithVariables({ '--menu-x': `${menu.position.x}px`, '--menu-y': `${menu.position.y}px` })}
-        />
+        <span aria-hidden="true" className="pointer-events-none fixed size-px" style={{ left: menu.position.x, top: menu.position.y }} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className={CONTEXT_MENU_PANEL} data-testid="workspace-tabbar-tab-menu">
+      <DropdownMenuContent align="start" data-testid="workspace-tabbar-tab-menu">
         {menu.groups.map((group, index) => (
           <Fragment key={group.map((item) => item.key).join('|')}>
-            {index > 0 && <DropdownMenuSeparator className={CONTEXT_MENU_SEPARATOR} />}
+            {index > 0 && <DropdownMenuSeparator />}
             {group.map((item) => (
               <DropdownMenuItem
                 key={item.key}
                 disabled={item.disabled}
-                className={CONTEXT_MENU_ITEM}
                 data-testid={`workspace-tabbar-menu-${item.key}`}
                 onSelect={item.onSelect}
               >
@@ -59,12 +55,8 @@ function TabBadge({ badge }: { badge: TabbarViewModel['tabs'][number]['badge'] }
         {badge.label}
       </span>
     )
-  if (badge.kind === 'method') return <span className={badge.className}>{badge.label}</span>
-  return (
-    <span className="text-[14px] leading-none text-primary" aria-hidden="true">
-      {badge.glyph}
-    </span>
-  )
+  if (badge.kind === 'method') return <MethodTag method={badge.method} />
+  return <Icon name="sliders" size={14} />
 }
 
 type EmptyAction = { label: string; disabled: boolean; onClick: () => void }
@@ -82,10 +74,7 @@ function EmptyPaneView({
   action?: EmptyAction
 }): ReactElement {
   return (
-    <div
-      className="col-span-full row-start-2 flex min-h-0 items-center justify-center rounded-[12px] border border-border bg-card p-4"
-      data-testid={testId}
-    >
+    <div className="flex min-h-0 flex-1 items-center justify-center p-4" data-testid={testId}>
       <div className="flex max-w-[320px] flex-col items-center gap-2 text-center">
         <span className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-hidden="true">
           <FileText size={18} strokeWidth={1.8} aria-hidden="true" />
@@ -94,7 +83,7 @@ function EmptyPaneView({
         <p className="text-[13px] leading-[1.6] text-muted-foreground">{description}</p>
         {action && (
           <Button
-            type="button"
+            variant="primary"
             size="sm"
             className="mt-4"
             disabled={action.disabled}
@@ -110,76 +99,36 @@ function EmptyPaneView({
 }
 
 export function WorkspaceTabbarView({ tabbar }: { tabbar: TabbarViewModel }): ReactElement {
-  const env = tabbar.environment
   return (
-    <div className="col-span-full row-start-1 flex min-w-0 items-end gap-4 bg-background px-4 pt-2 max-[720px]:mb-2 max-[720px]:gap-2">
-      <div
-        className="flex min-w-0 flex-1 items-end gap-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-        aria-label={tabbar.listLabel}
+    <>
+      <TabStrip
+        label={tabbar.listLabel}
+        addLabel={tabbar.addRequest.label}
+        addTestId="workspace-tabbar-add-request"
+        onAdd={tabbar.addRequest.disabled ? undefined : tabbar.addRequest.onClick}
       >
         {tabbar.tabs.map((tab) => (
-          <div
-            className={cn(
-              'group flex h-[36px] min-w-0 max-w-[220px] shrink-0 items-center rounded-t-[8px] pr-2 transition-colors',
-              tab.active ? 'bg-card shadow-[0_-1px_0_var(--border)_inset]' : 'text-muted-foreground hover:bg-muted/60',
-            )}
+          <TabStripItem
             key={tab.key}
-          >
-            <Button
-              type="button"
-              variant="ghost"
-              role="tab"
-              aria-selected={tab.active}
-              data-testid="workspace-tabbar-tab"
-              className={cn(
-                'h-[36px] min-h-0 min-w-0 max-w-[190px] justify-start gap-2 rounded-none rounded-t-[8px] bg-transparent px-4 text-left text-[12px] font-normal text-inherit hover:bg-transparent focus-visible:ring-0',
-                tab.active ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-              onClick={tab.onSelect}
-              onContextMenu={tab.onContextMenu}
-            >
-              <TabBadge badge={tab.badge} />
-              <span className="min-w-0 truncate">{tab.title}</span>
-              {tab.changed && <span className="size-[6px] shrink-0 rounded-full bg-warning" role="img" aria-label={tabbar.changedLabel} />}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className={cn(
-                'size-[22px] min-h-0 shrink-0 rounded-md p-0 text-[15px] font-normal leading-none text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-0',
-                tab.active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
-              )}
-              data-testid="workspace-tabbar-close"
-              aria-label={tab.closeLabel}
-              onClick={tab.onClose}
-              onContextMenu={tab.onContextMenu}
-            >
-              ×
-            </Button>
-          </div>
+            leading={<TabBadge badge={tab.badge} />}
+            label={tab.title}
+            trailing={tab.badge.kind === 'environment' && tab.badge.isActive ? <StatusDot tone="ok" /> : undefined}
+            active={tab.active}
+            dirty={tab.changed}
+            dirtyLabel={tabbar.changedLabel}
+            closeLabel={tab.closeLabel}
+            testIds={{ tab: 'workspace-tabbar-tab', close: 'workspace-tabbar-close' }}
+            onSelect={tab.onSelect}
+            onClose={tab.onClose}
+            onContextMenu={(event) => {
+              event.preventDefault()
+              tab.onContextMenu(event)
+            }}
+          />
         ))}
-      </div>
-      <div className="flex min-w-0 shrink-0 items-center pb-2 max-[720px]:pb-2">
-        <Select value={env.value} onValueChange={env.onChange} disabled={env.disabled}>
-          <SelectTrigger
-            aria-label={env.ariaLabel}
-            className="h-[30px] min-h-[30px] w-[160px] rounded-md border-border bg-card text-[12px] font-medium text-foreground max-[720px]:w-[124px]"
-            data-testid="workspace-tabbar-environment-select"
-          >
-            <SelectValue placeholder={env.placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {env.options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      </TabStrip>
       <TabContextMenuView menu={tabbar.contextMenu} />
-    </div>
+    </>
   )
 }
 
@@ -194,7 +143,7 @@ export function WorkspaceMainView({
 }): ReactElement {
   const main = tabbar.main
   return (
-    <section className="workspace" aria-label={main.requestLabel}>
+    <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden" aria-label={main.requestLabel}>
       <WorkspaceTabbarView tabbar={tabbar} />
       {tabbar.pane === 'environment' && <EnvironmentTabView {...environmentTab} />}
       {tabbar.pane === 'docs' && tabbar.docsRequest && (

@@ -38,12 +38,7 @@ export type TabbarInput = {
   onOpenOpenApi: () => void
 }
 
-export type TabBadge =
-  | { kind: 'docs'; label: string }
-  | { kind: 'method'; label: string; className: string }
-  | { kind: 'environment'; glyph: string }
-
-const environmentGlyph = '◎'
+export type TabBadge = { kind: 'docs'; label: string } | { kind: 'method'; method: string } | { kind: 'environment'; isActive: boolean }
 
 // The workspace tab bar, its environment picker, and which pane shows below it.
 export type TabMenuItem = {
@@ -72,8 +67,8 @@ export function useWorkspaceTabbarViewModel(input: TabbarInput) {
       tab.kind === 'docs'
         ? { kind: 'docs', label: t(WORKSPACE_TEXT.tabs.docsBadge) }
         : request
-          ? { kind: 'method', label: request.method, className: `workspace-tab-method method-${request.method.toLowerCase()}` }
-          : { kind: 'environment', glyph: environmentGlyph }
+          ? { kind: 'method', method: request.method }
+          : { kind: 'environment', isActive: tab.id === input.activeEnvironmentId }
     const key = workspaceTabKey(tab)
     return [
       {
@@ -178,6 +173,11 @@ export function useWorkspaceTabbarViewModel(input: TabbarInput) {
 
   return {
     listLabel: t(WORKSPACE_TEXT.tabs.list),
+    addRequest: {
+      label: t(WORKSPACE_TEXT.main.newRequest),
+      disabled: !input.canCreateRequest,
+      onClick: input.onNewRequest,
+    },
     tabs,
     changedLabel: t(WORKSPACE_TEXT.tabs.changed),
     readDocs: { label: t(WORKSPACE_TEXT.tabs.readDocs), disabled: !input.hasRequests, onClick: input.onReadDocs },
