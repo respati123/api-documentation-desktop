@@ -3,10 +3,7 @@ import type { useCommitDialogViewModel } from '@/features/sync/viewmodels/use-co
 import { ChangeRow, HistoryChangeRow } from '@/features/sync/views/change-rows.view'
 import type { TextDiffRow } from '@/lib/text-diff'
 import { plainButtonClass } from '@/shared/components/plain-button'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type CommitDialogViewProps = ReturnType<typeof useCommitDialogViewModel>
@@ -194,7 +191,7 @@ function HistoryPane({ history }: { history: CommitDialogViewProps['history'] })
           <div className="flex justify-end px-3 pt-2">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               data-testid="commit-dialog-history-revert-button"
               disabled={history.revert.disabled}

@@ -2,7 +2,7 @@ import type { ReactElement } from 'react'
 import type { useAuthDialogViewModel } from '@/features/sync/viewmodels/use-auth-dialog.viewmodel'
 import { AppDialog } from '@/shared/components/app-dialog'
 import { plainButtonClass } from '@/shared/components/plain-button'
-import { Button } from '@/shared/components/ui/button'
+import { Button } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type AuthDialogViewProps = ReturnType<typeof useAuthDialogViewModel>
@@ -25,7 +25,7 @@ export function AuthDialogView({
   return (
     <>
       {showTrigger && (
-        <Button data-testid="sync-auth-trigger-button" variant="outline" size="sm" onClick={onOpenTrigger}>
+        <Button data-testid="sync-auth-trigger-button" variant="secondary" size="sm" onClick={onOpenTrigger}>
           {triggerLabel}
         </Button>
       )}

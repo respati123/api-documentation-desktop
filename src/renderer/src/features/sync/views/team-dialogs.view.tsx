@@ -1,10 +1,20 @@
 import type { FormEvent, ReactElement } from 'react'
 import type { useTeamDialogsViewModel } from '@/features/sync/viewmodels/use-team-dialogs.viewmodel'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui'
 
 type ViewModel = ReturnType<typeof useTeamDialogsViewModel>
 
@@ -81,7 +91,7 @@ export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElem
           {team.inviteLink && (
             <div className="invite-link-row">
               <Input data-testid="sync-team-invite-link-input" aria-label={team.linkLabel} readOnly value={team.inviteLink} />
-              <Button data-testid="sync-team-copy-link-button" type="button" variant="outline" onClick={team.onCopy}>
+              <Button data-testid="sync-team-copy-link-button" type="button" variant="secondary" onClick={team.onCopy}>
                 {team.copyLabel}
               </Button>
             </div>
@@ -95,7 +105,7 @@ export function TeamDialogView({ team }: { team: ViewModel['team'] }): ReactElem
               onChange={(event) => team.onTokenChange(event.target.value)}
               placeholder={team.tokenPlaceholder}
             />
-            <Button data-testid="sync-team-accept-invite-button" type="submit" variant="outline" disabled={!team.canAccept}>
+            <Button data-testid="sync-team-accept-invite-button" type="submit" variant="secondary" disabled={!team.canAccept}>
               {team.joinLabel}
             </Button>
           </form>
