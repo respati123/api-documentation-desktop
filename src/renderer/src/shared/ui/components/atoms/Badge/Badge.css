@@ -1,0 +1,59 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 20px;
+  padding: 0 var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font: 500 11px/14px var(--font-data);
+  white-space: nowrap;
+}
+
+.badge--primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.badge--secondary {
+  background: var(--raised);
+  color: var(--fg-secondary);
+}
+
+.badge--outline {
+  border-color: var(--line-strong);
+  color: var(--fg-secondary);
+}
+
+.badge--success {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.badge--warning {
+  background: transparent;
+  color: var(--warn);
+}
+
+.badge--destructive {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+/* A count next to a tab name. */
+.badge--count {
+  height: auto;
+  padding: 0 5px;
+  border: 0;
+  background: var(--hover);
+  color: var(--fg-secondary);
+  font: 400 10px/15px var(--font-data);
+}
+
+/* A square chip for a status, such as 201 Created. */
+.badge--chip {
+  height: auto;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-xs);
+  font: 500 12px/18px var(--font-data);
+}

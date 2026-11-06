@@ -1,0 +1,12 @@
+.method-tag {
+  display: inline-block;
+  width: 40px;
+  flex: none;
+  font: 500 10px/14px var(--font-data);
+}
+
+.method-tag--get { color: var(--method-get); }
+.method-tag--post { color: var(--method-post); }
+.method-tag--put { color: var(--method-put); }
+.method-tag--patch { color: var(--method-patch); }
+.method-tag--delete { color: var(--method-delete); }

@@ -1,0 +1,187 @@
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: 500 12px/16px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.btn--sm {
+  height: 28px;
+  padding: 0 var(--space-md);
+  font-size: 11px;
+}
+
+.btn--md {
+  height: 30px;
+  padding: 0 10px;
+}
+
+.btn--lg {
+  height: 38px;
+  padding: 0 var(--space-xl);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.btn--icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+
+/* Variants: primary and send are the only high-emphasis fills. Use one primary per view. */
+.btn--primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+.btn--primary.btn--md {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* Electric green is reserved for the Send action. Do not use it for anything else. */
+.btn--send.btn--lg {
+  padding: 0 20px;
+}
+.btn--send {
+  background: var(--send);
+  color: var(--on-send);
+  font-weight: 700;
+}
+.btn--send:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn--secondary {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--fg-secondary);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--fg-muted);
+}
+.btn--ghost.btn--icon {
+  color: var(--fg-secondary);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.btn--destructive {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--error);
+}
+.btn--destructive:hover:not(:disabled) {
+  background: var(--error-soft);
+}
+
+.btn--link {
+  height: auto;
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border-radius: var(--radius-xs);
+  color: var(--link);
+  font-size: 12px;
+}
+.btn--link:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+/* Loading: the label fades out but keeps its space, and the spinner sits on top of it. */
+.btn--loading .btn__label {
+  opacity: 0;
+}
+
+.btn__spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: btn-spin 0.7s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn__spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* Secondary and destructive buttons are narrower, as the prototype shows them. */
+.btn--secondary.btn--md,
+.btn--destructive.btn--md {
+  padding: 0 10px;
+}
+
+/* The label holds an icon and text side by side. */
+.btn__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* A shortcut hint inside a button, as on Send. */
+.btn kbd {
+  font: 400 11px/16px var(--font-data);
+  opacity: 0.75;
+}
+
+.btn-group {
+  display: flex;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.btn-group > .btn {
+  border-radius: 0;
+}
+
+.btn-group > .btn + .btn {
+  width: 32px;
+  padding: 0;
+  border-left: 1px solid rgb(0 57 26 / 0.35);
+}

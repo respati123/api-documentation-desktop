@@ -1,0 +1,36 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  font: 400 13px/20px var(--font-ui);
+}
+
+.card__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-lg) var(--space-lg) 0;
+}
+
+.card__title {
+  font: 600 14px/20px var(--font-ui);
+}
+
+.card__description {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.card__content {
+  padding: var(--space-lg);
+}
+
+.card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-lg) var(--space-lg);
+}
