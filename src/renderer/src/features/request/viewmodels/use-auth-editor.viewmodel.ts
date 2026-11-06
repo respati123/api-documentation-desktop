@@ -15,9 +15,9 @@ export function useAuthEditorViewModel({ request, readOnly, suggestions, onVaria
     type: auth.type,
     typeOptions: [
       { value: 'none', label: t(REQUEST_TEXT.auth.none) },
+      { value: 'bearer', label: t(REQUEST_TEXT.auth.bearer) },
       { value: 'api-key', label: t(REQUEST_TEXT.auth.apiKey) },
       { value: 'basic', label: t(REQUEST_TEXT.auth.basic) },
-      { value: 'bearer', label: t(REQUEST_TEXT.auth.bearer) },
     ],
     bearer: auth.type === 'bearer' ? { token: auth.token } : null,
     basic: auth.type === 'basic' ? { username: auth.username, password: auth.password } : null,

@@ -1,6 +1,6 @@
 {
   "workbench": {
-    "kicker": "{{folder}} / Pembuat request",
+    "kicker": "{{folder}} /",
     "fallbackFolder": "Workspace",
     "nameLabel": "Nama request",
     "viewDocs": "Lihat dokumentasi",
@@ -21,7 +21,9 @@
     "preScriptLabel": "Script sebelum request",
     "postScriptLabel": "Script setelah respons",
     "scriptPlaceholder": "// JavaScript. Gunakan apidocs.vars, apidocs.req, apidocs.res, apidocs.check, dan apidocs.log.",
-    "scriptsLoading": "Memuat editor…"
+    "scriptsLoading": "Memuat editor…",
+    "unresolved": "Ada variabel yang belum terisi",
+    "resizeSplit": "Ubah ukuran request dan response"
   },
   "tabs": {
     "label": "Konfigurasi request",
@@ -35,7 +37,8 @@
     "headersActive_other": "{{count}} header aktif",
     "responses": "Respons",
     "docs": "Dokumentasi",
-    "scripts": "Script"
+    "scripts": "Script",
+    "scriptsConfigured": "Script sudah diatur"
   },
   "send": {
     "send": "Kirim",
@@ -58,7 +61,8 @@
     "scheduled_other": "Mengirim dalam {{count}} detik.",
     "repeating_other": "Mengulang setiap {{count}} detik.",
     "cancel": "Batal",
-    "stop": "Berhenti"
+    "stop": "Berhenti",
+    "shortcutHint": "Ctrl ↵"
   },
   "timers": {
     "delayTitle": "Kirim setelah jeda",
@@ -82,7 +86,7 @@
   },
   "params": {
     "tableLabel": "Parameter query",
-    "add": "＋ Tambah",
+    "add": "Tambah parameter",
     "deleteAll": "Hapus semua",
     "description": "Deskripsi",
     "count": "{{count}} parameter",
@@ -100,7 +104,7 @@
   },
   "headers": {
     "tableLabel": "Header request",
-    "add": "＋ Tambah",
+    "add": "Tambah header",
     "deleteAll": "Hapus semua",
     "description": "Deskripsi",
     "count": "{{count}} kustom",
@@ -126,10 +130,10 @@
   },
   "auth": {
     "typeLabel": "Jenis otorisasi",
-    "none": "Tidak ada",
-    "apiKey": "API Key",
-    "basic": "Basic Auth",
-    "bearer": "Bearer Token",
+    "none": "Tanpa auth",
+    "apiKey": "API key",
+    "basic": "Basic auth",
+    "bearer": "Bearer token",
     "token": "Token",
     "tokenAria": "Bearer token",
     "tokenPlaceholder": "Masukkan token",
@@ -193,15 +197,16 @@
     "fileErrorFallback": "Tidak dapat memilih file.",
     "rawPlaceholderJson": "{\n  \n}",
     "formatJson": "Format",
-    "jsonValid": "JSON valid",
-    "jsonInvalid": "JSON tidak valid pada baris {{line}}, kolom {{column}}"
+    "jsonValid": "JSON valid, {{size}}",
+    "jsonInvalid": "JSON tidak valid pada baris {{line}}, kolom {{column}}",
+    "moreModes": "Lainnya"
   },
   "contract": {
     "title": "Kontrak respons",
     "description": "Dokumentasikan kode status dan payload yang bisa diharapkan frontend.",
-    "add": "＋ Tambah respons",
+    "add": "Tambah response",
     "emptyTitle": "Belum ada respons terdokumentasi",
-    "emptyDescription": "Tambahkan kode status dan sertakan skema atau contoh bila ada.",
+    "emptyDescription": "Belum ada response tersimpan. Kirim request, lalu pilih Simpan sebagai contoh.",
     "status": "Status",
     "statusAria": "Kode status respons {{position}}",
     "descriptionLabel": "Deskripsi",

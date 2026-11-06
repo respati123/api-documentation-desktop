@@ -4,7 +4,7 @@ const slug = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/
 export const REQUEST_TEST_IDS = {
   workbench: 'request-workbench-container',
   name: 'request-workbench-name-input',
-  openDocs: 'request-workbench-docs-button',
+  resolvedUrl: 'request-workbench-resolved-url',
   method: 'request-workbench-method-select',
   url: 'request-workbench-url-input',
   docsField: 'request-workbench-docs-input',
@@ -86,6 +86,8 @@ export const REQUEST_TEST_IDS = {
   body: {
     container: 'request-body-container',
     mode: 'request-body-mode-select',
+    moreModes: 'request-body-more-modes-button',
+    modeOption: (value: string) => `request-body-mode-${value}-item`,
     help: 'request-body-help',
     add: 'request-body-add-field-button',
     error: 'request-body-error',

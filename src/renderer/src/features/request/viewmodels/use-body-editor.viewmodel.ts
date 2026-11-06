@@ -9,9 +9,12 @@ import type { PickedFile } from '@/features/request/models/request.model'
 import { requestService } from '@/features/request/services/request.service'
 import type { EditorInput } from '@/features/request/viewmodels/editor.types'
 import { BODY_MODE_TEXT } from '@/shared/constants/body-mode-text.constants'
+import { formatBytes } from '@/shared/lib/format-bytes'
 import { type BodyField, bodyFieldSchema, bodyModeSchema, bodyModes } from '@/shared/models/api-node.model'
 
 const rawModes = ['json', 'xml', 'yaml', 'edn', 'text', 'other']
+// These sit in the segmented control. The rest sit in its More menu.
+const primaryModes: string[] = ['none', 'json', 'text']
 
 // Owns the body tab: the body type, the form fields, the raw editors, and the file picker.
 export function useBodyEditorViewModel({ request, readOnly, suggestions, onVariableClick, onChange }: EditorInput) {
@@ -37,6 +40,10 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
   }
 
   const modeLabel = t(BODY_MODE_TEXT[mode], { ns: 'common' })
+  const modeText = (value: string) => {
+    const parsed = bodyModeSchema.safeParse(value)
+    return parsed.success ? t(BODY_MODE_TEXT[parsed.data], { ns: 'common' }) : value
+  }
   const helpByMode: Record<string, string> = {
     'form-data': t(REQUEST_TEXT.body.helpFormData),
     urlencoded: t(REQUEST_TEXT.body.helpUrlencoded),
@@ -49,7 +56,7 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
   const jsonCheck = isJson ? checkJsonBody(request.body ?? '') : null
   const jsonMessage =
     jsonCheck?.status === 'valid'
-      ? t(REQUEST_TEXT.body.jsonValid)
+      ? t(REQUEST_TEXT.body.jsonValid, { size: formatBytes(new Blob([request.body ?? '']).size) })
       : jsonCheck?.status === 'invalid'
         ? t(REQUEST_TEXT.body.jsonInvalid, { line: jsonCheck.line, column: jsonCheck.column })
         : null
@@ -59,7 +66,10 @@ export function useBodyEditorViewModel({ request, readOnly, suggestions, onVaria
     suggestions,
     onVariableClick,
     mode,
-    modeOptions: bodyModes.map((value) => ({ value, label: t(BODY_MODE_TEXT[value], { ns: 'common' }) })),
+    primaryModeOptions: primaryModes.map((value) => ({ value, label: modeText(value) })),
+    moreModeOptions: bodyModes.filter((value) => !primaryModes.includes(value)).map((value) => ({ value, label: modeText(value) })),
+    moreLabel: primaryModes.includes(mode) ? t(REQUEST_TEXT.body.moreModes) : modeLabel,
+    moreActive: !primaryModes.includes(mode),
     helpText: helpByMode[mode] ?? t(REQUEST_TEXT.body.helpContentType, { type: contentType }),
     isFields: mode === 'form-data' || mode === 'urlencoded',
     isFormData: mode === 'form-data',
