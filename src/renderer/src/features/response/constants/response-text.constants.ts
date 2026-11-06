@@ -25,6 +25,11 @@ export const RESPONSE_TEXT = {
   },
   body: {
     empty: 'body.empty',
+    copy: 'body.copy',
+    copied: 'body.copied',
+    saveExample: 'body.saveExample',
+    languageJson: 'body.languageJson',
+    languageText: 'body.languageText',
   },
   headers: {
     empty: 'headers.empty',

@@ -1,5 +1,7 @@
 export const RESPONSE_TEST_IDS = {
   container: 'response-view-container',
+  copy: 'response-view-copy-button',
+  saveExample: 'response-view-save-example-button',
   empty: 'response-view-empty',
   loading: 'response-view-loading',
   error: 'response-view-error',
