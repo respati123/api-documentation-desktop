@@ -6,6 +6,7 @@ import { canRevertTo } from '@/features/sync/lib/revert'
 import type { CommitTab } from '@/features/sync/viewmodels/use-commit-dialog-state.viewmodel'
 import type { TextDiffRow } from '@/lib/text-diff'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
+import type { CommitTone } from '@/shared/ui'
 
 // The fields of a commit that the dialog reads. Structural, so sync does not depend on the workspace's models.
 export type CommitSummary = {
@@ -101,20 +102,14 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
   }))
 
   const historyCommits = history.commits.map((commit) => {
-    const state =
-      commit.source === 'cloud'
-        ? history.localCommitIds.has(commit.id)
-          ? t(SYNC_TEXT.commit.pushed)
-          : t(SYNC_TEXT.commit.cloud)
-        : commit.pushed
-          ? t(SYNC_TEXT.commit.pushed)
-          : t(SYNC_TEXT.commit.local)
+    const tone: CommitTone =
+      commit.source === 'cloud' ? (history.localCommitIds.has(commit.id) ? 'pushed' : 'cloud') : commit.pushed ? 'pushed' : 'local'
     return {
       id: commit.id,
       message: commit.message,
       date: new Date(commit.createdAt).toLocaleString(),
-      state,
-      stateClass: state.toLowerCase(),
+      state: t(SYNC_TEXT.commit[tone]),
+      tone,
       selected: history.selectedCommit?.id === commit.id,
     }
   })
