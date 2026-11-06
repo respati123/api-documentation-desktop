@@ -4,8 +4,7 @@ import { VARIABLES_TEXT } from '@/features/variables/constants/variables-text.co
 import type { useEnvironmentTabViewModel } from '@/features/variables/viewmodels/use-environment-tab.viewmodel'
 import { VariableRowsView } from '@/features/variables/views/variable-rows.view'
 import { StateMessage } from '@/shared/components/state-message'
-import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
+import { Badge, Button, EnvironmentEditor } from '@/shared/ui'
 
 export type EnvironmentTabViewProps = ReturnType<typeof useEnvironmentTabViewModel>
 
@@ -15,17 +14,22 @@ export function EnvironmentTabView({
   readOnly,
   isActive,
   canActivate,
+  activeLabel,
   activateLabel,
+  duplicateLabel,
+  deleteLabel,
   secureStorageAvailable,
   rows,
   onNameChange,
   onActivate,
+  onDuplicate,
+  onDelete,
 }: EnvironmentTabViewProps) {
   const { t } = useTranslation('variables')
 
   if (!environment) {
     return (
-      <section className="request-card workspace-full-panel" data-testid={VARIABLES_TEST_IDS.tabPanel}>
+      <section className="flex min-h-0 flex-1" data-testid={VARIABLES_TEST_IDS.tabPanel}>
         <StateMessage
           testId={VARIABLES_TEST_IDS.tabUnavailable}
           title={t(VARIABLES_TEXT.environmentTab.unavailableTitle)}
@@ -36,37 +40,42 @@ export function EnvironmentTabView({
   }
 
   return (
-    <section className="request-card environment-tab-panel" aria-label={sectionLabel} data-testid={VARIABLES_TEST_IDS.tabPanel}>
-      <div className="flex items-center justify-between gap-4 pb-4">
-        <div className="min-w-0 flex-1">
-          <Input
-            className="h-[36px] border-transparent bg-transparent px-2 text-[18px] font-bold shadow-none hover:border-border focus-visible:border-primary"
-            data-testid={VARIABLES_TEST_IDS.tabName}
-            aria-label={t(VARIABLES_TEXT.environments.nameLabel)}
-            maxLength={100}
-            value={environment.name}
-            readOnly={readOnly}
-            onChange={(event) => onNameChange(event.target.value)}
-          />
-        </div>
-        <Button
-          type="button"
-          variant={isActive ? 'default' : 'outline'}
-          size="sm"
-          data-testid={VARIABLES_TEST_IDS.tabActivate}
-          disabled={!canActivate}
-          onClick={onActivate}
-        >
-          {activateLabel}
-        </Button>
-      </div>
-      <p className="variable-policy">{t(VARIABLES_TEXT.environmentTab.policy)}</p>
+    <div className="min-h-0 flex-1 overflow-y-auto" data-testid={VARIABLES_TEST_IDS.tabPanel}>
       {!secureStorageAvailable && (
         <p className="variable-storage-warning" role="status" data-testid={VARIABLES_TEST_IDS.tabStorageWarning}>
           {t(VARIABLES_TEXT.dialog.storageWarning)}
         </p>
       )}
-      <VariableRowsView {...rows} />
-    </section>
+      <EnvironmentEditor
+        folderLabel={`${sectionLabel} /`}
+        name={environment.name}
+        nameLabel={t(VARIABLES_TEXT.environments.nameLabel)}
+        nameTestId={VARIABLES_TEST_IDS.tabName}
+        readOnly={readOnly}
+        note={t(VARIABLES_TEXT.environmentTab.policy, { interpolation: { skipOnVariables: true }, variableName: '{{variableName}}' })}
+        actions={
+          <>
+            {isActive ? (
+              <Badge variant="success" shape="chip" data-testid={VARIABLES_TEST_IDS.tabActive}>
+                {activeLabel}
+              </Badge>
+            ) : (
+              <Button variant="primary" data-testid={VARIABLES_TEST_IDS.tabActivate} disabled={!canActivate} onClick={onActivate}>
+                {activateLabel}
+              </Button>
+            )}
+            <Button variant="secondary" data-testid={VARIABLES_TEST_IDS.tabDuplicate} disabled={readOnly} onClick={onDuplicate}>
+              {duplicateLabel}
+            </Button>
+            <Button variant="destructive" data-testid={VARIABLES_TEST_IDS.tabDelete} disabled={readOnly} onClick={onDelete}>
+              {deleteLabel}
+            </Button>
+          </>
+        }
+        onNameChange={onNameChange}
+      >
+        <VariableRowsView {...rows} />
+      </EnvironmentEditor>
+    </div>
   )
 }

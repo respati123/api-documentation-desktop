@@ -4,11 +4,7 @@ import { VARIABLES_TEXT } from '@/features/variables/constants/variables-text.co
 import type { useVariablesDialogViewModel } from '@/features/variables/viewmodels/use-variables-dialog.viewmodel'
 import { VariableRowsView } from '@/features/variables/views/variable-rows.view'
 import { AppDialog } from '@/shared/components/app-dialog'
-import { SectionHeading } from '@/shared/components/section-heading'
-import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
+import { Button, Input, Label, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type VariablesDialogViewProps = ReturnType<typeof useVariablesDialogViewModel>
@@ -34,7 +30,7 @@ export function VariablesDialogView({
     <AppDialog
       open={open}
       onOpenChange={onOpenChange}
-      className="variables-dialog"
+      className="grid max-h-[calc(100vh-32px)] gap-4 overflow-auto"
       testId={VARIABLES_TEST_IDS.dialog}
       title={t(VARIABLES_TEXT.dialog.title)}
       description={
@@ -43,17 +39,17 @@ export function VariablesDialogView({
           i18nKey={VARIABLES_TEXT.dialog.description}
           ns="variables"
           values={{ token: '{{variableName}}' }}
-          components={{ code: <code /> }}
+          components={{ code: <code className="font-mono text-foreground" /> }}
         />
       }
     >
-      <p className="variable-policy">{t(VARIABLES_TEXT.dialog.policy)}</p>
+      <p className="text-[12px] leading-[1.6] text-muted-foreground">{t(VARIABLES_TEXT.dialog.policy)}</p>
       {!secureStorageAvailable && (
-        <p className="variable-storage-warning" role="status" data-testid={VARIABLES_TEST_IDS.storageWarning}>
+        <p className="text-[12px] text-destructive" role="status" data-testid={VARIABLES_TEST_IDS.storageWarning}>
           {t(VARIABLES_TEXT.dialog.storageWarning)}
         </p>
       )}
-      <Tabs value={scope} onValueChange={onScopeChange} className="variables-tabs">
+      <Tabs value={scope} onValueChange={onScopeChange} className="grid gap-4">
         <TabsList aria-label={t(VARIABLES_TEXT.dialog.scopeLabel)}>
           <TabsTrigger value="global" data-testid={VARIABLES_TEST_IDS.globalTab}>
             {t(VARIABLES_TEXT.dialog.scopeGlobal)}
@@ -62,63 +58,58 @@ export function VariablesDialogView({
             {t(VARIABLES_TEXT.dialog.scopeEnvironments)}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="global" className="variables-pane">
-          <p className="variable-scope-help">{t(VARIABLES_TEXT.dialog.globalHelp)}</p>
+        <TabsContent value="global" className="grid gap-4">
+          <p className="text-[12px] leading-[1.6] text-muted-foreground">{t(VARIABLES_TEXT.dialog.globalHelp)}</p>
           <VariableRowsView {...globalRows} />
         </TabsContent>
-        <TabsContent value="environment" className="variables-pane">
-          <section className="environment-list-section" aria-label={t(VARIABLES_TEXT.environments.sectionLabel)}>
-            <SectionHeading
-              className="environment-section-heading"
-              title={t(VARIABLES_TEXT.environments.listTitle)}
-              description={t(VARIABLES_TEXT.environments.listDescription)}
-              action={<span className="environment-total">{environmentTotal}</span>}
-            />
-            <fieldset className="environment-list m-0 min-w-0 border-0 p-0">
+        <TabsContent value="environment" className="grid gap-4">
+          <section className="grid gap-2" aria-label={t(VARIABLES_TEXT.environments.sectionLabel)}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="grid">
+                <strong className="text-[13px] font-semibold text-foreground">{t(VARIABLES_TEXT.environments.listTitle)}</strong>
+                <span className="text-[12px] text-muted-foreground">{t(VARIABLES_TEXT.environments.listDescription)}</span>
+              </div>
+              <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{environmentTotal}</span>
+            </div>
+            <fieldset className="m-0 grid min-w-0 gap-1 border-0 p-0">
               <legend className="sr-only">{t(VARIABLES_TEXT.environments.chooseActive)}</legend>
               <Button
-                type="button"
                 variant="ghost"
-                className={cn('environment-list-item text-base font-normal', noEnvironmentActive && 'environment-list-item-active')}
-                data-testid={VARIABLES_TEST_IDS.environmentNone}
                 aria-pressed={noEnvironmentActive}
+                data-testid={VARIABLES_TEST_IDS.environmentNone}
+                className={cn('h-auto justify-start gap-3 px-3 py-2 text-left', noEnvironmentActive && 'bg-muted text-foreground')}
                 onClick={() => onSelectEnvironment(null)}
               >
-                <span className="environment-item-icon" aria-hidden="true">
-                  ◎
+                <span aria-hidden="true">◎</span>
+                <span className="grid min-w-0 flex-1">
+                  <strong className="font-semibold">{t(VARIABLES_TEXT.environments.noneTitle)}</strong>
+                  <small className="text-[11px] text-muted-foreground">{t(VARIABLES_TEXT.environments.noneDescription)}</small>
                 </span>
-                <span className="environment-item-copy">
-                  <strong>{t(VARIABLES_TEXT.environments.noneTitle)}</strong>
-                  <small>{t(VARIABLES_TEXT.environments.noneDescription)}</small>
-                </span>
-                {noEnvironmentActive && <span className="environment-active-badge">{t(VARIABLES_TEXT.environments.active)}</span>}
+                {noEnvironmentActive && <span className="text-[11px] text-primary">{t(VARIABLES_TEXT.environments.active)}</span>}
               </Button>
               {environments.map((environment) => (
                 <Button
-                  type="button"
                   variant="ghost"
                   key={environment.id}
-                  className={cn('environment-list-item text-base font-normal', environment.isActive && 'environment-list-item-active')}
-                  data-testid={VARIABLES_TEST_IDS.environmentItem(environment.id)}
                   aria-pressed={environment.isActive}
+                  data-testid={VARIABLES_TEST_IDS.environmentItem(environment.id)}
+                  className={cn('h-auto justify-start gap-3 px-3 py-2 text-left', environment.isActive && 'bg-muted text-foreground')}
                   onClick={() => onSelectEnvironment(environment.id)}
                 >
-                  <span className="environment-item-icon" aria-hidden="true">
-                    ◉
+                  <span aria-hidden="true">◉</span>
+                  <span className="grid min-w-0 flex-1">
+                    <strong className="truncate font-semibold">{environment.name}</strong>
+                    <small className="text-[11px] text-muted-foreground">{environment.countText}</small>
                   </span>
-                  <span className="environment-item-copy">
-                    <strong>{environment.name}</strong>
-                    <small>{environment.countText}</small>
-                  </span>
-                  {environment.isActive && <span className="environment-active-badge">{t(VARIABLES_TEXT.environments.active)}</span>}
+                  {environment.isActive && <span className="text-[11px] text-primary">{t(VARIABLES_TEXT.environments.active)}</span>}
                 </Button>
               ))}
             </fieldset>
           </section>
           {selected ? (
             <>
-              <div className="environment-name-row">
-                <Label htmlFor="variables-environment-name">
+              <div className="flex flex-wrap items-end gap-3">
+                <Label htmlFor="variables-environment-name" className="grid min-w-0 flex-1 gap-1">
                   <span>{t(VARIABLES_TEXT.environments.editing)}</span>
                   <Input
                     id="variables-environment-name"
@@ -131,8 +122,7 @@ export function VariablesDialogView({
                   />
                 </Label>
                 <Button
-                  type="button"
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
                   data-testid={VARIABLES_TEST_IDS.environmentDelete}
                   disabled={selected.readOnly}
@@ -141,11 +131,11 @@ export function VariablesDialogView({
                   {t(VARIABLES_TEXT.environments.delete)}
                 </Button>
               </div>
-              <p className="variable-scope-help">{t(VARIABLES_TEXT.environments.overrideHelp)}</p>
+              <p className="text-[12px] leading-[1.6] text-muted-foreground">{t(VARIABLES_TEXT.environments.overrideHelp)}</p>
               <VariableRowsView {...environmentRows} />
             </>
           ) : (
-            <p className="variable-empty environment-empty" data-testid={VARIABLES_TEST_IDS.environmentPrompt}>
+            <p className="text-[13px] leading-[1.6] text-muted-foreground" data-testid={VARIABLES_TEST_IDS.environmentPrompt}>
               {promptText}
             </p>
           )}

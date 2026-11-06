@@ -11,6 +11,8 @@ export function useEnvironmentTabViewModel({
   secureStorageAvailable,
   onUpdate,
   onActivate,
+  onDuplicate,
+  onDelete,
 }: {
   environment: WorkspaceEnvironment | null
   isActive: boolean
@@ -18,6 +20,8 @@ export function useEnvironmentTabViewModel({
   secureStorageAvailable: boolean
   onUpdate: (environmentId: string, patch: Partial<WorkspaceEnvironment>) => void
   onActivate: (environmentId: string) => void
+  onDuplicate: (environmentId: string) => void
+  onDelete: (environmentId: string) => void
 }) {
   const { t } = useTranslation('variables')
   const rows = useVariableRowsViewModel({
@@ -34,7 +38,10 @@ export function useEnvironmentTabViewModel({
     readOnly,
     isActive,
     canActivate: !readOnly && !isActive,
-    activateLabel: t(isActive ? VARIABLES_TEXT.environmentTab.activeForRequests : VARIABLES_TEXT.environmentTab.useForRequests),
+    activeLabel: t(VARIABLES_TEXT.environments.active),
+    activateLabel: t(VARIABLES_TEXT.environmentTab.useForRequests),
+    duplicateLabel: t(VARIABLES_TEXT.environmentTab.duplicate),
+    deleteLabel: t(VARIABLES_TEXT.environmentTab.delete),
     secureStorageAvailable,
     rows,
     onNameChange: (name: string) => {
@@ -42,6 +49,12 @@ export function useEnvironmentTabViewModel({
     },
     onActivate: () => {
       if (environment) onActivate(environment.id)
+    },
+    onDuplicate: () => {
+      if (environment) onDuplicate(environment.id)
+    },
+    onDelete: () => {
+      if (environment) onDelete(environment.id)
     },
   }
 }

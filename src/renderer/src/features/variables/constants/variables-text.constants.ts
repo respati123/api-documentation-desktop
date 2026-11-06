@@ -36,6 +36,8 @@ export const VARIABLES_TEXT = {
     sectionLabel: 'environmentTab.sectionLabel',
     activeForRequests: 'environmentTab.activeForRequests',
     useForRequests: 'environmentTab.useForRequests',
+    duplicate: 'environmentTab.duplicate',
+    delete: 'environmentTab.delete',
     policy: 'environmentTab.policy',
     unavailableTitle: 'environmentTab.unavailableTitle',
     unavailableDescription: 'environmentTab.unavailableDescription',
