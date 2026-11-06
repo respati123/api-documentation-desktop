@@ -3,7 +3,7 @@ import type { useCommitDialogViewModel } from '@/features/sync/viewmodels/use-co
 import { ChangeRow, HistoryChangeRow } from '@/features/sync/views/change-rows.view'
 import type { TextDiffRow } from '@/lib/text-diff'
 import { plainButtonClass } from '@/shared/components/plain-button'
-import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label } from '@/shared/ui'
+import { Button, CommitRow, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type CommitDialogViewProps = ReturnType<typeof useCommitDialogViewModel>
@@ -170,21 +170,16 @@ function HistoryPane({ history }: { history: CommitDialogViewProps['history'] })
           )}
           {history.emptyText && <p className="change-empty">{history.emptyText}</p>}
           {history.commits.map((commit) => (
-            <Button
+            <CommitRow
               key={commit.id}
-              type="button"
-              variant="ghost"
-              className={cn(plainButtonClass, 'history-commit-row', commit.selected && 'history-commit-row-selected')}
-              data-testid="commit-dialog-history-commit"
-              aria-pressed={commit.selected}
-              onClick={() => history.onSelectCommit(commit.id)}
-            >
-              <span className={`history-commit-state history-commit-${commit.stateClass}`}>{commit.state}</span>
-              <span className="history-commit-copy">
-                <strong title={commit.message}>{commit.message}</strong>
-                <small>{commit.date}</small>
-              </span>
-            </Button>
+              message={commit.message}
+              date={commit.date}
+              stateLabel={commit.state}
+              tone={commit.tone}
+              selected={commit.selected}
+              testId="commit-dialog-history-commit"
+              onSelect={() => history.onSelectCommit(commit.id)}
+            />
           ))}
         </section>
         {history.selectedCommit && (

@@ -84,6 +84,8 @@ describe('useCommitDialogViewModel', () => {
       ),
     )
     expect(result.current.history.commits.map((commit) => commit.state)).toEqual(['Pushed', 'Local', 'Cloud'])
+    // The tone comes from where the commit lives, not from the translated label.
+    expect(result.current.history.commits.map((commit) => commit.tone)).toEqual(['pushed', 'local', 'cloud'])
   })
 
   it('explains that a cloud-less workspace shows only local commits', () => {

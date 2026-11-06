@@ -240,15 +240,8 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .diff-note { margin: 16px; border: 1px solid var(--border); border-radius: 6px; padding: 8px; color: var(--muted-foreground); background: var(--muted); font-size: 12px; line-height: 1.5; }
 .change-list-section { display: grid; gap: 0; border-top: 1px solid var(--border); padding-top: 8px; }
 .history-sidebar .change-list-section:first-child { border-top: 0; padding-top: 0; }
-.history-commit-row { min-width: 0; width: 100%; display: flex; align-items: flex-start; gap: 8px; border: 0; border-radius: 5px; padding: 8px 8px; color: var(--secondary-foreground); background: transparent; text-align: left; }
-.history-commit-row:hover { background: var(--muted); }
-.history-commit-row-selected { background: color-mix(in srgb, var(--primary) 14%, transparent); }
-.history-commit-row:focus-visible, .history-change-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -1px; }
-.history-commit-state { flex: none; padding-top: 0; color: var(--muted-foreground); font-size: 10px; font-weight: 600; }
-.history-commit-copy { min-width: 0; display: grid; gap: 8px; }
-.history-commit-copy strong { overflow: hidden; color: var(--foreground); font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.history-commit-copy small { color: var(--muted-foreground); font-size: 10px; }
 .history-change-row { width: 100%; min-height: 30px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 5px; padding: 8px 8px; color: var(--secondary-foreground); background: transparent; text-align: left; }
+.history-change-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -1px; }
 .history-change-row:hover, .history-change-row-selected { background: color-mix(in srgb, var(--primary) 14%, transparent); }
 .history-change-row > span:nth-child(2) { min-width: 0; flex: 1; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .history-change-row small { flex: none; color: var(--muted-foreground); font-size: 10px; }
