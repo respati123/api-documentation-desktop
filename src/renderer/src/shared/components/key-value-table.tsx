@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Button } from '@/shared/components/ui/button'
+import { Button, Icon } from '@/shared/ui'
 
 // Wraps one row in a div only when the table asks for an entry class. Otherwise the row stays a fragment.
 function KeyValueEntry({ className, children }: { className?: string; children: ReactNode }) {
@@ -64,14 +64,14 @@ export function KeyValueTable<T extends { id: string }>({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="icon"
               className={classNames.remove}
               aria-label={removeLabel(row, index)}
               data-testid={removeTestId(row)}
               disabled={readOnly}
               onClick={() => onRemove(row)}
             >
-              ×
+              <Icon name="trash" size={14} />
             </Button>
           </div>
         </KeyValueEntry>
