@@ -40,8 +40,7 @@ const TEST_ID_FORMAT = /^[a-z0-9]+(-[a-z0-9]+){2,}$/
 const isCheckedFile = (rel: string): boolean =>
   rel.endsWith('.tsx') &&
   !rel.endsWith('.test.tsx') &&
-  (/^features\/[^/]+\/(views|pages|components)\//.test(rel) ||
-    (rel.startsWith('shared/components/') && !rel.startsWith('shared/components/ui/')))
+  (/^features\/[^/]+\/(views|pages|components)\//.test(rel) || rel.startsWith('shared/components/'))
 
 const listFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((name) => {
