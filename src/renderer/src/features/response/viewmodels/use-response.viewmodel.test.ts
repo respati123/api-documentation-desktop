@@ -53,7 +53,7 @@ describe('useResponseViewModel', () => {
     const { result, rerender } = renderHook(({ response }) => useResponseViewModel({ response }), { initialProps: { response: success } })
     act(() => result.current.onTabChange('headers'))
     expect(result.current.tab).toBe('headers')
-    rerender({ response: { ...success } })
+    rerender({ response: { kind: 'success', data: { ...success.data } } })
     expect(result.current.tab).toBe('body')
   })
 

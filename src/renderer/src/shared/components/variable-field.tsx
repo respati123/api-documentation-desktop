@@ -14,10 +14,8 @@ import {
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { plainButtonClass } from '@/shared/components/plain-button'
-import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
-import { Textarea } from '@/shared/components/ui/textarea'
 import { COMMON_TEXT } from '@/shared/constants/common-text.constants'
+import { Button, Input, jsonTokens, Textarea } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 import { isVariableToken } from '@/shared/utils/dom'
 
@@ -30,8 +28,13 @@ type CommonProps = {
   onVariableClick: (name: string, sourceValue: string) => void
 }
 
-type InputProps = CommonProps & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>
-type TextareaProps = CommonProps & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange'>
+type InputProps = CommonProps & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & { mono?: boolean }
+type TextareaProps = CommonProps &
+  Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange'> & {
+    mono?: boolean
+    // Colors JSON keys, strings, numbers, and literals in the overlay.
+    highlight?: 'json'
+  }
 
 type Match = { start: number; cursor: number; prefix: string }
 type MenuPosition = { left: number; top: number; width: number }
@@ -188,10 +191,7 @@ function useVariableField(value: string, onValueChange: (value: string) => void,
     const overlay = overlayRef.current
     if (!element || !overlay) return
     const style = getComputedStyle(element)
-    overlay.style.fontFamily =
-      element instanceof HTMLInputElement && element.type === 'password'
-        ? 'ui-monospace, SFMono-Regular, Menlo, monospace'
-        : style.fontFamily
+    overlay.style.fontFamily = element instanceof HTMLInputElement && element.type === 'password' ? 'var(--font-data)' : style.fontFamily
     overlay.style.fontSize = style.fontSize
     overlay.style.fontWeight = style.fontWeight
     overlay.style.fontStyle = style.fontStyle
@@ -381,6 +381,7 @@ export function VariableTextarea({
   onBlur,
   onKeyDown,
   onScroll,
+  highlight,
   ...props
 }: TextareaProps) {
   const [draft, updateDraft, flushDraft] = useDebouncedEditorValue(value, onValueChange)
@@ -423,7 +424,14 @@ export function VariableTextarea({
         aria-expanded={Boolean(field.match && field.filtered.length)}
       />
       <div ref={field.overlayRef} className="variable-field-overlay variable-textarea-overlay" aria-hidden="true">
-        {renderVariableText(draft, suggestions, (name) => onVariableClick(name, draft), false)}
+        {highlight === 'json'
+          ? jsonTokens(draft).map((token, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: tokens are derived from the text and never reorder, so the position is a stable key
+              <span key={`${index}-${token.kind}`} className={`code-token--${token.kind}`}>
+                {renderVariableText(token.text, suggestions, (name) => onVariableClick(name, draft), false)}
+              </span>
+            ))
+          : renderVariableText(draft, suggestions, (name) => onVariableClick(name, draft), false)}
       </div>
       <SuggestionsMenu
         id={field.menuId}

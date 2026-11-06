@@ -1,3 +1,4 @@
+export { VARIABLES_TEXT } from '@/features/variables/constants/variables-text.constants'
 export * from '@/features/variables/viewmodels/use-environment-tab.viewmodel'
 export * from '@/features/variables/viewmodels/use-variable-quick-edit.viewmodel'
 export * from '@/features/variables/viewmodels/use-variables-dialog.viewmodel'

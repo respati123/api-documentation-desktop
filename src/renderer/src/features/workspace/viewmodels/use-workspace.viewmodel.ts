@@ -26,6 +26,7 @@ import {
 import { useEnvironmentTabViewModel, useVariableQuickEditViewModel, useVariablesDialogViewModel } from '@/features/variables'
 import { refreshedToHead } from '@/features/workspace/lib/head-refresh'
 import { pullNoticeNeeded, pushedByTeammate } from '@/features/workspace/lib/live-update-notice'
+import { referenceGroups } from '@/features/workspace/lib/reference-groups'
 import { readTree } from '@/features/workspace/lib/storage'
 import { hasUnpushedChanges } from '@/features/workspace/lib/unpushed-changes'
 import { workspaceTabKey } from '@/features/workspace/lib/workspace-tabs'
@@ -34,6 +35,7 @@ import { appUpdateService, type UpdateStatus } from '@/features/workspace/servic
 import { workspaceStorageService } from '@/features/workspace/services/workspace-storage.service'
 import { useCloudRealtimeViewModel } from '@/features/workspace/viewmodels/use-cloud-realtime.viewmodel'
 import { useCollectionWidthViewModel } from '@/features/workspace/viewmodels/use-collection-width.viewmodel'
+import { useSendHistoryViewModel } from '@/features/workspace/viewmodels/use-send-history.viewmodel'
 import { useWorkspaceChangesViewModel } from '@/features/workspace/viewmodels/use-workspace-changes.viewmodel'
 import { useWorkspaceChromeViewModel } from '@/features/workspace/viewmodels/use-workspace-chrome.viewmodel'
 import { useCommitHistoryViewModel } from '@/features/workspace/viewmodels/use-workspace-history.viewmodel'
@@ -134,6 +136,9 @@ export function useWorkspaceViewModel() {
     setSelectedHistoryChangeId,
   } = commitState
   const [syncMenuOpen, setSyncMenuOpen] = useState(false)
+  // On narrow windows the side panel is an overlay. This decides whether it is shown.
+  // In a narrow window the side panel is a drawer, so it starts closed.
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 760)
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
   const [localCommits, setLocalCommits] = useState<LocalCommit[]>([])
   const [stagedSnapshot, setStagedSnapshot] = useState<ApiNode[] | null>(null)
@@ -379,6 +384,10 @@ export function useWorkspaceViewModel() {
     secureStorageAvailable,
     onUpdate: updateEnvironmentTab,
     onActivate: updateActiveEnvironment,
+    onDuplicate: (id) => {
+      variablesDialog.duplicateEnvironment(id)
+    },
+    onDelete: variablesDialog.deleteEnvironment,
   })
   const variableQuickEdit = useVariableQuickEditViewModel({
     target: quickEditTarget,
@@ -391,18 +400,18 @@ export function useWorkspaceViewModel() {
   })
 
   const scriptContext = { variables: workspaceVariables, activeEnvironmentId, updateVariables: updateWorkspaceVariables }
+  const sendHistory = useSendHistoryViewModel()
   const { activeRequest, updateActiveRequest, requestWorkbench } = useWorkspaceRequestViewModel({
     selectedRequestId,
     activeFolder,
     treeIndex,
     setTree,
-    activeWorkspace,
     currentWorkspaceId,
     isReadOnly,
     activeWorkspaceTab,
     variableSuggestions,
     resolvedVariables,
-    openDocsTab,
+    onSent: sendHistory.add,
     openVariableEditor,
     scriptContext,
   })
@@ -651,6 +660,7 @@ export function useWorkspaceViewModel() {
       renameFolder: renameFolderInTree,
       deleteItem,
       moveItem,
+      setExpandedFolders,
     },
   })
 
@@ -703,6 +713,29 @@ export function useWorkspaceViewModel() {
     onViewEnvironment: viewEnvironment,
     viewingEnvironmentId: activeEnvironmentTab?.id ?? null,
     canCreateEnvironment: variablesDialog.canCreateEnvironment,
+    onShowSidebar: () => setSidebarOpen(true),
+    historyRows: sendHistory.entries.flatMap((entry) => {
+      const node = treeIndex.nodeById.get(entry.requestId)
+      if (!node || isFolder(node)) return []
+      return [
+        {
+          key: entry.key,
+          requestId: entry.requestId,
+          method: node.method,
+          name: node.name,
+          detail: `${entry.status} ${entry.statusText}, ${entry.duration} ms, ${entry.at}`,
+          ok: entry.status < 400,
+          active: node.id === selectedRequestId,
+        },
+      ]
+    }),
+    referenceGroups: referenceGroups(
+      tree,
+      activeWorkspaceTab?.kind === 'environment' ? '' : selectedRequestId,
+      activeWorkspace?.name ?? '',
+    ),
+    onOpenRequest: openRequestTab,
+    onOpenDocs: openDocsTab,
   })
   const tabbar = useWorkspaceTabbarViewModel({
     tabs: workspaceTabs,
@@ -750,6 +783,11 @@ export function useWorkspaceViewModel() {
     requestWorkbench,
     collectionWidth,
     appShellRef,
+    lastSendById: sendHistory.lastSendById,
+    sidebarOpen,
+    openSidebar: () => setSidebarOpen(true),
+    toggleSidebar: () => setSidebarOpen((open) => !open),
+    closeSidebar: () => setSidebarOpen(false),
     tree,
     setTree,
     workspaceVariables,

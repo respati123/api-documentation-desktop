@@ -1,0 +1,38 @@
+.scroll-area {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.scroll-area__viewport {
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-area__scrollbar {
+  display: flex;
+  user-select: none;
+  touch-action: none;
+  padding: 2px;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+
+.scroll-area__scrollbar[data-orientation='vertical'] {
+  width: 10px;
+}
+
+.scroll-area__scrollbar[data-orientation='horizontal'] {
+  height: 10px;
+  flex-direction: column;
+}
+
+.scroll-area__thumb {
+  flex: 1;
+  border-radius: var(--radius-pill);
+  background: var(--pressed);
+}
+
+.scroll-area__thumb:hover {
+  background: var(--fg-muted);
+}

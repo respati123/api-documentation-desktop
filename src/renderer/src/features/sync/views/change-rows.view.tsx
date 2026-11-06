@@ -2,7 +2,7 @@ import type { ReactElement } from 'react'
 import { changeStatusCode } from '@/features/sync/lib/change-status'
 import type { WorkspaceChange } from '@/lib/workspace-changes'
 import { plainButtonClass } from '@/shared/components/plain-button'
-import { Button } from '@/shared/components/ui/button'
+import { Button } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export function ChangeRow({

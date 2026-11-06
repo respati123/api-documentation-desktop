@@ -1,10 +1,7 @@
 import type { ReactElement } from 'react'
 import type { useDiscardDialogViewModel, useMergeDialogViewModel } from '@/features/sync/viewmodels/use-merge-dialog.viewmodel'
 import { AppDialog } from '@/shared/components/app-dialog'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
-import { Label } from '@/shared/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group'
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Label, RadioGroup, RadioGroupItem } from '@/shared/ui'
 
 type MergeViewModel = ReturnType<typeof useMergeDialogViewModel>
 
@@ -96,7 +93,7 @@ export function DiscardDialogView(props: ReturnType<typeof useDiscardDialogViewM
       description={props.description}
     >
       <div className="dialog-actions">
-        <Button data-testid="sync-discard-cancel-button" type="button" variant="outline" onClick={props.onCancel}>
+        <Button data-testid="sync-discard-cancel-button" type="button" variant="secondary" onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
         <Button data-testid="sync-discard-confirm-button" type="button" variant="destructive" onClick={props.onConfirm}>

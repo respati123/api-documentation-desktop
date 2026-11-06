@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { REQUEST_TEST_IDS } from '@/features/request/constants/request-test-ids.constants'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import type { useAuthEditorViewModel } from '@/features/request/viewmodels/use-auth-editor.viewmodel'
-import { Label } from '@/shared/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import { VariableInput } from '@/shared/components/variable-field'
+import { Label, SegmentedControl, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui'
 
-// Matches the auth field captions in index.css: 12px, semibold, slate-700, normal line height.
-const authLabelClass = 'text-[12px] font-semibold leading-normal text-slate-700'
+const fieldClass = 'grid min-w-0 gap-1.5'
+const fieldGridClass = 'grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4'
 
 export type AuthEditorViewProps = ReturnType<typeof useAuthEditorViewModel>
 
@@ -33,36 +32,23 @@ export function AuthEditorView({
   const { t } = useTranslation('request')
 
   return (
-    <div className="auth-editor" data-testid={REQUEST_TEST_IDS.auth.container}>
-      <div className="auth-type-label">
-        <Label className={authLabelClass} htmlFor="request-auth-type">
-          {t(REQUEST_TEXT.auth.typeLabel)}
-        </Label>
-        <Select value={type} onValueChange={onTypeChange} disabled={readOnly}>
-          <SelectTrigger
-            id="request-auth-type"
-            data-testid={REQUEST_TEST_IDS.auth.type}
-            aria-label={t(REQUEST_TEXT.auth.typeLabel)}
-            className="auth-type-select"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {typeOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="grid min-w-0 content-start gap-4" data-testid={REQUEST_TEST_IDS.auth.container}>
+      <div>
+        <SegmentedControl
+          label={t(REQUEST_TEXT.auth.typeLabel)}
+          options={typeOptions}
+          value={type}
+          disabled={readOnly}
+          testId={REQUEST_TEST_IDS.auth.type}
+          onChange={onTypeChange}
+        />
       </div>
       {bearer && (
-        <div className="auth-field">
-          <Label className={authLabelClass} htmlFor="request-auth-token">
-            {t(REQUEST_TEXT.auth.token)}
-          </Label>
+        <div className={fieldClass}>
+          <Label htmlFor="request-auth-token">{t(REQUEST_TEXT.auth.token)}</Label>
           <VariableInput
             id="request-auth-token"
+            mono
             data-testid={REQUEST_TEST_IDS.auth.token}
             aria-label={t(REQUEST_TEXT.auth.tokenAria)}
             type="password"
@@ -77,13 +63,12 @@ export function AuthEditorView({
         </div>
       )}
       {basic && (
-        <div className="auth-field-grid">
-          <div className="auth-field">
-            <Label className={authLabelClass} htmlFor="request-auth-username">
-              {t(REQUEST_TEXT.auth.username)}
-            </Label>
+        <div className={fieldGridClass}>
+          <div className={fieldClass}>
+            <Label htmlFor="request-auth-username">{t(REQUEST_TEXT.auth.username)}</Label>
             <VariableInput
               id="request-auth-username"
+              mono
               data-testid={REQUEST_TEST_IDS.auth.username}
               aria-label={t(REQUEST_TEXT.auth.usernameAria)}
               autoComplete="off"
@@ -95,12 +80,11 @@ export function AuthEditorView({
               placeholder={t(REQUEST_TEXT.auth.usernamePlaceholder)}
             />
           </div>
-          <div className="auth-field">
-            <Label className={authLabelClass} htmlFor="request-auth-password">
-              {t(REQUEST_TEXT.auth.password)}
-            </Label>
+          <div className={fieldClass}>
+            <Label htmlFor="request-auth-password">{t(REQUEST_TEXT.auth.password)}</Label>
             <VariableInput
               id="request-auth-password"
+              mono
               data-testid={REQUEST_TEST_IDS.auth.password}
               aria-label={t(REQUEST_TEXT.auth.passwordAria)}
               type="password"
@@ -116,13 +100,12 @@ export function AuthEditorView({
         </div>
       )}
       {apiKey && (
-        <div className="auth-field-grid">
-          <div className="auth-field">
-            <Label className={authLabelClass} htmlFor="request-auth-key-name">
-              {t(REQUEST_TEXT.auth.key)}
-            </Label>
+        <div className={fieldGridClass}>
+          <div className={fieldClass}>
+            <Label htmlFor="request-auth-key-name">{t(REQUEST_TEXT.auth.key)}</Label>
             <VariableInput
               id="request-auth-key-name"
+              mono
               data-testid={REQUEST_TEST_IDS.auth.keyName}
               aria-label={t(REQUEST_TEXT.auth.keyAria)}
               autoComplete="off"
@@ -134,12 +117,11 @@ export function AuthEditorView({
               placeholder={t(REQUEST_TEXT.auth.keyPlaceholder)}
             />
           </div>
-          <div className="auth-field">
-            <Label className={authLabelClass} htmlFor="request-auth-key-value">
-              {t(REQUEST_TEXT.auth.value)}
-            </Label>
+          <div className={fieldClass}>
+            <Label htmlFor="request-auth-key-value">{t(REQUEST_TEXT.auth.value)}</Label>
             <VariableInput
               id="request-auth-key-value"
+              mono
               data-testid={REQUEST_TEST_IDS.auth.keyValue}
               aria-label={t(REQUEST_TEXT.auth.valueAria)}
               type="password"
@@ -152,16 +134,13 @@ export function AuthEditorView({
               placeholder={t(REQUEST_TEXT.auth.valuePlaceholder)}
             />
           </div>
-          <div className="auth-field">
-            <Label className={authLabelClass} htmlFor="request-auth-location">
-              {t(REQUEST_TEXT.auth.addTo)}
-            </Label>
+          <div className={fieldClass}>
+            <Label htmlFor="request-auth-location">{t(REQUEST_TEXT.auth.addTo)}</Label>
             <Select value={apiKey.location} onValueChange={onLocationChange} disabled={readOnly}>
               <SelectTrigger
                 id="request-auth-location"
                 data-testid={REQUEST_TEST_IDS.auth.location}
                 aria-label={t(REQUEST_TEXT.auth.locationAria)}
-                className="auth-location-select"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -173,7 +152,7 @@ export function AuthEditorView({
           </div>
         </div>
       )}
-      <p className="auth-help" data-testid={REQUEST_TEST_IDS.auth.help}>
+      <p className="max-w-[62ch] text-[12px] leading-5 text-muted-foreground" data-testid={REQUEST_TEST_IDS.auth.help}>
         {helpText}
       </p>
     </div>

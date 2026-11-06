@@ -1,0 +1,106 @@
+.app-shell {
+  height: 100%;
+  display: grid;
+  /* --app-sidebar-width lets the app set the width the user dragged to. */
+  grid-template: 48px minmax(0, 1fr) / 64px var(--app-sidebar-width, clamp(220px, 22vw, 280px)) minmax(0, 1fr);
+  background: var(--canvas);
+  color: var(--fg);
+  font: 400 13px/20px var(--font-ui);
+}
+
+.app-shell__rail {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  min-height: 0;
+}
+
+.app-shell__topbar {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.app-shell__sidebar {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1 / -1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The work area stacks its parts: fixed bars first, then one flexible part that fills the rest and scrolls. */
+.app-shell__main {
+  grid-column: 3;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--canvas);
+}
+
+.app-shell__main > * {
+  flex: none;
+}
+
+.app-shell__main > :last-child {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.app-shell__scrim {
+  display: none;
+}
+
+/* Narrow windows: the rail and the side panel become a drawer, closed until the menu button opens it. */
+@media (max-width: 760px) {
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-shell__topbar,
+  .app-shell__main {
+    grid-column: 1;
+  }
+
+  .app-shell__rail {
+    position: fixed;
+    z-index: 31;
+    inset: 0 auto 0 0;
+    width: 64px;
+    transform: translateX(-102%);
+    transition: transform 160ms ease;
+  }
+
+  .app-shell__sidebar {
+    position: fixed;
+    z-index: 30;
+    inset: 0 auto 0 64px;
+    width: min(280px, calc(100vw - 96px));
+    transform: translateX(calc(-100% - 64px));
+    transition: transform 160ms ease;
+  }
+
+  .app-shell[data-sidebar='open'] .app-shell__rail,
+  .app-shell[data-sidebar='open'] .app-shell__sidebar {
+    transform: none;
+  }
+
+  .app-shell[data-sidebar='open'] .app-shell__scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    border: 0;
+    background: rgb(5 6 14 / 0.6);
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__rail,
+  .app-shell__sidebar {
+    transition: none;
+  }
+}

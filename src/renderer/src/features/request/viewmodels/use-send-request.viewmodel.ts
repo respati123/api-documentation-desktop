@@ -25,16 +25,21 @@ type SendOutcome =
   | { status: 'sent'; response: ResponseData; scripts: ScriptRuns }
   | { status: 'failed'; message: string; scripts: ScriptRuns }
 
+export type SentResult = { requestId: string; status: number; statusText: string; duration: number }
+
 // Owns sending: the scripts around the request, the mutation, the response it produces, the download option, and the Ctrl+Enter shortcut.
 export function useSendRequestViewModel({
   readRequest,
   scriptContext,
   resetKey,
+  onSent,
 }: {
   readRequest: () => RequestNode
   scriptContext: ScriptContext
   // Changes when another request opens, so an old response never shows under the new request.
   resetKey: string
+  // Called after each send that got a response, for the History panel.
+  onSent?: (result: SentResult) => void
 }) {
   const { t } = useTranslation('request')
   const [downloadAfterSend, setDownloadAfterSend] = useState(false)
@@ -104,6 +109,13 @@ export function useSendRequestViewModel({
   const mutation = useMutation({
     mutationFn: ({ request }: SendInput) => runSend(request),
     onSuccess: (outcome, { request, download }) => {
+      if (outcome.status === 'sent')
+        onSent?.({
+          requestId: request.id,
+          status: outcome.response.status,
+          statusText: outcome.response.statusText,
+          duration: outcome.response.duration,
+        })
       if (outcome.status === 'sent' && (download || downloadAfterSend)) downloadResponse(outcome.response, request.name)
     },
   })

@@ -126,8 +126,8 @@ export function useSyncFooterViewModel(input: SyncFooterInput) {
   // Arrow keys move focus between enabled menu items, and Escape closes the menu.
   function onMenuKeyDown(event: KeyboardEvent<HTMLElement>) {
     const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)'))
-    const active = document.activeElement
-    const activeIndex = items.findIndex((item) => item === active)
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const activeIndex = active ? items.indexOf(active) : -1
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
       const direction = event.key === 'ArrowDown' ? 1 : -1
@@ -163,5 +163,7 @@ export function useSyncFooterViewModel(input: SyncFooterInput) {
     cloudItems,
     pushDisabledReason,
     statusLines,
+    // One line for the top bar, such as "2 local changes, 1 commit to push".
+    summary: statusLines.map((line) => line.text).join(', '),
   }
 }

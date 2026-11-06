@@ -1,7 +1,6 @@
 import type { ReactElement, ReactNode } from 'react'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
-import { Separator } from '@/shared/components/ui/separator'
 import { type InlineNode, type MarkdownBlock, parseMarkdown } from '@/shared/lib/markdown'
+import { ScrollArea, Separator } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type MarkdownViewProps = {
@@ -13,12 +12,12 @@ export type MarkdownViewProps = {
 // A parsed document is static until its source changes, and its children keep their order, so their position is a stable key.
 
 const headingClass: Record<number, string> = {
-  1: 'text-xl font-semibold tracking-tight text-foreground',
-  2: 'text-lg font-semibold tracking-tight text-foreground',
-  3: 'text-base font-semibold text-foreground',
-  4: 'text-sm font-semibold text-foreground',
-  5: 'text-sm font-medium text-foreground',
-  6: 'text-sm font-medium text-muted-foreground',
+  1: 'text-[18px] font-bold text-foreground',
+  2: 'text-[16px] font-bold text-foreground',
+  3: 'mt-1.5 text-[14px] font-bold text-foreground',
+  4: 'text-[13px] font-semibold text-foreground',
+  5: 'text-[13px] font-medium text-foreground',
+  6: 'text-[13px] font-medium text-muted-foreground',
 }
 
 function renderInlineNode(node: InlineNode, key: number): ReactNode {

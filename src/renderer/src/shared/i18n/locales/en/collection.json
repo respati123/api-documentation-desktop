@@ -6,7 +6,13 @@
     "folderNameLabel": "Folder name",
     "menuLabel": "Collection item actions",
     "workspaceActions": "Workspace actions",
-    "newRequestIn": "New request in {{name}}"
+    "newRequestIn": "New request in {{name}}",
+    "filterPlaceholder": "Filter requests",
+    "filterShortcut": "Ctrl K",
+    "noMatches": "No requests match \"{{query}}\".",
+    "add": "Add to collection",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
   },
   "menu": {
     "createFolder": "Create folder",

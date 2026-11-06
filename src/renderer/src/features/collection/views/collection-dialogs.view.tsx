@@ -1,9 +1,6 @@
 import type { ReactElement } from 'react'
 import type { useCollectionTreeViewModel } from '@/features/collection/viewmodels/use-collection-tree.viewmodel'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
-import { Label } from '@/shared/components/ui/label'
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input, Label } from '@/shared/ui'
 
 type ViewModel = ReturnType<typeof useCollectionTreeViewModel>
 
@@ -45,7 +42,7 @@ export function DeleteItemDialogView({ deleteDialog }: { deleteDialog: ViewModel
           <DialogDescription>{deleteDialog.description}</DialogDescription>
         </DialogHeader>
         <div className="dialog-actions">
-          <Button data-testid="collection-delete-cancel-button" type="button" variant="outline" onClick={deleteDialog.onCancel}>
+          <Button data-testid="collection-delete-cancel-button" type="button" variant="secondary" onClick={deleteDialog.onCancel}>
             {deleteDialog.cancel}
           </Button>
           <Button data-testid="collection-delete-confirm-button" type="button" variant="destructive" onClick={deleteDialog.onConfirm}>

@@ -23,10 +23,10 @@
     "xml": "XML",
     "yaml": "YAML",
     "edn": "EDN",
-    "text": "Teks Biasa",
+    "text": "Teks",
     "other": "Lainnya",
     "file": "File",
-    "none": "Tanpa Body"
+    "none": "Tidak ada"
   },
   "suggestions": {
     "variables": "Saran variabel environment"

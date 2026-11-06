@@ -1,7 +1,6 @@
 import type { ComponentProps } from 'react'
-import { Input } from '@/shared/components/ui/input'
-import { Textarea } from '@/shared/components/ui/textarea'
 import { useDebouncedEditorValue } from '@/shared/components/variable-field'
+import { Input, Textarea } from '@/shared/ui'
 
 type DebouncedInputProps = Omit<ComponentProps<typeof Input>, 'value' | 'onChange'> & {
   value: string

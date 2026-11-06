@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest'
 // Enforces references/architecture.md: absolute imports, feature boundaries, and MVVM layer rules.
 
 const RENDERER_ROOT = fileURLToPath(new URL('..', import.meta.url))
-const GENERATED_UI_DIR = join(RENDERER_ROOT, 'shared', 'components', 'ui')
+// shared/ui is a copy of the storybook library made by `bun run sync-ui`. It uses relative imports and is not edited here.
+const SYNCED_UI_DIR = join(RENDERER_ROOT, 'shared', 'ui')
 const ALLOWED_VIEW_HOOKS = new Set(['useTranslation'])
 const REACT_PACKAGE = /^(react|react-dom|react-i18next|@tanstack\/react-.+)(\/.*)?$/
 
@@ -18,7 +19,7 @@ const listSourceFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((name) => {
     const full = join(dir, name)
     if (statSync(full).isDirectory()) {
-      return name === 'node_modules' || full === GENERATED_UI_DIR ? [] : listSourceFiles(full)
+      return name === 'node_modules' || full === SYNCED_UI_DIR ? [] : listSourceFiles(full)
     }
     return /\.tsx?$/.test(name) && !name.endsWith('.d.ts') ? [full] : []
   })

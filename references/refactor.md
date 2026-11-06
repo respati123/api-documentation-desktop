@@ -15,7 +15,7 @@ Read this before you migrate code out of `App.tsx` or legacy `components/`.
 2. Create only the folders it needs under `features/<name>/` (see `architecture.md`).
 3. Move types to `models/` as zod schemas, API and IPC calls to `services/`, state and handlers to `viewmodels/`.
 4. Replace effect-based fetching with TanStack Query: key factory and `staleTime`.
-5. Move JSX to `views/` as props-in components with shadcn, `t(CONSTANT)`, and `data-testid`.
+5. Move JSX to `views/` as props-in components with library components, `t(CONSTANT)`, and `data-testid`.
 6. Move repeated components, helpers, and types to `shared/` or `lib/`.
 7. Export the page from `index.ts`. Point `App.tsx` or `app/` routing at it.
 8. Delete the old files and unused code in `App.tsx`.
@@ -40,7 +40,7 @@ Add a package in the step that first needs it, as its own commit, with the reaso
 
 | Package | When |
 |---|---|
-| `tailwindcss`, `@tailwindcss/vite`, shadcn setup | before any feature moves |
+| `tailwindcss`, `@tailwindcss/vite`, UI library setup | before any feature moves |
 | `@biomejs/biome` | before any feature moves. Run `bun run format` once and commit it alone. |
 | `babel-plugin-react-compiler` (exact) | before any feature moves |
 | `react-error-boundary` | with the app shell |

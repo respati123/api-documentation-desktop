@@ -1,0 +1,82 @@
+.environment-editor {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  max-width: 1168px;
+  padding: 24px;
+  min-width: 0;
+}
+
+.environment-editor__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.environment-editor__folder {
+  color: var(--fg-muted);
+  white-space: nowrap;
+  font: 400 13px/20px var(--font-ui);
+}
+
+.environment-editor__name {
+  width: min(360px, 60vw);
+  height: auto;
+  padding: 3px 6px;
+  border-color: transparent;
+  background: transparent;
+  font: 600 18px/26px var(--font-ui);
+}
+
+.environment-editor__name:hover {
+  border-color: var(--line-strong);
+}
+
+.environment-editor__name:focus {
+  border-color: var(--primary);
+}
+
+.environment-editor__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.environment-editor__active {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-pill);
+  background: var(--ok-soft);
+  color: var(--ok);
+  font: 500 12px/16px var(--font-ui);
+}
+
+.environment-editor__note {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+/* Narrow windows: less padding, the name takes the full row, and the actions move under it. */
+@media (max-width: 720px) {
+  .environment-editor {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .environment-editor__name {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .environment-editor__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}

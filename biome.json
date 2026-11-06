@@ -36,11 +36,11 @@
   "files": {
     "includes": [
       "**",
-      "!src/renderer/src/shared/components/ui/**",
       "!out/**",
       "!release/**",
       "!dist/**",
       "!node_modules/**",
+      "!src/renderer/src/shared/ui/**",
       "!src/**/*.css"
     ]
   }

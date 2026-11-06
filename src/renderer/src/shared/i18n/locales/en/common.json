@@ -23,10 +23,10 @@
     "xml": "XML",
     "yaml": "YAML",
     "edn": "EDN",
-    "text": "Plain Text",
+    "text": "Text",
     "other": "Other",
     "file": "File",
-    "none": "No Body"
+    "none": "None"
   },
   "suggestions": {
     "variables": "Environment variable suggestions"

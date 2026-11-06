@@ -1,6 +1,6 @@
 {
   "workbench": {
-    "kicker": "{{folder}} / Request builder",
+    "kicker": "{{folder}} /",
     "fallbackFolder": "Workspace",
     "nameLabel": "Request name",
     "viewDocs": "View docs",
@@ -21,7 +21,9 @@
     "preScriptLabel": "Pre-request script",
     "postScriptLabel": "Post-response script",
     "scriptPlaceholder": "// JavaScript. Use apidocs.vars, apidocs.req, apidocs.res, apidocs.check, and apidocs.log.",
-    "scriptsLoading": "Loading editor…"
+    "scriptsLoading": "Loading editor…",
+    "unresolved": "Has unresolved variables",
+    "resizeSplit": "Resize request and response"
   },
   "tabs": {
     "label": "Request configuration",
@@ -37,7 +39,8 @@
     "headersActive_other": "{{count}} active headers",
     "responses": "Responses",
     "docs": "Docs",
-    "scripts": "Scripts"
+    "scripts": "Scripts",
+    "scriptsConfigured": "Scripts configured"
   },
   "send": {
     "send": "Send",
@@ -62,7 +65,8 @@
     "repeating_one": "Repeating every {{count}} second.",
     "repeating_other": "Repeating every {{count}} seconds.",
     "cancel": "Cancel",
-    "stop": "Stop"
+    "stop": "Stop",
+    "shortcutHint": "Ctrl ↵"
   },
   "timers": {
     "delayTitle": "Send after delay",
@@ -86,7 +90,7 @@
   },
   "params": {
     "tableLabel": "Query parameters",
-    "add": "＋ Add",
+    "add": "Add parameter",
     "deleteAll": "Delete all",
     "description": "Description",
     "count": "{{count}} params",
@@ -104,7 +108,7 @@
   },
   "headers": {
     "tableLabel": "Request headers",
-    "add": "＋ Add",
+    "add": "Add header",
     "deleteAll": "Delete all",
     "description": "Description",
     "count": "{{count}} custom",
@@ -130,10 +134,10 @@
   },
   "auth": {
     "typeLabel": "Authorization type",
-    "none": "None",
-    "apiKey": "API Key",
-    "basic": "Basic Auth",
-    "bearer": "Bearer Token",
+    "none": "No auth",
+    "apiKey": "API key",
+    "basic": "Basic auth",
+    "bearer": "Bearer token",
     "token": "Token",
     "tokenAria": "Bearer token",
     "tokenPlaceholder": "Enter token",
@@ -197,15 +201,16 @@
     "fileErrorFallback": "Could not select a file.",
     "rawPlaceholderJson": "{\n  \n}",
     "formatJson": "Format",
-    "jsonValid": "Valid JSON",
-    "jsonInvalid": "Invalid JSON at line {{line}}, column {{column}}"
+    "jsonValid": "Valid JSON, {{size}}",
+    "jsonInvalid": "Invalid JSON at line {{line}}, column {{column}}",
+    "moreModes": "More"
   },
   "contract": {
     "title": "Response contract",
     "description": "Document the status codes and payloads the frontend can expect.",
-    "add": "＋ Add response",
+    "add": "Add response",
     "emptyTitle": "No responses documented",
-    "emptyDescription": "Add a status code and include a schema or example when available.",
+    "emptyDescription": "No saved responses yet. Send the request, then choose Save as example.",
     "status": "Status",
     "statusAria": "Response {{position}} status code",
     "descriptionLabel": "Description",

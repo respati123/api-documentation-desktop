@@ -12,10 +12,10 @@ export function ScriptEditorView({ containerRef, ready, loadingText, id, testId 
     <div
       id={id}
       data-testid={testId}
-      className="relative h-64 min-h-48 w-full min-w-0 overflow-hidden rounded-md border border-input bg-background"
+      className="relative h-48 min-h-[120px] w-full min-w-0 overflow-hidden rounded-[12px] border border-border bg-chrome"
     >
       <div ref={containerRef} className="h-full w-full" />
-      {!ready && <p className="absolute inset-0 m-0 p-3 font-mono text-xs text-muted-foreground">{loadingText}</p>}
+      {!ready && <p className="absolute inset-0 m-0 p-3 font-mono text-[12px] text-muted-foreground">{loadingText}</p>}
     </div>
   )
 }

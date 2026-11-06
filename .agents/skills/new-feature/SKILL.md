@@ -18,7 +18,7 @@ Creates the MVVM files for one feature and one view, so the structure, imports, 
    ```
 
    The script never overwrites a file. It lists what it created, what it skipped, and the manual steps left.
-3. Make sure the shadcn components the view uses exist (`alert`, `button`, `skeleton`). Add missing ones with `npx shadcn@latest add <name> -y`, then fix the `cn` import (see `references/ui-design.md`).
+3. Make sure the library components the view uses exist (`Alert`, `Button`, `Skeleton`). If one is missing, add it to the library first, following the `api-ui` skill, then import it in the view.
 4. Do the manual steps the script prints:
    - register the i18n namespace if needed
    - wire the page into routing

@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { REQUEST_TEST_IDS } from '@/features/request/constants/request-test-ids.constants'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import type { useRequestWorkbenchViewModel } from '@/features/request/viewmodels/use-request-workbench.viewmodel'
-import { Button } from '@/shared/components/ui/button'
 import {
+  Button,
+  ButtonGroup,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -13,10 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu'
+  Icon,
+} from '@/shared/ui'
 
 export type SendControlViewProps = ReturnType<typeof useRequestWorkbenchViewModel>['send']
 
+// The Send button and its options menu, joined as one control.
 export function SendControlView({
   isSending,
   label,
@@ -33,16 +36,12 @@ export function SendControlView({
   const { t } = useTranslation('request')
 
   return (
-    <div className="relative flex h-[38px] min-w-[118px] max-[1040px]:col-span-full max-[1040px]:w-full">
-      <Button
-        type="submit"
-        className="h-[38px] min-h-[38px] min-w-0 flex-1 rounded-l-[7px] rounded-r-none px-4"
-        data-testid={REQUEST_TEST_IDS.send.submit}
-        disabled={isSending}
-      >
+    <ButtonGroup className="h-[38px] max-[760px]:ml-auto">
+      <Button variant="send" size="lg" type="submit" data-testid={REQUEST_TEST_IDS.send.submit} disabled={isSending}>
         {label}
+        <kbd className="max-[760px]:hidden">{t(REQUEST_TEXT.send.shortcutHint)}</kbd>
         {downloadAfterSend && (
-          <span className="ml-2 text-xs opacity-80" title={t(REQUEST_TEXT.send.downloadAfter)}>
+          <span className="text-[12px] opacity-80" title={t(REQUEST_TEXT.send.downloadAfter)}>
             <span aria-hidden="true">↓</span>
             <span className="sr-only">{t(REQUEST_TEXT.send.downloadAfter)}</span>
           </span>
@@ -51,14 +50,13 @@ export function SendControlView({
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
+            variant="send"
+            size="lg"
             type="button"
-            variant="default"
-            size="sm"
-            className="h-[38px] min-h-[38px] w-[36px] shrink-0 rounded-l-none rounded-r-[7px] border-l border-primary-foreground/30 p-0 text-[18px] shadow-none"
             data-testid={REQUEST_TEST_IDS.send.options}
             aria-label={t(REQUEST_TEXT.send.optionsLabel)}
           >
-            ⌄
+            <Icon name="chevron" size={14} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" aria-label={t(REQUEST_TEXT.send.menuLabel)} data-testid={REQUEST_TEST_IDS.send.menu}>
@@ -96,6 +94,6 @@ export function SendControlView({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+    </ButtonGroup>
   )
 }

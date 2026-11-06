@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import type { useApiReferenceViewModel } from '@/features/docs/viewmodels/use-api-reference.viewmodel'
 import { MarkdownView } from '@/shared/components/markdown-view'
-import { Button } from '@/shared/components/ui/button'
+import { Button } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type ApiReferenceViewProps = ReturnType<typeof useApiReferenceViewModel>
@@ -25,7 +25,7 @@ export function ApiReferenceView(props: ApiReferenceViewProps): ReactElement {
           <h2>{props.name}</h2>
         </div>
         <div className="docs-page-actions">
-          <Button data-testid="docs-reference-openapi-button" type="button" variant="outline" size="sm" onClick={props.onOpenOpenApi}>
+          <Button data-testid="docs-reference-openapi-button" type="button" variant="secondary" size="sm" onClick={props.onOpenOpenApi}>
             {props.openApiLabel}
           </Button>
           <Button data-testid="docs-reference-open-request-button" type="button" size="sm" onClick={props.onOpenRequest}>

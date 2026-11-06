@@ -1,8 +1,7 @@
 import type { ReactElement } from 'react'
 import type { useOpenApiDialogViewModel } from '@/features/docs/viewmodels/use-openapi-dialog.viewmodel'
 import { AppDialog } from '@/shared/components/app-dialog'
-import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
+import { Button, Input } from '@/shared/ui'
 
 export type OpenApiDialogViewProps = ReturnType<typeof useOpenApiDialogViewModel>
 
@@ -43,13 +42,13 @@ export function OpenApiDialogView({
         onChange={onFileChange}
       />
       <div className="openapi-actions">
-        <Button data-testid="docs-openapi-choose-file-button" type="button" variant="outline" disabled={readOnly} onClick={onChooseFile}>
+        <Button data-testid="docs-openapi-choose-file-button" type="button" variant="secondary" disabled={readOnly} onClick={onChooseFile}>
           {chooseLabel}
         </Button>
-        <Button data-testid="docs-openapi-export-json-button" type="button" variant="outline" onClick={() => onExport('json')}>
+        <Button data-testid="docs-openapi-export-json-button" type="button" variant="secondary" onClick={() => onExport('json')}>
           {exportJsonLabel}
         </Button>
-        <Button data-testid="docs-openapi-export-yaml-button" type="button" variant="outline" onClick={() => onExport('yaml')}>
+        <Button data-testid="docs-openapi-export-yaml-button" type="button" variant="secondary" onClick={() => onExport('yaml')}>
           {exportYamlLabel}
         </Button>
       </div>

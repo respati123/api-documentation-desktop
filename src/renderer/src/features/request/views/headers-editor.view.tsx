@@ -4,9 +4,8 @@ import { REQUEST_TEST_IDS } from '@/features/request/constants/request-test-ids.
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
 import type { useHeadersEditorViewModel } from '@/features/request/viewmodels/use-headers-editor.viewmodel'
 import { DebouncedInput } from '@/shared/components/debounced-field'
-import { Button } from '@/shared/components/ui/button'
-import { Checkbox } from '@/shared/components/ui/checkbox'
 import { VariableInput } from '@/shared/components/variable-field'
+import { Button, Checkbox, Icon } from '@/shared/ui'
 
 export type HeadersEditorViewProps = ReturnType<typeof useHeadersEditorViewModel>
 
@@ -36,41 +35,12 @@ export function HeadersEditorView({
   const { t } = useTranslation('request')
 
   return (
-    <div className="headers-editor" data-testid={REQUEST_TEST_IDS.headers.container}>
-      <div className="headers-toolbar">
-        <Button type="button" variant="ghost" size="sm" data-testid={REQUEST_TEST_IDS.headers.add} disabled={readOnly} onClick={onAdd}>
-          {t(REQUEST_TEXT.headers.add)}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-testid={REQUEST_TEST_IDS.headers.deleteAll}
-          disabled={!canDeleteAll}
-          onClick={onDeleteAll}
-        >
-          {t(REQUEST_TEXT.headers.deleteAll)}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-testid={REQUEST_TEST_IDS.headers.description}
-          aria-pressed={showDescriptions}
-          onClick={onToggleDescriptions}
-        >
-          {t(REQUEST_TEXT.headers.description)}
-        </Button>
-        <span className="headers-count" data-testid={REQUEST_TEST_IDS.headers.count}>
-          {countText}
-        </span>
-      </div>
+    <div className="grid min-w-0 content-start gap-4" data-testid={REQUEST_TEST_IDS.headers.container}>
       {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
       <div className="headers-table" role="table" aria-label={t(REQUEST_TEXT.headers.tableLabel)}>
         {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
         {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
         <div className="headers-heading" role="row">
-          <span aria-hidden="true" />
           <span aria-hidden="true" />
           {/* biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change */}
           {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
@@ -87,7 +57,6 @@ export function HeadersEditorView({
             {/* biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus */}
             <div className="headers-row" role="row">
               <Button
-                type="button"
                 variant="ghost"
                 className="header-drag-handle"
                 data-testid={REQUEST_TEST_IDS.headers.drag(header.id)}
@@ -102,12 +71,13 @@ export function HeadersEditorView({
               <Checkbox
                 data-testid={REQUEST_TEST_IDS.headers.enabled(header.id)}
                 aria-label={header.enableLabel}
-                className="header-enabled"
                 checked={header.enabled}
                 disabled={readOnly}
-                onCheckedChange={(checked) => onEnabledChange(header.id, checked)}
+                onChange={(event) => onEnabledChange(header.id, event.target.checked)}
               />
               <VariableInput
+                mono
+                disabled={!header.enabled}
                 data-testid={REQUEST_TEST_IDS.headers.name(header.id)}
                 aria-label={header.nameLabel}
                 value={header.name}
@@ -118,6 +88,8 @@ export function HeadersEditorView({
                 onValueChange={(value) => onNameChange(header.id, value)}
               />
               <VariableInput
+                mono
+                disabled={!header.enabled}
                 data-testid={REQUEST_TEST_IDS.headers.value(header.id)}
                 aria-label={header.valueLabel}
                 value={header.value}
@@ -128,16 +100,15 @@ export function HeadersEditorView({
                 onValueChange={(value) => onValueChange(header.id, value)}
               />
               <Button
-                type="button"
                 variant="ghost"
-                size="sm"
+                size="icon"
                 className="header-remove"
                 data-testid={REQUEST_TEST_IDS.headers.remove(header.id)}
                 aria-label={header.removeLabel}
                 disabled={readOnly}
                 onClick={() => onRemove(header.id)}
               >
-                ×
+                <Icon name="trash" size={14} />
               </Button>
             </div>
             {showDescriptions && (
@@ -153,27 +124,39 @@ export function HeadersEditorView({
             )}
           </div>
         ))}
-        <div className="headers-generated-label">{t(REQUEST_TEXT.headers.generatedLabel)}</div>
+        {generated.length > 0 && <div className="headers-generated-label">{t(REQUEST_TEXT.headers.generatedLabel)}</div>}
         {generated.map((header) => (
           // biome-ignore lint/a11y/useSemanticElements: the element keeps its ARIA table or grid role so the existing layout does not change
           // biome-ignore lint/a11y/useFocusableInteractive: the row is a layout container; the controls inside it take focus
           <div className="headers-generated-row" role="row" key={header.name}>
-            <span aria-hidden="true" />
-            <Checkbox
-              data-testid={REQUEST_TEST_IDS.headers.generated(header.name)}
-              className="header-enabled"
-              checked
-              disabled
-              aria-label={header.enabledLabel}
-            />
+            <Checkbox data-testid={REQUEST_TEST_IDS.headers.generated(header.name)} checked disabled aria-label={header.enabledLabel} />
             <span className="header-generated-name">{header.name}</span>
             <span className="header-generated-value">{header.value}</span>
             <span className="header-generated-status">{t(REQUEST_TEXT.headers.auto)}</span>
           </div>
         ))}
       </div>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <Button variant="secondary" data-testid={REQUEST_TEST_IDS.headers.add} disabled={readOnly} onClick={onAdd}>
+          {t(REQUEST_TEXT.headers.add)}
+        </Button>
+        <Button variant="ghost" data-testid={REQUEST_TEST_IDS.headers.deleteAll} disabled={!canDeleteAll} onClick={onDeleteAll}>
+          {t(REQUEST_TEXT.headers.deleteAll)}
+        </Button>
+        <Button
+          variant="ghost"
+          data-testid={REQUEST_TEST_IDS.headers.description}
+          aria-pressed={showDescriptions}
+          onClick={onToggleDescriptions}
+        >
+          {t(REQUEST_TEXT.headers.description)}
+        </Button>
+        <span className="ml-auto font-mono text-[11px] text-muted-foreground" data-testid={REQUEST_TEST_IDS.headers.count}>
+          {countText}
+        </span>
+      </div>
       {helpText && (
-        <p className="headers-help" data-testid={REQUEST_TEST_IDS.headers.help}>
+        <p className="max-w-[62ch] text-[12px] leading-5 text-muted-foreground" data-testid={REQUEST_TEST_IDS.headers.help}>
           {helpText}
         </p>
       )}

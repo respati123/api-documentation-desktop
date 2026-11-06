@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 // The list only shrinks: a listed file that is clean fails the test until you delete its line.
 
 const root = join(__dirname, '..')
+const SYNCED_UI_DIR = join(root, 'shared', 'ui')
 const rawElements = new Set(['button', 'input', 'select', 'textarea', 'label', 'table', 'hr', 'a'])
 const textAttributes = new Set(['aria-label', 'title', 'placeholder', 'alt', 'label'])
 const interactiveComponents = new Set(['Button', 'Input', 'Textarea', 'SelectTrigger', 'TabsTrigger'])
@@ -16,7 +17,8 @@ const hookNames = new Set(['useState', 'useEffect', 'useLayoutEffect', 'useReduc
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name)
-    if (entry.isDirectory()) return entry.name === 'ui' && dir.endsWith('shared/components') ? [] : sourceFiles(path)
+    // shared/ui is the synced copy of the UI library (`bun run sync-ui`). It defines the controls, so the rules do not apply to it.
+    if (entry.isDirectory()) return path === SYNCED_UI_DIR ? [] : sourceFiles(path)
     return entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx') ? [path] : []
   })
 }

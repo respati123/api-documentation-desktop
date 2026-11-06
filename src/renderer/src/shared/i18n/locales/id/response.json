@@ -1,13 +1,48 @@
 {
-  "heading": { "kicker": "Inspektur", "title": "Respons", "duration": "{{ms}} md" },
-  "empty": { "title": "Belum ada respons", "description": "Kirim request untuk melihat status, header, waktu, dan body." },
-  "loading": { "title": "Mengirim request", "description": "Menunggu respons dari server." },
-  "error": { "title": "Request gagal" },
-  "tabs": { "label": "Detail respons", "body": "Body", "headers": "Header", "cookies": "Cookie", "tests": "Tes", "console": "Konsol" },
-  "body": { "empty": "Body respons kosong." },
-  "headers": { "empty": "Server tidak mengembalikan header." },
-  "cookies": { "empty": "Tidak ada header Set-Cookie.", "fallbackName": "Cookie {{position}}" },
-  "tests": { "empty": "Tidak ada pengecekan yang berjalan untuk request ini.", "passed": "Lolos", "failed": "Gagal" },
+  "heading": {
+    "kicker": "Inspektur",
+    "title": "Respons",
+    "duration": "{{ms}} md"
+  },
+  "empty": {
+    "title": "Belum ada respons",
+    "description": "Kirim request untuk melihat status, header, waktu, dan body."
+  },
+  "loading": {
+    "title": "Mengirim request",
+    "description": "Menunggu respons dari server."
+  },
+  "error": {
+    "title": "Request gagal"
+  },
+  "tabs": {
+    "label": "Detail respons",
+    "body": "Body",
+    "headers": "Header",
+    "cookies": "Cookie",
+    "tests": "Tes",
+    "console": "Konsol"
+  },
+  "body": {
+    "empty": "Body respons kosong.",
+    "copy": "Salin",
+    "copied": "Tersalin",
+    "saveExample": "Simpan sebagai contoh",
+    "languageJson": "JSON",
+    "languageText": "Teks"
+  },
+  "headers": {
+    "empty": "Server tidak mengembalikan header."
+  },
+  "cookies": {
+    "empty": "Tidak ada header Set-Cookie.",
+    "fallbackName": "Cookie {{position}}"
+  },
+  "tests": {
+    "empty": "Tidak ada pengecekan yang berjalan untuk request ini.",
+    "passed": "LULUS",
+    "failed": "GAGAL"
+  },
   "console": {
     "empty": "Tidak ada script yang berjalan untuk request ini.",
     "pre": "Script sebelum request",

@@ -3,7 +3,8 @@ export const REQUEST_TEXT = {
     kicker: 'workbench.kicker',
     fallbackFolder: 'workbench.fallbackFolder',
     nameLabel: 'workbench.nameLabel',
-    viewDocs: 'workbench.viewDocs',
+    unresolved: 'workbench.unresolved',
+    resizeSplit: 'workbench.resizeSplit',
     methodLabel: 'workbench.methodLabel',
     urlLabel: 'workbench.urlLabel',
     urlPlaceholder: 'workbench.urlPlaceholder',
@@ -26,6 +27,7 @@ export const REQUEST_TEXT = {
   tabs: {
     label: 'tabs.label',
     scripts: 'tabs.scripts',
+    scriptsConfigured: 'tabs.scriptsConfigured',
     params: 'tabs.params',
     paramsActive: 'tabs.paramsActive',
     body: 'tabs.body',
@@ -46,6 +48,7 @@ export const REQUEST_TEXT = {
     sectionBasic: 'send.sectionBasic',
     sendNow: 'send.sendNow',
     shortcut: 'send.shortcut',
+    shortcutHint: 'send.shortcutHint',
     clientCode: 'send.clientCode',
     sectionAdvanced: 'send.sectionAdvanced',
     delay: 'send.delay',
@@ -194,6 +197,7 @@ export const REQUEST_TEXT = {
     fileErrorFallback: 'body.fileErrorFallback',
     formatJson: 'body.formatJson',
     jsonValid: 'body.jsonValid',
+    moreModes: 'body.moreModes',
     jsonInvalid: 'body.jsonInvalid',
   },
   contract: {

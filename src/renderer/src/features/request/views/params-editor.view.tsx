@@ -5,9 +5,8 @@ import { REQUEST_TEXT } from '@/features/request/constants/request-text.constant
 import type { useParamsEditorViewModel } from '@/features/request/viewmodels/use-params-editor.viewmodel'
 import { DebouncedInput } from '@/shared/components/debounced-field'
 import { KeyValueTable } from '@/shared/components/key-value-table'
-import { Button } from '@/shared/components/ui/button'
-import { Checkbox } from '@/shared/components/ui/checkbox'
 import { VariableInput } from '@/shared/components/variable-field'
+import { Button, Checkbox } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 export type ParamsEditorViewProps = ReturnType<typeof useParamsEditorViewModel>
@@ -32,35 +31,7 @@ export function ParamsEditorView({
   const { t } = useTranslation('request')
 
   return (
-    <div className="params-editor" data-testid={REQUEST_TEST_IDS.params.container}>
-      <div className="params-toolbar">
-        <Button type="button" variant="ghost" size="sm" data-testid={REQUEST_TEST_IDS.params.add} disabled={readOnly} onClick={onAdd}>
-          {t(REQUEST_TEXT.params.add)}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-testid={REQUEST_TEST_IDS.params.deleteAll}
-          disabled={!canDeleteAll}
-          onClick={onDeleteAll}
-        >
-          {t(REQUEST_TEXT.params.deleteAll)}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-testid={REQUEST_TEST_IDS.params.description}
-          aria-pressed={showDescriptions}
-          onClick={onToggleDescriptions}
-        >
-          {t(REQUEST_TEXT.params.description)}
-        </Button>
-        <span className="params-count" data-testid={REQUEST_TEST_IDS.params.count}>
-          {countText}
-        </span>
-      </div>
+    <div className="grid min-w-0 content-start gap-4" data-testid={REQUEST_TEST_IDS.params.container}>
       <KeyValueTable
         label={t(REQUEST_TEXT.params.tableLabel)}
         columns={[
@@ -83,12 +54,13 @@ export function ParamsEditorView({
             <Checkbox
               data-testid={REQUEST_TEST_IDS.params.enabled(param.id)}
               aria-label={param.enableLabel}
-              className="param-enabled"
               checked={param.enabled}
               disabled={readOnly}
-              onCheckedChange={(checked) => onEnabledChange(param.id, checked)}
+              onChange={(event) => onEnabledChange(param.id, event.target.checked)}
             />
             <VariableInput
+              mono
+              disabled={!param.enabled}
               data-testid={REQUEST_TEST_IDS.params.name(param.id)}
               aria-label={param.nameLabel}
               value={param.name}
@@ -99,6 +71,8 @@ export function ParamsEditorView({
               onValueChange={(value) => onNameChange(param.id, value)}
             />
             <VariableInput
+              mono
+              disabled={!param.enabled}
               data-testid={REQUEST_TEST_IDS.params.value(param.id)}
               aria-label={param.valueLabel}
               value={param.value}
@@ -124,6 +98,25 @@ export function ParamsEditorView({
         removeLabel={(param) => param.removeLabel}
         onRemove={(param) => onRemove(param.id)}
       />
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <Button variant="secondary" data-testid={REQUEST_TEST_IDS.params.add} disabled={readOnly} onClick={onAdd}>
+          {t(REQUEST_TEXT.params.add)}
+        </Button>
+        <Button variant="ghost" data-testid={REQUEST_TEST_IDS.params.deleteAll} disabled={!canDeleteAll} onClick={onDeleteAll}>
+          {t(REQUEST_TEXT.params.deleteAll)}
+        </Button>
+        <Button
+          variant="ghost"
+          data-testid={REQUEST_TEST_IDS.params.description}
+          aria-pressed={showDescriptions}
+          onClick={onToggleDescriptions}
+        >
+          {t(REQUEST_TEXT.params.description)}
+        </Button>
+        <span className="ml-auto font-mono text-[11px] text-muted-foreground" data-testid={REQUEST_TEST_IDS.params.count}>
+          {countText}
+        </span>
+      </div>
     </div>
   )
 }

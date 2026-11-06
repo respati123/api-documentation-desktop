@@ -30,7 +30,7 @@ Read this when you handle a failed request, add an error state, or add an error 
 ## Error boundaries
 
 - Use `react-error-boundary`, wrapped in `QueryErrorResetBoundary` so "Try again" also resets failed queries.
-- The wrapper and fallback live in `shared/errors/`. The fallback uses shadcn `Alert` and `Button`, and its text comes from i18n.
+- The wrapper and fallback live in `shared/errors/`. The fallback uses the library `Alert` and `Button`, and its text comes from i18n.
 - Every page is wrapped at the app level in `app/`. A page may add a smaller boundary around one section.
 - Boundaries catch render errors only. Async and handler errors are caught in the ViewModel.
 - `console.error` in development only. Never show a stack trace.

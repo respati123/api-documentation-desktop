@@ -8,6 +8,8 @@ import { useDebouncedEditorValue } from '@/shared/components/variable-field'
 
 type StandaloneEditor = MonacoEditor.IStandaloneCodeEditor
 
+const SCRIPT_THEME = 'api-documentation-dark'
+
 export type ScriptEditorInput = {
   phase: 'pre' | 'post'
   value: string
@@ -56,21 +58,37 @@ export function useScriptEditorViewModel({
     let created: StandaloneEditor | null = null
     void loadScriptMonaco().then((monaco) => {
       if (disposed) return
+      monaco.editor.defineTheme(SCRIPT_THEME, {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [],
+        colors: {
+          'editor.background': '#0f1014',
+          'editorGutter.background': '#0f1014',
+          'editorLineNumber.foreground': '#6b6e7c',
+          'editor.lineHighlightBackground': '#15161b',
+        },
+      })
       const model = monaco.editor.createModel(latest.current.draft, 'javascript', monaco.Uri.parse(modelPath))
       created = monaco.editor.create(container, {
         model,
+        theme: SCRIPT_THEME,
         ariaLabel: latest.current.ariaLabel,
         readOnly: latest.current.readOnly,
         minimap: { enabled: false },
         lineNumbers: 'on',
         fontSize: 12,
         lineHeight: 20,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        fontFamily: "'Fira Code', ui-monospace, Menlo, Consolas, monospace",
         tabSize: 2,
         wordWrap: 'on',
         scrollBeyondLastLine: false,
         automaticLayout: true,
         padding: { top: 8, bottom: 8 },
+        overviewRulerLanes: 0,
+        overviewRulerBorder: false,
+        hideCursorInOverviewRuler: true,
+        renderLineHighlight: 'none',
         scrollbar: { alwaysConsumeMouseWheel: false },
       })
       const editor = created

@@ -36,6 +36,7 @@ export function useResponseContractViewModel({
         id: response.id,
         statusCode: response.statusCode,
         // The first digit of the code, as a class such as 2xx, or empty when the code is not a number.
+        isError: /^[45]/.test(response.statusCode.trim()),
         statusClass: /^[1-5]/.test(response.statusCode.trim()) ? `${response.statusCode.trim()[0]}xx` : '',
         description: response.description,
         statusLabel: t(REQUEST_TEXT.contract.statusAria, { position: index + 1 }),
@@ -61,6 +62,20 @@ export function useResponseContractViewModel({
         ...responses,
         { id: crypto.randomUUID(), statusCode: '200', description: t(REQUEST_TEXT.contract.defaultDescription), content: [newContent()] },
       ]),
+    // Saves a received response as an example. A saved response with the same status is updated.
+    onSaveExample: (example: { statusCode: string; description: string; mediaType: string; body: string }) => {
+      const found = responses.find((item) => item.statusCode === example.statusCode)
+      const content: ResponseContent = { ...newContent(), mediaType: example.mediaType, example: example.body }
+      if (!found) {
+        onChange([
+          ...responses,
+          { id: crypto.randomUUID(), statusCode: example.statusCode, description: example.description, content: [content] },
+        ])
+        return
+      }
+      const [first, ...rest] = found.content
+      updateResponse(found.id, { content: [first ? { ...first, example: example.body } : content, ...rest] })
+    },
     onRemove: (id: string) => onChange(responses.filter((response) => response.id !== id)),
     onStatusChange: (id: string, statusCode: string) => updateResponse(id, { statusCode }),
     onDescriptionChange: (id: string, description: string) => updateResponse(id, { description }),
