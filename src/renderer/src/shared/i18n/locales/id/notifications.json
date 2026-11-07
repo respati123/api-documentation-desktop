@@ -8,5 +8,7 @@
   "updateReady": "Update siap",
   "updateReadyBody": "Aplikasi akan restart untuk menyelesaikan update.",
   "joined": "Kamu bergabung ke {{name}}",
-  "joinedBody": "Workspace ini sekarang ada di daftar kamu."
+  "joinedBody": "Workspace ini sekarang ada di daftar kamu.",
+  "pullNow": "Tarik sekarang",
+  "moreChanges": "+{{count}} lainnya"
 }

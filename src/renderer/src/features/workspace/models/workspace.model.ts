@@ -14,6 +14,15 @@ export type WorkspaceHistoryCommit = {
   source: 'local' | 'cloud'
 }
 
+export const workspaceChangeSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: z.enum(['added', 'modified', 'deleted']),
+  method: z.string().optional(),
+  folder: z.string().optional(),
+})
+export type WorkspaceChangeSummary = z.infer<typeof workspaceChangeSummarySchema>
+
 // A workspace change pushed over the event socket. Fields a sender may leave out are optional.
 export const workspaceUpdateEventSchema = z.object({
   type: z.literal('workspace.updated'),
@@ -23,6 +32,9 @@ export const workspaceUpdateEventSchema = z.object({
   actorId: z.string().optional(),
   actorEmail: z.string().optional(),
   commitCount: z.number().optional(),
+  // The items the push changed, at most 20. Older servers do not send them.
+  changes: z.array(workspaceChangeSummarySchema).optional(),
+  changeTotal: z.number().optional(),
 })
 export type WorkspaceUpdateEvent = z.infer<typeof workspaceUpdateEventSchema>
 

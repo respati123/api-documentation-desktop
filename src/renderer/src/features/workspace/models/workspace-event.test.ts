@@ -17,4 +17,18 @@ describe('parseWorkspaceEvent', () => {
     expect(parseWorkspaceEvent(JSON.stringify({ type: 'something.else' }))).toBeNull()
     expect(parseWorkspaceEvent(JSON.stringify({ type: 'workspace.changed' }))).toBeNull()
   })
+
+  it('keeps the changed items a newer server sends, and accepts an event without them', () => {
+    const withChanges = parseWorkspaceEvent(
+      JSON.stringify({
+        type: 'workspace.updated',
+        workspaceId: 'w',
+        headCommitId: 'h',
+        changes: [{ id: 'a', name: 'Create invoice', status: 'added', method: 'POST', folder: 'Billing' }],
+        changeTotal: 3,
+      }),
+    )
+    expect(withChanges).toMatchObject({ changeTotal: 3, changes: [{ name: 'Create invoice', status: 'added', method: 'POST' }] })
+    expect(parseWorkspaceEvent(JSON.stringify({ type: 'workspace.updated', workspaceId: 'w', headCommitId: 'h' }))).not.toBeNull()
+  })
 })

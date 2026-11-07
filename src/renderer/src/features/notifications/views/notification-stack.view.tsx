@@ -1,6 +1,6 @@
 import { Bell, CheckCircle2, Info, X } from 'lucide-react'
 import type { ReactElement } from 'react'
-import type { AppNotification, NotificationTone } from '@/features/notifications/models/notification.model'
+import type { AppNotification, NotificationDetail, NotificationTone } from '@/features/notifications/models/notification.model'
 import { Button, Card, CardDescription, CardTitle } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
@@ -8,10 +8,17 @@ export type NotificationStackViewProps = {
   items: AppNotification[]
   dismissLabel: string
   laterLabel: string
+  moreLabel: (count: number) => string
   onDismiss: (id: string) => void
 }
 
 const toneIcon: Record<NotificationTone, typeof Info> = { info: Info, success: CheckCircle2, action: Bell }
+const detailDot: Record<NotificationDetail['kind'], string> = {
+  added: 'bg-ok',
+  modified: 'bg-warning',
+  deleted: 'bg-destructive',
+}
+
 const toneTile: Record<NotificationTone, string> = {
   info: 'bg-muted text-muted-foreground',
   success: 'bg-ok/15 text-ok',
@@ -43,6 +50,17 @@ export function NotificationStackView(props: NotificationStackViewProps): ReactE
               <div className="flex min-w-0 flex-col gap-1">
                 <CardTitle>{item.title}</CardTitle>
                 {item.body ? <CardDescription>{item.body}</CardDescription> : null}
+                {item.details?.length ? (
+                  <ul data-testid="notifications-details" className="mt-1 grid gap-0.5 font-mono text-xs text-muted-foreground">
+                    {item.details.map((detail) => (
+                      <li key={`${detail.kind}-${detail.label}`} className="flex min-w-0 items-center gap-2">
+                        <span aria-hidden="true" className={cn('size-1.5 flex-none rounded-full', detailDot[detail.kind])} />
+                        <span className="truncate">{detail.label}</span>
+                      </li>
+                    ))}
+                    {item.moreCount ? <li className="pl-3.5">{props.moreLabel(item.moreCount)}</li> : null}
+                  </ul>
+                ) : null}
               </div>
             </div>
             {hasAction ? (

@@ -4,7 +4,15 @@ import { NotificationStackView } from '@/features/notifications/views/notificati
 
 describe('NotificationStackView', () => {
   it('renders nothing when there are no notifications', () => {
-    const { container } = render(<NotificationStackView items={[]} dismissLabel="Dismiss" laterLabel="Later" onDismiss={vi.fn()} />)
+    const { container } = render(
+      <NotificationStackView
+        items={[]}
+        dismissLabel="Dismiss"
+        laterLabel="Later"
+        moreLabel={(count) => `+${count} more`}
+        onDismiss={vi.fn()}
+      />,
+    )
     expect(container).toBeEmptyDOMElement()
   })
 
@@ -15,6 +23,7 @@ describe('NotificationStackView', () => {
         items={[{ id: 'a', tone: 'info', title: 'Update from your team' }]}
         dismissLabel="Dismiss"
         laterLabel="Later"
+        moreLabel={(count) => `+${count} more`}
         onDismiss={onDismiss}
       />,
     )
@@ -31,6 +40,7 @@ describe('NotificationStackView', () => {
         items={[{ id: 'u', tone: 'action', title: 'Update ready', actionLabel: 'Download', onAction }]}
         dismissLabel="Dismiss"
         laterLabel="Later"
+        moreLabel={(count) => `+${count} more`}
         onDismiss={onDismiss}
       />,
     )
@@ -49,6 +59,7 @@ describe('NotificationStackView', () => {
         ]}
         dismissLabel="Dismiss"
         laterLabel="Later"
+        moreLabel={(count) => `+${count} more`}
         onDismiss={onDismiss}
       />,
     )
@@ -64,10 +75,38 @@ describe('NotificationStackView', () => {
         items={[{ id: 'j', tone: 'info', title: 'Joined' }]}
         dismissLabel="Dismiss"
         laterLabel="Later"
+        moreLabel={(count) => `+${count} more`}
         onDismiss={vi.fn()}
       />,
     )
     expect(screen.queryByTestId('notifications-dismiss-later-button')).toBeNull()
     expect(screen.queryByTestId('notifications-action-button')).toBeNull()
+  })
+
+  it('lists the changed items with their method, and says how many more there are', () => {
+    render(
+      <NotificationStackView
+        items={[
+          {
+            id: 'p',
+            tone: 'info',
+            title: 'Update from your team',
+            details: [
+              { label: 'POST Create invoice', kind: 'added' },
+              { label: 'PATCH Update customer', kind: 'modified' },
+            ],
+            moreCount: 18,
+          },
+        ]}
+        dismissLabel="Dismiss"
+        laterLabel="Later"
+        moreLabel={(count) => `+${count} more`}
+        onDismiss={vi.fn()}
+      />,
+    )
+    const list = screen.getByTestId('notifications-details')
+    expect(list).toHaveTextContent('POST Create invoice')
+    expect(list).toHaveTextContent('PATCH Update customer')
+    expect(list).toHaveTextContent('+18 more')
   })
 })
