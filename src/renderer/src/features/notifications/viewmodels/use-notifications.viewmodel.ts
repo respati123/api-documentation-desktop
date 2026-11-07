@@ -49,6 +49,7 @@ export function useNotificationsViewModel() {
     stack: {
       items,
       dismissLabel: t(NOTIFICATION_TEXT.dismiss),
+      laterLabel: t(NOTIFICATION_TEXT.later),
       onDismiss: dismiss,
     },
   }

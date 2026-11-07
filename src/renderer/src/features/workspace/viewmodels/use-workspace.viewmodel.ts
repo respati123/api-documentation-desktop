@@ -297,6 +297,7 @@ export function useWorkspaceViewModel() {
         id: `update-${status.version}`,
         tone: 'action',
         title: tNotice(NOTIFICATION_TEXT.updateAvailable, { version: status.version }),
+        body: tNotice(NOTIFICATION_TEXT.updateAvailableBody),
         actionLabel: tNotice(NOTIFICATION_TEXT.updateDownload),
         onAction: () => void appUpdateService.download(status.version),
       })
