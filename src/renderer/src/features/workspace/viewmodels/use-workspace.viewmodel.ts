@@ -548,12 +548,16 @@ export function useWorkspaceViewModel() {
     readOnly: Boolean(isReadOnly),
     cloudConnected: Boolean(activeWorkspace?.cloudId),
     cloudHeadId: activeWorkspace?.baseCommitId ?? null,
+    signedIn: Boolean(sessionToken),
     changeCount: workspaceChanges.length,
+    changes: workspaceChanges,
     staged: stagedChanges,
     unstaged: unstagedChanges,
-    selectedChangeId,
+    selectedChangeId: selectedChange?.id ?? '',
     selectedChange,
     diffRows,
+    pendingPushCount,
+    syncStatus,
     history: {
       commits: historyCommits,
       localCommitIds,
@@ -564,7 +568,7 @@ export function useWorkspaceViewModel() {
       detailError: historyDetailError,
       snapshotsReady: historySnapshotsReady,
       changes: historyChanges,
-      selectedChangeId: selectedHistoryChangeId,
+      selectedChangeId: selectedHistoryChange?.id ?? '',
       selectedChange: selectedHistoryChange,
       diffRows: historyDiffRows,
     },
@@ -586,6 +590,7 @@ export function useWorkspaceViewModel() {
         setStagedSnapshot(null)
         setStagedVariables(null)
       },
+      onPush: pushWorkspace,
       onSelectHistoryCommit: (commitId) => {
         setSelectedHistoryCommitId(commitId)
       },

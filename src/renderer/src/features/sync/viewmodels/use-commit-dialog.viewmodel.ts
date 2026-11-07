@@ -1,7 +1,7 @@
-import type { FormEvent } from 'react'
+import { type FormEvent, type KeyboardEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SYNC_TEXT } from '@/features/sync/constants/sync-text.constants'
-import { changeStatusCode, changeStatusKey } from '@/features/sync/lib/change-status'
+import { changeStatusKey } from '@/features/sync/lib/change-status'
 import { canRevertTo } from '@/features/sync/lib/revert'
 import type { CommitTab } from '@/features/sync/viewmodels/use-commit-dialog-state.viewmodel'
 import type { TextDiffRow } from '@/lib/text-diff'
@@ -17,20 +17,32 @@ export type CommitSummary = {
   source: 'local' | 'cloud'
 }
 
+export type DiffLayout = 'split' | 'unified'
+
+const messageMax = 200
+// A short list needs no filter.
+const filterFromCount = 8
+
 export type CommitDialogInput = {
   open: boolean
   view: CommitTab
   message: string
   readOnly: boolean
   cloudConnected: boolean
+  signedIn: boolean
   // The commit the cloud head points to. Reverting to it would do nothing, so the button stays off.
   cloudHeadId?: string | null
   changeCount: number
+  // The working tree compared with the last commit. It gives the list one stable order while items are selected.
+  changes: WorkspaceChange[]
   staged: WorkspaceChange[]
   unstaged: WorkspaceChange[]
   selectedChangeId: string
   selectedChange: WorkspaceChange | undefined
   diffRows: TextDiffRow[]
+  pendingPushCount: number
+  // The result of the last commit or push. Only shown after one is started from this dialog.
+  syncStatus: string
   history: {
     commits: CommitSummary[]
     localCommitIds: ReadonlySet<string>
@@ -54,6 +66,7 @@ export type CommitDialogInput = {
     onStage: (change: WorkspaceChange, staged: boolean) => void
     onStageAll: (changes: WorkspaceChange[], staged: boolean) => void
     onUnstageAll: () => void
+    onPush: () => Promise<void>
     onSelectHistoryCommit: (commitId: string) => void
     onSelectHistoryChange: (changeId: string) => void
     onRevertHistoryCommit: (commitId: string) => void
@@ -62,17 +75,35 @@ export type CommitDialogInput = {
   }
 }
 
+function countLines(rows: TextDiffRow[], kind: TextDiffRow['kind']): number {
+  return rows.filter((row) => row.kind === kind).length
+}
+
 // Turns the commit dialog's data into everything its two tabs show. Labels, empty states, and badges are decided here.
 export function useCommitDialogViewModel(input: CommitDialogInput) {
   const { t } = useTranslation('sync')
   const { actions, history } = input
+  const [filter, setFilter] = useState('')
+  const [layout, setLayout] = useState<DiffLayout>('split')
+  const [pushing, setPushing] = useState(false)
+  const [statusVisible, setStatusVisible] = useState(false)
 
-  function statusOf(change: WorkspaceChange) {
-    return { code: changeStatusCode(change.status), status: change.status, text: t(changeStatusKey(change.status)) }
+  function onOpenChange(open: boolean) {
+    setStatusVisible(false)
+    setFilter('')
+    actions.onOpenChange(open)
   }
 
-  function diffHeader(change: WorkspaceChange) {
-    return { ...statusOf(change), name: change.name }
+  function diffHeader(change: WorkspaceChange, rows: TextDiffRow[]) {
+    return {
+      name: change.name,
+      method: change.method,
+      folder: change.folder,
+      status: change.status,
+      statusLabel: t(changeStatusKey(change.status)),
+      added: countLines(rows, 'added'),
+      removed: countLines(rows, 'removed'),
+    }
   }
 
   const description =
@@ -82,24 +113,72 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
         ? t(SYNC_TEXT.commit.historyDescriptionCloud)
         : t(SYNC_TEXT.commit.historyDescriptionLocal)
 
-  const stagedRows = input.staged.map((change) => ({
-    key: `staged-${change.id}`,
-    change,
-    name: change.name,
-    code: changeStatusCode(change.status),
-    status: change.status,
-    selected: input.selectedChangeId === change.id,
-    actionLabel: t(SYNC_TEXT.commit.unstage),
-  }))
-  const unstagedRows = input.unstaged.map((change) => ({
-    key: `unstaged-${change.id}`,
-    change,
-    name: change.name,
-    code: changeStatusCode(change.status),
-    status: change.status,
-    selected: input.selectedChangeId === change.id,
-    actionLabel: t(SYNC_TEXT.commit.stage),
-  }))
+  // A change is in both lists when it was selected and then edited again. One row shows it, in the mixed state.
+  const stagedById = new Map(input.staged.map((change) => [change.id, change]))
+  const unstagedById = new Map(input.unstaged.map((change) => [change.id, change]))
+  const knownIds = new Set(input.changes.map((change) => change.id))
+  const allChanges = [...input.changes, ...input.staged.filter((change) => !knownIds.has(change.id))]
+  const query = filter.trim().toLowerCase()
+  const visible = query ? allChanges.filter((change) => `${change.name} ${change.folder ?? ''}`.toLowerCase().includes(query)) : allChanges
+  const visibleIds = new Set(visible.map((change) => change.id))
+  const visibleStaged = input.staged.filter((change) => visibleIds.has(change.id))
+  const visibleUnstaged = input.unstaged.filter((change) => visibleIds.has(change.id))
+  const editedCount = input.staged.filter((change) => unstagedById.has(change.id)).length
+
+  function toRow(change: WorkspaceChange) {
+    const staged = stagedById.get(change.id)
+    const unstaged = unstagedById.get(change.id)
+    return {
+      key: change.id,
+      name: change.name,
+      method: change.method,
+      status: change.status,
+      statusLabel: t(changeStatusKey(change.status)),
+      selected: input.selectedChangeId === change.id,
+      onSelect: () => actions.onSelectChange(change.id),
+      checked: Boolean(staged),
+      indeterminate: Boolean(staged && unstaged),
+      checkLabel: t(SYNC_TEXT.commit.includeInCommit, { name: change.name }),
+      // On a change edited after it was selected, a click takes in the edits instead of dropping the change.
+      onCheckedChange: (next: boolean) => {
+        if (unstaged && (next || staged)) actions.onStage(unstaged, true)
+        else if (staged) actions.onStage(staged, false)
+      },
+    }
+  }
+
+  const rootGroup = t(SYNC_TEXT.commit.rootGroup)
+  const groups: { key: string; label: string; rows: ReturnType<typeof toRow>[] }[] = []
+  for (const change of visible) {
+    const label = change.folder ?? rootGroup
+    const group = groups.find((item) => item.label === label)
+    if (group) group.rows.push(toRow(change))
+    else groups.push({ key: label, label, rows: [toRow(change)] })
+  }
+
+  const canSubmit = input.message.trim() !== '' && input.staged.length > 0
+
+  let hint = t(SYNC_TEXT.commit.hintReady)
+  if (input.staged.length === 0) hint = t(SYNC_TEXT.commit.hintSelect)
+  else if (input.message.trim() === '') hint = t(SYNC_TEXT.commit.hintMessage)
+  else if (editedCount > 0) hint = t(SYNC_TEXT.commit.hintEdited)
+
+  const pushDisabledReason = !input.signedIn ? t(SYNC_TEXT.footer.signIn) : input.readOnly ? t(SYNC_TEXT.footer.viewerReadOnly) : ''
+
+  async function onPush() {
+    setStatusVisible(true)
+    setPushing(true)
+    try {
+      await actions.onPush()
+    } finally {
+      setPushing(false)
+    }
+  }
+
+  function onSubmit(event: FormEvent) {
+    setStatusVisible(true)
+    actions.onSubmit(event)
+  }
 
   const historyCommits = history.commits.map((commit) => {
     const tone: CommitTone =
@@ -116,12 +195,12 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
 
   const historyChanges = history.changes.map((change) => ({
     key: change.id,
-    change,
     name: change.name,
-    code: changeStatusCode(change.status),
+    method: change.method,
     status: change.status,
-    text: t(changeStatusKey(change.status)),
+    statusLabel: t(changeStatusKey(change.status)),
     selected: history.selectedChangeId === change.id,
+    onSelect: () => actions.onSelectHistoryChange(change.id),
   }))
 
   let historyEmpty: string | null = null
@@ -141,9 +220,12 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
 
   return {
     open: input.open,
-    onOpenChange: actions.onOpenChange,
+    onOpenChange,
+    onClose: () => onOpenChange(false),
+    closeLabel: t(SYNC_TEXT.commit.close),
     openHistory: actions.onOpenHistory,
     openChanges: actions.onOpenChanges,
+    openHistoryTab: () => actions.onViewChange('history'),
     title: input.view === 'changes' ? t(SYNC_TEXT.commit.title) : t(SYNC_TEXT.commit.historyTitle),
     description,
     tabs: {
@@ -154,36 +236,72 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
       changesDisabled: input.readOnly,
       historyLabel: t(SYNC_TEXT.commit.historyTab),
       historyCount: history.commits.length,
-      onSelect: actions.onViewChange,
+      onSelect: (value: string) => actions.onViewChange(value === 'history' ? 'history' : 'changes'),
+    },
+    diffLayout: {
+      label: t(SYNC_TEXT.commit.diffLayout),
+      value: layout,
+      options: [
+        { value: 'split', label: t(SYNC_TEXT.commit.diffSplit) },
+        { value: 'unified', label: t(SYNC_TEXT.commit.diffUnified) },
+      ],
+      onChange: (value: string) => setLayout(value === 'unified' ? 'unified' : 'split'),
     },
     changes: {
+      isEmpty: allChanges.length === 0,
+      empty: {
+        title: t(SYNC_TEXT.commit.emptyTitle),
+        body: t(SYNC_TEXT.commit.emptyBody),
+        action: t(SYNC_TEXT.commit.emptyAction),
+      },
+      selectAll: {
+        label:
+          visibleStaged.length === 0
+            ? t(SYNC_TEXT.commit.selectAll, { count: visible.length })
+            : t(SYNC_TEXT.commit.selectedCount, { selected: visibleStaged.length, total: visible.length }),
+        checked: visible.length > 0 && visibleStaged.length === visible.length,
+        indeterminate: visibleStaged.length > 0 && visibleStaged.length < visible.length,
+        onToggle: (next: boolean) => {
+          if (next) actions.onStageAll(visibleUnstaged, true)
+          else if (query) actions.onStageAll(visibleStaged, false)
+          else actions.onUnstageAll()
+        },
+      },
+      filter: {
+        visible: allChanges.length > filterFromCount,
+        label: t(SYNC_TEXT.commit.filter),
+        value: filter,
+        onChange: setFilter,
+      },
+      noMatch: query && visible.length === 0 ? t(SYNC_TEXT.commit.noMatch) : null,
+      groups,
       messageLabel: t(SYNC_TEXT.commit.message),
       messagePlaceholder: t(SYNC_TEXT.commit.messagePlaceholder),
+      messageMax,
+      messageCount: `${input.message.length}/${messageMax}`,
       message: input.message,
       onMessageChange: actions.onMessageChange,
-      onSubmit: actions.onSubmit,
-      canSubmit: input.message.trim() !== '' && input.staged.length > 0,
-      submitLabel: t(SYNC_TEXT.commit.submit),
-      stagedHeading: t(SYNC_TEXT.commit.staged),
-      stagedCount: input.staged.length,
-      unstageAllLabel: t(SYNC_TEXT.commit.unstageAll),
-      canUnstageAll: input.staged.length > 0,
-      onUnstageAll: actions.onUnstageAll,
-      stagedRows,
-      stagedEmpty: t(SYNC_TEXT.commit.stageToCommit),
-      unstagedHeading: t(SYNC_TEXT.commit.changes),
-      unstagedCount: input.unstaged.length,
-      stageAllLabel: t(SYNC_TEXT.commit.stageAll),
-      canStageAll: input.unstaged.length > 0,
-      onStageAll: () => actions.onStageAll(input.unstaged, true),
-      unstagedRows,
-      unstagedEmpty: t(SYNC_TEXT.commit.noUnstaged),
-      onSelect: actions.onSelectChange,
-      onStage: actions.onStage,
+      onMessageKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return
+        event.preventDefault()
+        if (canSubmit) onSubmit(event)
+      },
+      onSubmit,
+      canSubmit,
+      submitLabel: input.staged.length > 0 ? t(SYNC_TEXT.commit.submitCount, { count: input.staged.length }) : t(SYNC_TEXT.commit.submit),
+      hint,
+      push: {
+        pendingLabel: input.pendingPushCount > 0 ? t(SYNC_TEXT.commit.unpushed, { count: input.pendingPushCount }) : null,
+        label: t(SYNC_TEXT.footer.push),
+        pushing,
+        disabledReason: pushDisabledReason,
+        status: statusVisible && input.syncStatus ? input.syncStatus : null,
+        onPush: () => void onPush(),
+      },
       diffLabel: t(SYNC_TEXT.commit.diffLabel),
       diff: input.selectedChange
         ? {
-            header: diffHeader(input.selectedChange),
+            header: diffHeader(input.selectedChange, input.diffRows),
             leftHeading: t(SYNC_TEXT.commit.previous),
             rightHeading: t(SYNC_TEXT.commit.workingTree),
             rows: input.diffRows,
@@ -195,8 +313,6 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
       diffEmpty: t(SYNC_TEXT.commit.selectToCompare),
     },
     history: {
-      commitsHeading: t(SYNC_TEXT.history.commits),
-      commitCount: history.commits.length,
       loadingText: history.loading ? t(SYNC_TEXT.history.loadingCloud) : null,
       errorText: history.error ? t(SYNC_TEXT.history.cloudError, { error: history.error }) : null,
       emptyText: !history.commits.length && !history.loading ? t(SYNC_TEXT.history.noCommits) : null,
@@ -204,13 +320,11 @@ export function useCommitDialogViewModel(input: CommitDialogInput) {
       onSelectCommit: actions.onSelectHistoryCommit,
       selectedCommit: history.selectedCommit ? { id: history.selectedCommit.id, busy: history.detailLoading } : null,
       changedItemsHeading: t(SYNC_TEXT.history.changedItems),
-      changedItemsCount: history.snapshotsReady ? history.changes.length : '…',
       changes: historyChanges,
       changesEmpty: historyEmpty,
-      onSelectChange: actions.onSelectHistoryChange,
-      selectedChange: history.selectedChange ? diffHeader(history.selectedChange) : null,
-      parentHeading: t(SYNC_TEXT.history.parentVersion),
-      parentMessage: history.selectedCommit?.message ?? '',
+      diffHeader: history.selectedChange ? diffHeader(history.selectedChange, history.diffRows) : null,
+      leftHeading: t(SYNC_TEXT.history.beforeCommit),
+      rightHeading: t(SYNC_TEXT.history.thisCommit),
       diffRegionLabel: t(SYNC_TEXT.history.diffLabel),
       diffScrollLabel: history.selectedChange ? t(SYNC_TEXT.history.diffLabelFor, { name: history.selectedChange.name }) : '',
       diffRows: history.diffRows,

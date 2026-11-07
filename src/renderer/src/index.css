@@ -204,60 +204,8 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .invite-link-row input { min-width: 0; flex: 1; font-size: 11px; }
 .invite-accept-form { display: grid; gap: 8px; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
 .invite-accept-form label { color: var(--secondary-foreground); font-size: 13px; font-weight: 600; }
-.changes-dialog { width: min(1240px, calc(100vw - 32px)); height: min(820px, calc(100vh - 40px)); max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; }
-.changes-dialog .dialog-header { flex: none; margin-bottom: 16px; }
-.commit-view-tabs { flex: none; display: flex; gap: 8px; margin: 0 0 16px; border-radius: 7px; padding: 8px; background: var(--muted); }
-.commit-view-tabs button { min-height: 30px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 5px; padding: 0 8px; color: var(--muted-foreground); background: transparent; font-size: 12px; font-weight: 500; }
-.commit-view-tabs button[aria-selected='true'] { color: var(--foreground); background: var(--card); box-shadow: 0 1px 2px rgb(15 23 42 / .08); }
-.commit-view-tabs button:disabled { opacity: .45; cursor: not-allowed; }
-.commit-view-tabs button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-.commit-view-tabs button span { color: var(--muted-foreground); font-family: var(--font-data); font-size: 10px; }
-.changes-layout { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(230px, 280px) minmax(0, 1fr); gap: 16px; overflow: hidden; }
-.changes-sidebar { min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 8px; }
-.changes-sidebar-commit { overflow: hidden; }
-.changes-sidebar > label { color: var(--secondary-foreground); font-size: 12px; font-weight: 600; }
-.changes-sidebar > input { min-height: 38px; }
-.changes-sidebar .change-list-section { flex: none; }
-.changes-list-scroll { min-height: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 8px; }
-.changes-sidebar-footer { flex: none; border-top: 1px solid var(--border); padding-top: 8px; background: var(--card); }
-.changes-sidebar-footer > button { width: 100%; }
-.diff-view { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
-.diff-file-header { min-height: 40px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding: 0 16px; color: var(--secondary-foreground); font-size: 12px; }
-.diff-file-header strong { min-width: 0; flex: 1; overflow: hidden; color: var(--foreground); text-overflow: ellipsis; white-space: nowrap; }
-.diff-file-header > span:last-child { color: var(--muted-foreground); font-size: 11px; }
-.diff-column-headings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-bottom: 1px solid var(--border); color: var(--muted-foreground); background: var(--muted); font-size: 11px; font-weight: 600; }
-.diff-column-headings span { padding: 8px 8px; }
-.diff-column-headings span + span { border-left: 1px solid var(--border); }
-.diff-scroll { min-height: 0; flex: 1; overflow: auto; color: var(--foreground); font-family: var(--font-data); font-size: 11px; line-height: 20px; }
-.diff-row { min-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.diff-cell { min-width: 0; min-height: 22px; display: flex; border-bottom: 1px solid var(--muted); }
-.diff-cell + .diff-cell { border-left: 1px solid var(--border); }
-.diff-cell-removed { background: color-mix(in srgb, var(--destructive) 12%, transparent); }
-.diff-cell-added { background: color-mix(in srgb, var(--ok) 14%, transparent); }
-.diff-gutter { width: 38px; flex: none; padding-right: 8px; color: var(--muted-foreground); background: rgb(241 245 249 / 55%); text-align: right; user-select: none; }
-.diff-cell code { min-width: 0; overflow: hidden; padding: 0 8px; color: inherit; font: inherit; text-overflow: clip; white-space: pre; }
-.diff-empty { min-height: 160px; flex: 1; display: grid; place-items: center; padding: 24px; color: var(--muted-foreground); font-size: 13px; text-align: center; }
-.diff-note { margin: 16px; border: 1px solid var(--border); border-radius: 6px; padding: 8px; color: var(--muted-foreground); background: var(--muted); font-size: 12px; line-height: 1.5; }
-.change-list-section { display: grid; gap: 0; border-top: 1px solid var(--border); padding-top: 8px; }
-.history-sidebar .change-list-section:first-child { border-top: 0; padding-top: 0; }
-.history-change-row { width: 100%; min-height: 30px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 5px; padding: 8px 8px; color: var(--secondary-foreground); background: transparent; text-align: left; }
-.history-change-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -1px; }
-.history-change-row:hover, .history-change-row-selected { background: color-mix(in srgb, var(--primary) 14%, transparent); }
-.history-change-row > span:nth-child(2) { min-width: 0; flex: 1; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.history-change-row small { flex: none; color: var(--muted-foreground); font-size: 10px; }
-.history-error { margin: 8px 0; border-left: 2px solid var(--destructive); padding: 8px 8px; color: var(--destructive); font-size: 10px; line-height: 1.45; }
-.change-list-heading { min-height: 28px; display: flex; align-items: center; gap: 8px; color: var(--secondary-foreground); font-size: 12px; }
-.change-list-heading strong { font-weight: 700; }
-.change-list-heading > span { min-width: 18px; border-radius: 10px; padding: 0 8px; color: var(--muted-foreground); background: var(--muted); font-family: var(--font-data); font-size: 10px; text-align: center; }
-.text-action { margin-left: auto; border: 0; padding: 8px 8px; color: var(--primary-foreground); background: transparent; font-size: 11px; font-weight: 600; }
-.text-action:disabled { color: var(--muted-foreground); cursor: default; }
-.text-action:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.change-row { min-height: 30px; display: flex; align-items: center; gap: 8px; border-radius: 5px; padding: 0 8px; }
-.change-row:hover { background: var(--muted); }
-.change-row-selected { background: color-mix(in srgb, var(--primary) 14%, transparent); }
-.change-name { min-width: 0; flex: 1; overflow: hidden; border: 0; padding: 8px 0; color: var(--secondary-foreground); background: transparent; font-size: 11px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
-.change-name:focus-visible { outline: 2px solid var(--primary); outline-offset: -1px; }
-.change-empty { margin: 0 0 8px; padding: 8px 8px; color: var(--muted-foreground); font-size: 11px; }
+.dialog__content.changes-dialog { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0; width: min(1240px, calc(100vw - 32px)); height: min(820px, calc(100vh - 40px)); max-height: calc(100vh - 40px); padding: 0; overflow: hidden; }
+.dialog__content.changes-dialog textarea { min-height: 72px; resize: none; }
 .sync-toast { position: fixed; right: 20px; bottom: 20px; z-index: 40; max-width: min(420px, calc(100vw - 40px)); border: 1px solid var(--border); border-radius: 9px; padding: 8px 16px; color: var(--foreground); background: var(--card); box-shadow: 0 8px 24px rgb(15 23 42 / 0.12); font-size: 12px; }
 .merge-dialog { width: min(560px, calc(100vw - 32px)); }
 .merge-conflicts { max-height: min(48vh, 420px); display: grid; gap: 16px; margin: 16px 0; overflow-y: auto; }
@@ -275,11 +223,6 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 
 
 @media (max-width: 720px) {
-  .changes-dialog { height: calc(100vh - 24px); width: calc(100vw - 24px); padding: 16px; }
-  .changes-layout { grid-template-columns: 1fr; grid-template-rows: minmax(190px, 0.8fr) minmax(220px, 1.2fr); overflow-y: auto; }
-  .changes-sidebar { overflow: visible; }
-  .changes-sidebar.changes-sidebar-commit { overflow: hidden; }
-  .diff-view { min-height: 220px; }
   .variables-dialog { width: calc(100vw - 24px); max-height: calc(100vh - 24px); padding: 16px; }
 }
 
