@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { type CommitDialogInput, useCommitDialogViewModel } from '@/features/sync/viewmodels/use-commit-dialog.viewmodel'
 
@@ -11,12 +11,16 @@ function input(overrides: Partial<CommitDialogInput> = {}): CommitDialogInput {
     message: '',
     readOnly: false,
     cloudConnected: false,
+    signedIn: true,
     changeCount: 1,
+    changes: [{ id: 'a', name: 'List users', status: 'modified' }],
     staged: [],
     unstaged: [{ id: 'a', name: 'List users', status: 'modified' }],
     selectedChangeId: '',
     selectedChange: undefined,
     diffRows: [],
+    pendingPushCount: 0,
+    syncStatus: '',
     history: {
       commits: [],
       localCommitIds: new Set(),
@@ -40,6 +44,7 @@ function input(overrides: Partial<CommitDialogInput> = {}): CommitDialogInput {
       onStage: noop,
       onStageAll: noop,
       onUnstageAll: noop,
+      onPush: vi.fn(async () => {}),
       onSelectHistoryCommit: noop,
       onSelectHistoryChange: noop,
       onRevertHistoryCommit: noop,
@@ -63,8 +68,94 @@ describe('useCommitDialogViewModel', () => {
   })
 
   it('uses the change status word from the locale, not English text in the view', () => {
-    const { result } = renderHook(() => useCommitDialogViewModel(input({ unstaged: [{ id: 'b', name: 'New', status: 'added' }] })))
-    expect(result.current.changes.unstagedRows[0]).toMatchObject({ code: 'U', actionLabel: 'Stage' })
+    const added = { id: 'b', name: 'New one', status: 'added' as const }
+    const { result } = renderHook(() => useCommitDialogViewModel(input({ changes: [added], unstaged: [added] })))
+    expect(result.current.changes.groups[0].rows[0]).toMatchObject({ statusLabel: 'New', checked: false, indeterminate: false })
+  })
+
+  it('groups the changes by folder in one stable list, with items outside a folder under the workspace', () => {
+    const changes = [
+      { id: 'a', name: 'Get user', status: 'modified' as const, method: 'GET', folder: 'Users' },
+      { id: 'b', name: 'Workspace variables', status: 'modified' as const },
+      { id: 'c', name: 'Update user', status: 'modified' as const, method: 'PATCH', folder: 'Users' },
+    ]
+    const { result } = renderHook(() =>
+      useCommitDialogViewModel(input({ changes, staged: [changes[2]], unstaged: [changes[0], changes[1]] })),
+    )
+    expect(result.current.changes.groups.map((group) => [group.label, group.rows.map((row) => row.name)])).toEqual([
+      ['Users', ['Get user', 'Update user']],
+      ['Workspace', ['Workspace variables']],
+    ])
+    expect(result.current.changes.selectAll).toMatchObject({ checked: false, indeterminate: true, label: '1 of 3 selected' })
+    expect(result.current.changes.submitLabel).toBe('Commit 1 change')
+  })
+
+  it('keeps a change that was selected and then reverted, so it can still be unselected', () => {
+    const staged = { id: 'gone', name: 'Reverted', status: 'modified' as const }
+    const onStage = vi.fn()
+    const base = input()
+    const { result } = renderHook(() =>
+      useCommitDialogViewModel(input({ changes: [], staged: [staged], unstaged: [], actions: { ...base.actions, onStage } })),
+    )
+    const row = result.current.changes.groups[0].rows[0]
+    expect(row.checked).toBe(true)
+    row.onCheckedChange(false)
+    expect(onStage).toHaveBeenCalledWith(staged, false)
+  })
+
+  it('takes in the edits when the box of a change edited after selecting is clicked', () => {
+    const staged = { id: 'a', name: 'List users', status: 'modified' as const }
+    const edited = { ...staged }
+    const onStage = vi.fn()
+    const base = input()
+    const { result } = renderHook(() =>
+      useCommitDialogViewModel(input({ message: 'x', staged: [staged], unstaged: [edited], actions: { ...base.actions, onStage } })),
+    )
+    const row = result.current.changes.groups[0].rows[0]
+    expect(row).toMatchObject({ checked: true, indeterminate: true })
+    row.onCheckedChange(false)
+    expect(onStage).toHaveBeenCalledWith(edited, true)
+    expect(result.current.changes.hint).toContain('edited again')
+  })
+
+  it('applies select all only to the items the filter shows', () => {
+    const changes = Array.from({ length: 9 }, (_, index) => ({
+      id: String(index),
+      name: index === 0 ? 'Invoice' : 'User ' + index,
+      status: 'modified' as const,
+    }))
+    const onStageAll = vi.fn()
+    const base = input()
+    const { result } = renderHook(() =>
+      useCommitDialogViewModel(input({ changes, unstaged: changes, actions: { ...base.actions, onStageAll } })),
+    )
+    expect(result.current.changes.filter.visible).toBe(true)
+    act(() => result.current.changes.filter.onChange('invoice'))
+    result.current.changes.selectAll.onToggle(true)
+    expect(onStageAll).toHaveBeenCalledWith([changes[0]], true)
+  })
+
+  it('offers Push with a pending commit, and says why when it cannot run', () => {
+    const { result } = renderHook(() => useCommitDialogViewModel(input({ pendingPushCount: 2, signedIn: false })))
+    expect(result.current.changes.push.pendingLabel).toBe('2 commits not pushed')
+    expect(result.current.changes.push.disabledReason).toBe('Sign in to sync this workspace.')
+  })
+
+  it('shows the sync status only after a commit or push started from the dialog', async () => {
+    const { result } = renderHook(() => useCommitDialogViewModel(input({ pendingPushCount: 1, syncStatus: 'Something older' })))
+    expect(result.current.changes.push.status).toBeNull()
+    await act(async () => result.current.changes.push.onPush())
+    expect(result.current.changes.push.status).toBe('Something older')
+  })
+
+  it('counts the lines of the compared change', () => {
+    const selectedChange = { id: 'a', name: 'List users', status: 'modified' as const }
+    const diffRows = [
+      { kind: 'same' as const, leftText: 'a', rightText: 'a', leftLine: 1, rightLine: 1 },
+      { kind: 'added' as const, leftText: '', rightText: 'b', leftLine: null, rightLine: 2 },
+    ]
+    const { result } = renderHook(() => useCommitDialogViewModel(input({ selectedChange, diffRows })))
+    expect(result.current.changes.diff?.header).toMatchObject({ added: 1, removed: 0 })
   })
 
   it('labels a cloud commit that was pushed, a local one that was not, and a cloud one that is only remote', () => {

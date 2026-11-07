@@ -57,7 +57,8 @@ export function useCommitHistoryViewModel(input: HistoryInput) {
   })()
   const historyCommitById = new Map(historyCommits.map((commit) => [commit.id, commit]))
   const localCommitIds = new Set(localCommits.map((commit) => commit.id))
-  const selectedHistoryCommit = historyCommitById.get(selectedHistoryCommitId)
+  // The newest commit and its first item open at once, as in the Changes tab.
+  const selectedHistoryCommit = historyCommitById.get(selectedHistoryCommitId) ?? (cloudHistoryOpen ? historyCommits[0] : undefined)
   const historyParentId = selectedHistoryCommit?.parentIds.find((id) => historyCommitById.has(id))
   const historyParentCommit = historyParentId ? historyCommitById.get(historyParentId) : undefined
   const historyDetailIds =
@@ -100,7 +101,7 @@ export function useCommitHistoryViewModel(input: HistoryInput) {
     selectedHistoryCommit && historySnapshotsReady
       ? getWorkspaceChanges(historyBeforeTree, historyAfterTree, historyBeforeVariables, historyAfterVariables)
       : []
-  const selectedHistoryChange = historyChanges.find((change) => change.id === selectedHistoryChangeId)
+  const selectedHistoryChange = historyChanges.find((change) => change.id === selectedHistoryChangeId) ?? historyChanges[0]
   const historyDiffRows =
     selectedHistoryCommit && selectedHistoryChange
       ? diffText(

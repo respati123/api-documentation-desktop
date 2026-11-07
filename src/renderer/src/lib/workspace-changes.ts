@@ -7,7 +7,8 @@ import {
 import type { ApiNode, FolderNode, RequestNode } from '@/shared/models/api-node.model'
 
 export type ChangeStatus = 'added' | 'modified' | 'deleted'
-export type WorkspaceChange = { id: string; name: string; status: ChangeStatus }
+// method and folder say where a request or folder sits. Workspace variables have neither.
+export type WorkspaceChange = { id: string; name: string; status: ChangeStatus; method?: string; folder?: string }
 type FlatResource = Omit<FolderNode, 'children'> | RequestNode
 type FlatNode = { node: FlatResource; parentId: string; order: number }
 const nodeSignatures = new WeakMap<FlatResource, string>()
@@ -61,9 +62,17 @@ export function getWorkspaceChanges(
     const before = base.get(id)
     const after = working.get(id)
     if (sameEntry(before, after)) continue
-    const node = after?.node ?? before?.node
-    if (!node) continue
-    changes.push({ id, name: node.name, status: !before ? 'added' : !after ? 'deleted' : 'modified' })
+    const entry = after ?? before
+    if (!entry) continue
+    const { node, parentId } = entry
+    const folder = (after ? working : base).get(parentId)?.node.name
+    changes.push({
+      id,
+      name: node.name,
+      status: !before ? 'added' : !after ? 'deleted' : 'modified',
+      ...(node.kind === 'request' ? { method: node.method } : {}),
+      ...(folder ? { folder } : {}),
+    })
   }
   if (JSON.stringify(shareableWorkspaceVariables(baseVariables)) !== JSON.stringify(shareableWorkspaceVariables(workingVariables))) {
     changes.push({ id: workspaceVariablesChangeId, name: 'Workspace variables', status: 'modified' })

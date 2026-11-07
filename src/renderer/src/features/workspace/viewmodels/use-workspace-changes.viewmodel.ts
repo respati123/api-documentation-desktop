@@ -60,7 +60,10 @@ export function useWorkspaceChangesViewModel(input: ChangesInput) {
     return getWorkspaceChanges(stageBaseTree, tree, stageBaseVariables, workspaceVariables)
   })()
   const changeById = new Map(workspaceChanges.map((change) => [change.id, change]))
-  const selectedChange = showChanges ? workspaceChanges.find((change) => change.id === selectedChangeId) : undefined
+  // The first change opens at once, so the largest part of the dialog is never empty.
+  const selectedChange = showChanges
+    ? (workspaceChanges.find((change) => change.id === selectedChangeId) ?? workspaceChanges[0])
+    : undefined
   const diffRows = selectedChange
     ? diffText(
         selectedChange.id === workspaceVariablesChangeId

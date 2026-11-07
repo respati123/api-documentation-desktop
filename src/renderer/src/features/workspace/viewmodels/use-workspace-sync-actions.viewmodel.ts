@@ -144,7 +144,6 @@ export function useWorkspaceSyncActionsViewModel(input: SyncActionsInput) {
     setStagedSnapshot(null)
     setStagedVariables(null)
     setCommitMessage('')
-    setCommitDialogOpen(false)
     setSyncStatus(tSync(SYNC_TEXT.commit.saved))
   }
 
