@@ -2,9 +2,13 @@
   "dismiss": "Tutup",
   "teamUpdate": "Update dari tim kamu",
   "updateAvailable": "Update v{{version}} tersedia",
+  "updateAvailableBody": "Unduh sekarang. Aplikasi akan restart setelah update siap.",
   "updateDownload": "Unduh",
+  "later": "Nanti",
   "updateReady": "Update siap",
   "updateReadyBody": "Aplikasi akan restart untuk menyelesaikan update.",
   "joined": "Kamu bergabung ke {{name}}",
-  "joinedBody": "Workspace ini sekarang ada di daftar kamu."
+  "joinedBody": "Workspace ini sekarang ada di daftar kamu.",
+  "pullNow": "Tarik sekarang",
+  "moreChanges": "+{{count}} lainnya"
 }

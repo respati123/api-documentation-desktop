@@ -28,7 +28,7 @@ export function useNotificationsViewModel() {
     const previous = timers.current.get(id)
     if (previous !== undefined) window.clearTimeout(previous)
     setItems((list) => addNotification(list, item))
-    const delay = autoDismissMs[item.tone]
+    const delay = item.autoDismissMs !== undefined ? item.autoDismissMs : autoDismissMs[item.tone]
     if (delay !== null)
       timers.current.set(
         id,
@@ -49,6 +49,8 @@ export function useNotificationsViewModel() {
     stack: {
       items,
       dismissLabel: t(NOTIFICATION_TEXT.dismiss),
+      laterLabel: t(NOTIFICATION_TEXT.later),
+      moreLabel: (count: number) => t(NOTIFICATION_TEXT.moreChanges, { count }),
       onDismiss: dismiss,
     },
   }

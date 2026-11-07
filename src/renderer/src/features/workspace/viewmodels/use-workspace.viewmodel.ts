@@ -10,7 +10,7 @@ import {
   normalizeSharedVariables,
   useCollectionTreeViewModel,
 } from '@/features/collection'
-import { NOTIFICATION_TEXT, useNotificationsViewModel } from '@/features/notifications'
+import { NOTIFICATION_TEXT, teamUpdateDismissMs, useNotificationsViewModel } from '@/features/notifications'
 import {
   type CloudWorkspace,
   changeStatusKey,
@@ -297,6 +297,7 @@ export function useWorkspaceViewModel() {
         id: `update-${status.version}`,
         tone: 'action',
         title: tNotice(NOTIFICATION_TEXT.updateAvailable, { version: status.version }),
+        body: tNotice(NOTIFICATION_TEXT.updateAvailableBody),
         actionLabel: tNotice(NOTIFICATION_TEXT.updateDownload),
         onAction: () => void appUpdateService.download(status.version),
       })
@@ -507,11 +508,20 @@ export function useWorkspaceViewModel() {
         const pullNeeded = pullNoticeNeeded(event, user?.id ?? null, result)
         const message = pullNeeded ? pushed : tSync(SYNC_TEXT.live.updated, { actor })
         setSyncStatus(message)
+        const changes = event.changes ?? []
         notifications.notify({
           id: `pull-${event.headCommitId}`,
           tone: pullNeeded ? 'action' : 'info',
+          // A team update leaves on its own. The pull button stays while this copy cannot follow the head by itself.
+          autoDismissMs: teamUpdateDismissMs,
           title: tNotice(NOTIFICATION_TEXT.teamUpdate),
           body: message,
+          details: changes.map((change) => ({
+            label: change.method ? `${change.method} ${change.name}` : change.name,
+            kind: change.status,
+          })),
+          moreCount: Math.max(0, (event.changeTotal ?? changes.length) - changes.length),
+          ...(pullNeeded ? { actionLabel: tNotice(NOTIFICATION_TEXT.pullNow), onAction: () => void pullWorkspace() } : {}),
         })
       }
     } catch (error) {

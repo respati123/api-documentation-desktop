@@ -22,4 +22,20 @@ describe('useNotificationsViewModel', () => {
     act(() => result.current.stack.onDismiss('u'))
     expect(result.current.stack.items).toHaveLength(0)
   })
+
+  it('uses the delay the notification asks for, not the default of its tone', () => {
+    const { result } = renderHook(() => useNotificationsViewModel())
+    act(() => result.current.notify({ id: 't', tone: 'info', title: 'Update from your team', autoDismissMs: 8000 }))
+    act(() => vi.advanceTimersByTime(7000))
+    expect(result.current.stack.items).toHaveLength(1)
+    act(() => vi.advanceTimersByTime(1000))
+    expect(result.current.stack.items).toHaveLength(0)
+  })
+
+  it('keeps a notification that asks for no delay until it is dismissed', () => {
+    const { result } = renderHook(() => useNotificationsViewModel())
+    act(() => result.current.notify({ id: 'k', tone: 'info', title: 'Kept', autoDismissMs: null }))
+    act(() => vi.advanceTimersByTime(60_000))
+    expect(result.current.stack.items).toHaveLength(1)
+  })
 })
