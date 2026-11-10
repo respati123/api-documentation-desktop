@@ -52,6 +52,44 @@ describe('useAiConnectViewModel', () => {
     expect(desktop).toMatchObject({ showInstall: false, showConnect: false, statusText: 'Not available on this operating system.' })
   })
 
+  it('describes Antigravity: no install button, and connect only once agy is installed', async () => {
+    const missing = setup({
+      node: idle.node,
+      tools: [...idle.tools, { id: 'antigravity', supported: true, installed: false, connected: false }],
+    })
+    act(() => openFromMenu())
+    await waitFor(() => expect(missing.result.current.tools[3].statusText).toContain('Install Antigravity first'))
+    expect(missing.result.current.tools[3]).toMatchObject({
+      name: 'Antigravity (agy)',
+      showInstall: false,
+      showConnect: false,
+      statusText: 'Not installed. Install Antigravity first, then open this dialog again.',
+    })
+  })
+
+  it('offers Connect for Antigravity when agy is installed', async () => {
+    const installed = setup({
+      node: idle.node,
+      tools: [...idle.tools, { id: 'antigravity', supported: true, installed: true, connected: false }],
+    })
+    act(() => openFromMenu())
+    // The tool list always has four entries, so wait for a value that only the loaded status can give.
+    await waitFor(() => expect(installed.result.current.tools[3].showConnect).toBe(true))
+    expect(installed.result.current.tools[3]).toMatchObject({ showInstall: false, showConnect: true, statusText: 'Not connected yet' })
+  })
+
+  it('installs Gemini CLI from the app, the same way as Codex and Claude CLI', async () => {
+    vi.mocked(aiConnectService.installTool).mockResolvedValue(undefined)
+    const { result } = setup({
+      node: idle.node,
+      tools: [...idle.tools, { id: 'gemini', supported: true, installed: false, connected: false }],
+    })
+    act(() => openFromMenu())
+    await waitFor(() => expect(result.current.tools[4]).toMatchObject({ name: 'Gemini CLI', showInstall: true, showConnect: false }))
+    act(() => result.current.tools[4].onInstall())
+    await waitFor(() => expect(aiConnectService.installTool).toHaveBeenCalledWith('gemini'))
+  })
+
   it('asks to install Node.js first when it is missing', async () => {
     const { result } = setup({ node: { installed: false }, tools: idle.tools })
     act(() => openFromMenu())

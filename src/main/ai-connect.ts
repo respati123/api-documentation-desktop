@@ -13,7 +13,7 @@ import { findOnPath, type NodeRuntimePaths, readNodeRuntime } from './node-runti
 export const mcpServerName = 'api-documentation'
 const mcpPackage = 'api-documentation-mcp@latest'
 
-export type AiToolId = 'codex' | 'claude-cli' | 'claude-desktop'
+export type AiToolId = 'codex' | 'claude-cli' | 'claude-desktop' | 'antigravity' | 'gemini'
 
 export type AiToolStatus = {
   id: AiToolId
@@ -27,9 +27,10 @@ export type AiConnectStatus = {
   tools: AiToolStatus[]
 }
 
-const cliPackages: Record<'codex' | 'claude-cli', { package: string; bin: string }> = {
+const cliPackages: Record<'codex' | 'claude-cli' | 'gemini', { package: string; bin: string }> = {
   codex: { package: '@openai/codex', bin: 'codex' },
   'claude-cli': { package: '@anthropic-ai/claude-code', bin: 'claude' },
+  gemini: { package: '@google/gemini-cli', bin: 'gemini' },
 }
 
 function toolsDir(userDataDir: string): string {
@@ -53,10 +54,37 @@ function claudeCliConfigPath(): string {
   return join(homedir(), '.claude.json')
 }
 
-function claudeDesktopConfigPath(): string | null {
-  if (process.platform === 'darwin') return join(homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
-  if (process.platform === 'win32' && process.env.APPDATA) return join(process.env.APPDATA, 'Claude', 'claude_desktop_config.json')
+// Claude Desktop has an official build for macOS and Windows only. On Linux there is no config file to write.
+export function claudeDesktopConfigPath(platform: NodeJS.Platform, env: NodeJS.ProcessEnv, home: string): string | null {
+  if (platform === 'darwin') return join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
+  if (platform === 'win32' && env.APPDATA) return join(env.APPDATA, 'Claude', 'claude_desktop_config.json')
   return null
+}
+
+// Gemini CLI keeps its user settings here, with the MCP servers under mcpServers.
+export function geminiSettingsPath(home: string): string {
+  return join(home, '.gemini', 'settings.json')
+}
+
+// The Gemini CLI commands that replace this app's entry in the user scope. Unlike agy, it takes the command without a -- separator.
+export function geminiMcpCommands(command: string[]): { remove: string[]; add: string[] } {
+  return {
+    remove: ['mcp', 'remove', '-s', 'user', mcpServerName],
+    add: ['mcp', 'add', '-s', 'user', mcpServerName, ...command],
+  }
+}
+
+// Antigravity's agy CLI reads and writes its global MCP servers here. Checked on Linux with agy mcp list.
+export function antigravityConfigPath(home: string): string {
+  return join(home, '.gemini', 'config', 'mcp_config.json')
+}
+
+// The agy commands that replace this app's entry. A command after -- is the server command. Flags come before the name.
+export function agyMcpCommands(command: string[]): { remove: string[]; add: string[] } {
+  return {
+    remove: ['mcp', 'remove', mcpServerName],
+    add: ['mcp', 'add', mcpServerName, '--', ...command],
+  }
 }
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
@@ -68,7 +96,7 @@ async function readJson(path: string): Promise<Record<string, unknown>> {
   }
 }
 
-async function resolveCli(userDataDir: string, id: 'codex' | 'claude-cli'): Promise<string | null> {
+async function resolveCli(userDataDir: string, id: 'codex' | 'claude-cli' | 'gemini'): Promise<string | null> {
   const appBin = appToolBin(userDataDir, cliPackages[id].bin)
   if (existsSync(appBin)) return appBin
   return findOnPath(cliPackages[id].bin)
@@ -78,10 +106,14 @@ export async function getAiConnectStatus(userDataDir: string): Promise<AiConnect
   const runtime = await readNodeRuntime(join(userDataDir, 'runtime'))
   const codexConfig = await readFile(codexConfigPath(), 'utf8').catch(() => '')
   const claudeCli = await readJson(claudeCliConfigPath())
-  const desktopPath = claudeDesktopConfigPath()
+  const desktopPath = claudeDesktopConfigPath(process.platform, process.env, homedir())
   const desktop = desktopPath ? await readJson(desktopPath) : {}
   const desktopServers = isRecord(desktop.mcpServers) ? desktop.mcpServers : {}
   const cliServers = isRecord(claudeCli.mcpServers) ? claudeCli.mcpServers : {}
+  const gemini = await readJson(geminiSettingsPath(homedir()))
+  const geminiServers = isRecord(gemini.mcpServers) ? gemini.mcpServers : {}
+  const antigravity = await readJson(antigravityConfigPath(homedir()))
+  const antigravityServers = isRecord(antigravity.mcpServers) ? antigravity.mcpServers : {}
 
   return {
     node: runtime.installed ? { installed: true, version: runtime.version, source: runtime.source } : { installed: false },
@@ -103,6 +135,18 @@ export async function getAiConnectStatus(userDataDir: string): Promise<AiConnect
         supported: desktopPath !== null,
         installed: desktopPath !== null && existsSync(dirname(desktopPath)),
         connected: Boolean(desktopServers[mcpServerName]),
+      },
+      {
+        id: 'antigravity',
+        supported: true,
+        installed: Boolean(await findOnPath('agy')),
+        connected: Boolean(antigravityServers[mcpServerName]),
+      },
+      {
+        id: 'gemini',
+        supported: true,
+        installed: Boolean(await resolveCli(userDataDir, 'gemini')),
+        connected: Boolean(geminiServers[mcpServerName]),
       },
     ],
   }
@@ -142,7 +186,7 @@ function runCommand(file: string, args: string[], env: NodeJS.ProcessEnv, onLine
 export async function installCli(
   userDataDir: string,
   runtime: NodeRuntimePaths,
-  id: 'codex' | 'claude-cli',
+  id: 'codex' | 'claude-cli' | 'gemini',
   onLine: AiLogLine,
 ): Promise<void> {
   const dir = toolsDir(userDataDir)
@@ -186,8 +230,34 @@ async function connectWithCli(
   onLine(`Connected. Start a new ${cliPackages[id].bin} session to use the tools.`)
 }
 
+async function connectAntigravity(runtime: NodeRuntimePaths, onLine: AiLogLine): Promise<void> {
+  const bin = await findOnPath('agy')
+  if (!bin) throw new Error('agy is not installed yet. Install Antigravity first, then connect again.')
+  const env = runtimeEnv(runtime)
+  const commands = agyMcpCommands(mcpCommand(runtime))
+  // Replacing an existing entry keeps the command and args current. Removal failing is fine when none exists.
+  await runCommand(bin, commands.remove, env, () => {}).catch(() => 0)
+  onLine(`Registering ${mcpServerName} with agy…`)
+  const code = await runCommand(bin, commands.add, env, onLine)
+  if (code !== 0) throw new Error(`agy mcp add failed (exit ${code}).`)
+  onLine('Connected. Start a new Antigravity session to use the tools.')
+}
+
+async function connectGemini(userDataDir: string, runtime: NodeRuntimePaths, onLine: AiLogLine): Promise<void> {
+  const bin = await resolveCli(userDataDir, 'gemini')
+  if (!bin) throw new Error('gemini is not installed yet. Install it first.')
+  const env = runtimeEnv(runtime)
+  const commands = geminiMcpCommands(mcpCommand(runtime))
+  // Replacing an existing entry keeps the command and args current. Removal failing is fine when none exists.
+  await runCommand(bin, commands.remove, env, () => {}).catch(() => 0)
+  onLine(`Registering ${mcpServerName} with gemini…`)
+  const code = await runCommand(bin, commands.add, env, onLine)
+  if (code !== 0) throw new Error(`gemini mcp add failed (exit ${code}).`)
+  onLine('Connected. Start a new Gemini CLI session to use the tools.')
+}
+
 async function connectClaudeDesktop(runtime: NodeRuntimePaths, onLine: AiLogLine): Promise<void> {
-  const path = claudeDesktopConfigPath()
+  const path = claudeDesktopConfigPath(process.platform, process.env, homedir())
   if (!path) throw new Error('Claude Desktop is not available on this operating system.')
   const config = await readJson(path)
   const servers = isRecord(config.mcpServers) ? config.mcpServers : {}
@@ -202,5 +272,7 @@ async function connectClaudeDesktop(runtime: NodeRuntimePaths, onLine: AiLogLine
 
 export async function connectAiTool(userDataDir: string, runtime: NodeRuntimePaths, id: AiToolId, onLine: AiLogLine): Promise<void> {
   if (id === 'claude-desktop') return connectClaudeDesktop(runtime, onLine)
+  if (id === 'antigravity') return connectAntigravity(runtime, onLine)
+  if (id === 'gemini') return connectGemini(userDataDir, runtime, onLine)
   return connectWithCli(userDataDir, runtime, id, onLine)
 }

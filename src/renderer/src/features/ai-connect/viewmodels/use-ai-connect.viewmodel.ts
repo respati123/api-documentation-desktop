@@ -11,11 +11,13 @@ export const aiConnectKeys = {
 }
 
 const LOG_LIMIT = 200
-const toolIds: AiToolId[] = ['codex', 'claude-cli', 'claude-desktop']
+const toolIds: AiToolId[] = ['codex', 'claude-cli', 'claude-desktop', 'antigravity', 'gemini']
 const toolNames = {
   codex: AI_CONNECT_TEXT.tools.codex,
   'claude-cli': AI_CONNECT_TEXT.tools.claudeCli,
   'claude-desktop': AI_CONNECT_TEXT.tools.claudeDesktop,
+  antigravity: AI_CONNECT_TEXT.tools.antigravity,
+  gemini: AI_CONNECT_TEXT.tools.gemini,
 } satisfies Record<AiToolId, string>
 
 type Action = { label: string; run: () => Promise<unknown> }
@@ -89,19 +91,21 @@ export function useAiConnectViewModel() {
     const supported = tool?.supported ?? true
     const installed = tool?.installed ?? false
     const connected = tool?.connected ?? false
-    const needsInstall = id !== 'claude-desktop' && !installed
+    // The app installs only Codex and Claude CLI. Antigravity and Claude Desktop come from their own installers.
     const installable = installableToolSchema.safeParse(id)
+    const needsInstall = installable.success && !installed
     let statusText = t(AI_CONNECT_TEXT.tools.notInstalled)
     if (!supported) statusText = t(AI_CONNECT_TEXT.tools.unsupported)
     else if (connected) statusText = t(AI_CONNECT_TEXT.tools.connected)
     else if (installed || id === 'claude-desktop') statusText = t(AI_CONNECT_TEXT.tools.notConnected)
+    else if (id === 'antigravity') statusText = t(AI_CONNECT_TEXT.tools.antigravityNotInstalled)
 
     return {
       id,
       name: t(toolNames[id]),
       statusText,
       showInstall: supported && needsInstall,
-      showConnect: supported && !needsInstall,
+      showConnect: supported && (installed || id === 'claude-desktop'),
       installLabel: t(busy === id ? AI_CONNECT_TEXT.tools.installing : AI_CONNECT_TEXT.tools.install),
       connectLabel: t(
         busy === id ? AI_CONNECT_TEXT.tools.connecting : connected ? AI_CONNECT_TEXT.tools.reconnect : AI_CONNECT_TEXT.tools.connect,
