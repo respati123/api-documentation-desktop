@@ -13,6 +13,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { isResponseReference } from '@/lib/response-references'
 import { plainButtonClass } from '@/shared/components/plain-button'
 import { COMMON_TEXT } from '@/shared/constants/common-text.constants'
 import { Button, Input, jsonTokens, Textarea } from '@/shared/ui'
@@ -37,7 +38,7 @@ type TextareaProps = CommonProps &
   }
 
 type Match = { start: number; cursor: number; prefix: string }
-type MenuPosition = { left: number; top: number; width: number }
+type MenuPosition = { left: number; width: number; maxHeight: number; top?: number; bottom?: number }
 
 export function useDebouncedEditorValue(
   value: string,
@@ -108,16 +109,40 @@ function getMatch(value: string, cursor: number): Match | null {
   return { start: match.index, cursor, prefix: match[1] }
 }
 
+// The menu opens below the field and shrinks to the room there is, so it never leaves the window. It opens above the field only when
+// there is too little room below and more above.
+const suggestionMenuMaxHeight = 230
+const minimumRoomBelow = 100
+
+export function placeSuggestionMenu(
+  rect: Pick<DOMRect, 'top' | 'bottom' | 'left' | 'width'>,
+  viewport: { width: number; height: number },
+): MenuPosition {
+  const width = Math.min(Math.max(rect.width, 220), 360, viewport.width - 16)
+  const left = Math.max(8, Math.min(rect.left, viewport.width - width - 8))
+  const spaceBelow = viewport.height - rect.bottom - 8
+  const spaceAbove = rect.top - 8
+  if (spaceBelow >= minimumRoomBelow || spaceBelow >= spaceAbove) {
+    return { left, width, top: rect.bottom + 4, maxHeight: Math.min(suggestionMenuMaxHeight, Math.max(spaceBelow, 0)) }
+  }
+  const maxHeight = Math.min(suggestionMenuMaxHeight, Math.max(spaceAbove, 0))
+  // Anchored by the bottom edge: the menu's real height is smaller than maxHeight, so a top offset would leave a gap above the field.
+  return { left, width, bottom: viewport.height - rect.top + 4, maxHeight }
+}
+
+// The rectangle to anchor the menu to. In a multi-line editor that is the caret's line, not the whole editor, so the menu opens next to the text being typed.
+function anchorRect(element: HTMLElement): Pick<DOMRect, 'top' | 'bottom' | 'left' | 'width'> {
+  const selection = window.getSelection()
+  if (element.isContentEditable && selection && selection.rangeCount > 0 && element.contains(selection.anchorNode)) {
+    const range = selection.getRangeAt(0).cloneRange()
+    const caret = range.getClientRects()[0] ?? range.getBoundingClientRect()
+    if (caret.height > 0) return caret
+  }
+  return element.getBoundingClientRect()
+}
+
 function getMenuPosition(element: HTMLElement): MenuPosition {
-  const rect = element.getBoundingClientRect()
-  const width = Math.min(Math.max(rect.width, 220), 300, window.innerWidth - 16)
-  const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
-  const estimatedHeight = 230
-  const top =
-    window.innerHeight - rect.bottom < estimatedHeight && rect.top > estimatedHeight
-      ? Math.max(8, rect.top - estimatedHeight - 4)
-      : Math.min(window.innerHeight - 8, rect.bottom + 4)
-  return { left, top, width }
+  return placeSuggestionMenu(anchorRect(element), { width: window.innerWidth, height: window.innerHeight })
 }
 
 function getVariableTooltip(item: VariableSuggestion | undefined, name: string, masked = false): string {
@@ -137,24 +162,29 @@ function renderVariableText(value: string, suggestions: VariableSuggestion[], on
     const name = match[1].trim()
     const prefix = value.slice(cursor, match.index)
     if (prefix) parts.push(<span key={`text-${cursor}`}>{masked ? '•'.repeat(prefix.length) : prefix}</span>)
-    const known = knownNames.has(name)
+    const reference = isResponseReference(name)
+    const known = knownNames.has(name) || reference
     parts.push(
       // biome-ignore lint/a11y/useSemanticElements: the token must stay a span so it can sit inside the text editor overlay
       <span
         key={`variable-${match.index}`}
         className={cn('variable-token', !known && 'variable-token-missing')}
-        title={getVariableTooltip(known ? suggestionByName.get(name) : undefined, name, masked)}
+        title={
+          reference && !knownNames.has(name)
+            ? `${name}\nSaved response reference`
+            : getVariableTooltip(known ? suggestionByName.get(name) : undefined, name, masked)
+        }
         role="button"
         tabIndex={0}
         onClick={(event) => {
           event.stopPropagation()
-          onClick(name)
+          if (!reference) onClick(name)
         }}
         onKeyDown={(event) => {
           if (event.key !== 'Enter' && event.key !== ' ') return
           event.preventDefault()
           event.stopPropagation()
-          onClick(name)
+          if (!reference) onClick(name)
         }}
       >{`{{${name}}}`}</span>,
     )
@@ -565,7 +595,7 @@ function renderEditableVariables(editor: HTMLDivElement, value: string, suggesti
   for (let match = tokens.exec(value); match; match = tokens.exec(value)) {
     const name = match[1].trim()
     if (match.index > cursor) parts.push(document.createTextNode(value.slice(cursor, match.index)))
-    const known = knownNames.has(name)
+    const known = knownNames.has(name) || isResponseReference(name)
     const token = document.createElement('span')
     token.className = cn('variable-token', 'variable-url-token', !known && 'variable-token-missing')
     token.contentEditable = 'false'
@@ -760,7 +790,7 @@ export function VariableUrlField({
           const token = event.target.closest<HTMLElement>('[data-variable-token="true"]')
           if (!token) return
           const name = (token.dataset.tokenValue ?? '').match(/^\{\{\s*([^{}]+?)\s*\}\}$/)?.[1]?.trim()
-          if (name) onVariableClick(name, getEditableValue(event.currentTarget))
+          if (name && !isResponseReference(name)) onVariableClick(name, getEditableValue(event.currentTarget))
         }}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}

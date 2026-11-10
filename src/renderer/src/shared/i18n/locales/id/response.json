@@ -51,5 +51,8 @@
     "skippedNoEnvironment": "Variabel \"{{name}}\" tidak disimpan karena tidak ada environment yang aktif.",
     "skippedSecret": "Variabel \"{{name}}\" tidak diubah karena berupa secret.",
     "errorAtLine": "Baris {{line}}: {{message}}"
+  },
+  "suggestion": {
+    "scope": "Respons tersimpan, {{status}} {{statusText}}"
   }
 }

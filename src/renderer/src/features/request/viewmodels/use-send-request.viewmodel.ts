@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { REQUEST_TEXT } from '@/features/request/constants/request-text.constants'
@@ -13,7 +13,15 @@ import {
   toScriptRequest,
 } from '@/features/request/lib/script-run'
 import { requestService } from '@/features/request/services/request.service'
-import { downloadResponse, type ResponseData, type ResponseState, type ScriptRuns } from '@/features/response'
+import {
+  downloadResponse,
+  type ResponseData,
+  type ResponseState,
+  type ScriptRuns,
+  savedResponseService,
+  savedResponsesKey,
+} from '@/features/response'
+import { referencedRequestIds, type SavedResponses } from '@/lib/response-references'
 import { activeVariableValues, resolveRequestVariables } from '@/lib/workspace-variables'
 import type { ScriptRunResult } from '@/shared/ipc/script-contract'
 import type { RequestNode } from '@/shared/models/api-node.model'
@@ -26,6 +34,17 @@ type SendOutcome =
   | { status: 'failed'; message: string; scripts: ScriptRuns }
 
 export type SentResult = { requestId: string; status: number; statusText: string; duration: number }
+
+// The saved responses that the request's {{response.<id>...}} references use. Only the ones it refers to are read.
+async function loadReferencedResponses(request: RequestNode, workspaceId: string | undefined): Promise<SavedResponses> {
+  const savedResponses: SavedResponses = new Map()
+  if (!workspaceId) return savedResponses
+  for (const requestId of referencedRequestIds(JSON.stringify(request))) {
+    const saved = await savedResponseService.read(workspaceId, requestId)
+    if (saved) savedResponses.set(requestId, saved)
+  }
+  return savedResponses
+}
 
 // Owns sending: the scripts around the request, the mutation, the response it produces, the download option, and the Ctrl+Enter shortcut.
 export function useSendRequestViewModel({
@@ -43,6 +62,7 @@ export function useSendRequestViewModel({
 }) {
   const { t } = useTranslation('request')
   const [downloadAfterSend, setDownloadAfterSend] = useState(false)
+  const queryClient = useQueryClient()
   // A repeat timer can call send from an earlier render, so the send reads the variables through this ref.
   const contextRef = useRef(scriptContext)
   useLayoutEffect(() => {
@@ -81,7 +101,10 @@ export function useSendRequestViewModel({
       }
 
       if (!current.url.trim()) return { status: 'failed', message: t(REQUEST_TEXT.send.urlRequired), scripts }
-      const data = await requestService.send(toApiRequest(resolveRequestVariables(current, activeVariableValues(variables, environmentId))))
+      const savedResponses = await loadReferencedResponses(current, context.workspaceId)
+      const apiRequest = toApiRequest(resolveRequestVariables(current, activeVariableValues(variables, environmentId), savedResponses))
+      const savedResponse = context.workspaceId ? { workspaceId: context.workspaceId, requestId: current.id } : undefined
+      const data = await requestService.send({ ...apiRequest, savedResponse })
 
       const postScript = current.postScript ?? ''
       if (postScript.trim()) {
@@ -109,6 +132,8 @@ export function useSendRequestViewModel({
   const mutation = useMutation({
     mutationFn: ({ request }: SendInput) => runSend(request),
     onSuccess: (outcome, { request, download }) => {
+      // A sent request may have saved its response, so the menus that list saved responses reload.
+      if (outcome.status === 'sent') void queryClient.invalidateQueries({ queryKey: [savedResponsesKey] })
       if (outcome.status === 'sent')
         onSent?.({
           requestId: request.id,

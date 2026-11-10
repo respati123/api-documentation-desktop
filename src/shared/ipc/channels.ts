@@ -1,6 +1,7 @@
 // Every IPC channel name. The main process and the preload read names from here, so no channel is typed twice.
 export const CHANNELS = {
   request: { send: 'request:send' },
+  response: { listSaved: 'response:list-saved', readSaved: 'response:read-saved' },
   scripts: { run: 'scripts:run' },
   file: { select: 'file:select' },
   workspace: {

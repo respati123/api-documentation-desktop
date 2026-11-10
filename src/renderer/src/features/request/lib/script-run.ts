@@ -8,6 +8,8 @@ export interface ScriptContext {
   variables: WorkspaceVariables
   activeEnvironmentId: string | null
   updateVariables: (next: WorkspaceVariables) => void
+  // The workspace the request belongs to. Without it, the response is not saved for later references.
+  workspaceId?: string
 }
 
 export function activeEnvironment(variables: WorkspaceVariables, environmentId: string | null): WorkspaceEnvironment | undefined {

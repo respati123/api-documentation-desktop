@@ -44,6 +44,8 @@ export const VARIABLES_TEXT = {
   },
   rows: {
     tableLabel: 'rows.tableLabel',
+    reservedNameTitle: 'rows.reservedNameTitle',
+    reservedName: 'rows.reservedName',
     columnName: 'rows.columnName',
     columnValue: 'rows.columnValue',
     columnSecret: 'rows.columnSecret',

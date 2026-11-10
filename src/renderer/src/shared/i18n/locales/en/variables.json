@@ -56,7 +56,9 @@
     "secretToggle": "Secret",
     "removeLabel": "Delete variable {{name}}",
     "empty": "No variables yet.",
-    "add": "Add variable"
+    "add": "Add variable",
+    "reservedNameTitle": "Reserved name",
+    "reservedName": "Names that start with response. are reserved for saved responses. A variable with this name is never used. Rename it."
   },
   "quickEdit": {
     "eyebrow": "Workspace variable",
