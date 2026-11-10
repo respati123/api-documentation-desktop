@@ -252,8 +252,8 @@ function persistWorkspace(workspace: LocalWorkspace, overwrite = false): boolean
   return canEncrypt || secretRows.every((item) => !item.value)
 }
 
-const aiToolSchema = z.enum(['codex', 'claude-cli', 'claude-desktop'])
-const installableToolSchema = z.enum(['codex', 'claude-cli'])
+const aiToolSchema = z.enum(['codex', 'claude-cli', 'claude-desktop', 'antigravity', 'gemini'])
+const installableToolSchema = z.enum(['codex', 'claude-cli', 'gemini'])
 
 function cookieList(value: string | null): string[] {
   return value ? [value] : []
@@ -722,7 +722,7 @@ function sendToWindow(channel: string, payload?: unknown): void {
 
 async function requireNodeRuntime(): Promise<NodeRuntimePaths> {
   const status = await readNodeRuntime(join(app.getPath('userData'), 'runtime'))
-  if (!status.installed) throw new Error('Node.js is not installed yet. Install it first from Connect AI assistant.')
+  if (!status.installed) throw new Error('Node.js is not installed yet. Install it first from Connect MCP.')
   return status
 }
 
@@ -773,7 +773,7 @@ function buildApplicationMenu(): Menu {
     {
       role: 'help',
       submenu: [
-        { label: 'Connect AI assistant…', click: () => sendToWindow(CHANNELS.menu.connectAi) },
+        { label: 'Connect MCP…', click: () => sendToWindow(CHANNELS.menu.connectAi) },
         { type: 'separator' },
         { label: 'About API Documentation', click: showAbout },
       ],

@@ -1,7 +1,7 @@
 {
   "dialog": {
-    "title": "Hubungkan asisten AI",
-    "description": "Izinkan Codex, Claude Desktop, atau Claude CLI membaca dan mengedit koleksi API lokal kamu lewat server MCP API Documentation.",
+    "title": "Hubungkan MCP",
+    "description": "Izinkan Codex, Antigravity, Claude Desktop, Claude CLI, atau Gemini CLI membaca dan mengedit koleksi API lokal kamu lewat server MCP API Documentation.",
     "note": "Menghubungkan akan mengganti entri \"api-documentation\" yang sudah ada di pengaturan alat itu. Restart Claude Desktop setelah terhubung.",
     "logLabel": "Log penyiapan",
     "errorFallback": "Terjadi kesalahan."
@@ -28,6 +28,9 @@
     "installing": "Memasang…",
     "connect": "Hubungkan",
     "connecting": "Menghubungkan…",
-    "reconnect": "Hubungkan ulang"
+    "reconnect": "Hubungkan ulang",
+    "antigravity": "Antigravity (agy)",
+    "antigravityNotInstalled": "Belum terpasang. Pasang Antigravity dulu, lalu buka dialog ini lagi.",
+    "gemini": "Gemini CLI"
   }
 }

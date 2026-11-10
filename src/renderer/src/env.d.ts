@@ -64,7 +64,7 @@ type LocalCommit = {
   pushed: boolean
 }
 
-type AiToolId = 'codex' | 'claude-cli' | 'claude-desktop'
+type AiToolId = 'codex' | 'claude-cli' | 'claude-desktop' | 'antigravity' | 'gemini'
 type AiConnectStatus = {
   node: { installed: boolean; version?: string; source?: 'app' | 'system' }
   tools: Array<{ id: AiToolId; supported: boolean; installed: boolean; connected: boolean }>
@@ -96,7 +96,7 @@ interface Window {
     downloadUpdate(version: string): Promise<void>
     aiStatus(): Promise<AiConnectStatus>
     installNodeRuntime(): Promise<string | null>
-    installAiTool(id: 'codex' | 'claude-cli'): Promise<void>
+    installAiTool(id: 'codex' | 'claude-cli' | 'gemini'): Promise<void>
     connectAiTool(id: AiToolId): Promise<void>
     onNodeProgress(handler: (progress: NodeInstallProgress) => void): () => void
     onAiLog(handler: (line: string) => void): () => void

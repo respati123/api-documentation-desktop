@@ -6,7 +6,7 @@ import {
   nodeInstallProgressSchema,
 } from '@/features/ai-connect/models/ai-connect.model'
 
-type InstallableTool = 'codex' | 'claude-cli'
+type InstallableTool = 'codex' | 'claude-cli' | 'gemini'
 
 // The only place the renderer talks to the main process about AI tools.
 export const aiConnectService = {

@@ -1,7 +1,7 @@
 {
   "dialog": {
-    "title": "Connect AI assistant",
-    "description": "Let Codex, Claude Desktop, or Claude CLI read and edit your local API collections through the API Documentation MCP server.",
+    "title": "Connect MCP",
+    "description": "Let Codex, Antigravity, Claude Desktop, Claude CLI, or Gemini CLI read and edit your local API collections through the API Documentation MCP server.",
     "note": "Connecting replaces any existing \"api-documentation\" entry in that tool's settings. Restart Claude Desktop after connecting.",
     "logLabel": "Setup log",
     "errorFallback": "Something went wrong."
@@ -28,6 +28,9 @@
     "installing": "Installing…",
     "connect": "Connect",
     "connecting": "Connecting…",
-    "reconnect": "Reconnect"
+    "reconnect": "Reconnect",
+    "antigravity": "Antigravity (agy)",
+    "antigravityNotInstalled": "Not installed. Install Antigravity first, then open this dialog again.",
+    "gemini": "Gemini CLI"
   }
 }

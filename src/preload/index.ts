@@ -13,7 +13,7 @@ ipcRenderer.on(CHANNELS.invite.token, (_event, token: string) => {
   if (inviteHandlers.size) pendingInviteToken = null
 })
 
-type AiToolId = 'codex' | 'claude-cli' | 'claude-desktop'
+type AiToolId = 'codex' | 'claude-cli' | 'claude-desktop' | 'antigravity' | 'gemini'
 type AiConnectStatus = {
   node: { installed: boolean; version?: string; source?: 'app' | 'system' }
   tools: Array<{ id: AiToolId; supported: boolean; installed: boolean; connected: boolean }>
@@ -92,7 +92,7 @@ contextBridge.exposeInMainWorld('apiDesktop', {
   downloadUpdate: (version: string): Promise<void> => ipcRenderer.invoke(CHANNELS.update.download, version),
   aiStatus: (): Promise<AiConnectStatus> => ipcRenderer.invoke(CHANNELS.ai.status),
   installNodeRuntime: (): Promise<string | null> => ipcRenderer.invoke(CHANNELS.ai.installNode),
-  installAiTool: (id: 'codex' | 'claude-cli'): Promise<void> => ipcRenderer.invoke(CHANNELS.ai.installTool, id),
+  installAiTool: (id: 'codex' | 'claude-cli' | 'gemini'): Promise<void> => ipcRenderer.invoke(CHANNELS.ai.installTool, id),
   connectAiTool: (id: AiToolId): Promise<void> => ipcRenderer.invoke(CHANNELS.ai.connect, id),
   onNodeProgress: (handler: (progress: NodeInstallProgress) => void) => {
     const listener = (_event: unknown, progress: NodeInstallProgress) => handler(progress)

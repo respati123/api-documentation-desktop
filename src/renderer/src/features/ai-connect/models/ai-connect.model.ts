@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-export const aiToolIdSchema = z.enum(['codex', 'claude-cli', 'claude-desktop'])
+export const aiToolIdSchema = z.enum(['codex', 'claude-cli', 'claude-desktop', 'antigravity', 'gemini'])
 export type AiToolId = z.infer<typeof aiToolIdSchema>
 
-export const installableToolSchema = z.enum(['codex', 'claude-cli'])
+export const installableToolSchema = z.enum(['codex', 'claude-cli', 'gemini'])
 
 export const aiToolStatusSchema = z.object({
   id: aiToolIdSchema,
