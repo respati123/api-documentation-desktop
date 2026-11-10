@@ -12,6 +12,7 @@ import { CHANNELS } from '../shared/ipc/channels'
 import { connectAiTool, getAiConnectStatus, installCli } from './ai-connect'
 import { assertTrustedSender, isTrustedPage } from './ipc-guard'
 import { installNodeRuntime, type NodeRuntimePaths, readNodeRuntime } from './node-runtime'
+import { listSavedResponses, readSavedResponse, saveResponse, storeIdSchema } from './response-store'
 import { runScript } from './scripts/script-engine'
 import { attemptMatches, openSignInBox, parseSignInLink, type SignInAttempt, signInUrl, startSignInAttempt } from './sign-in'
 import { localVaultId, removeWorkspaceRows } from './workspace-removal'
@@ -43,6 +44,7 @@ const keyValueRowSchema = z.object({
 })
 
 const apiRequestSchema = z.object({
+  savedResponse: z.object({ workspaceId: storeIdSchema, requestId: storeIdSchema }).optional(),
   method: z.string(),
   url: z.string(),
   headers: z.array(z.object({ name: z.string(), value: z.string(), enabled: z.boolean() })),
@@ -461,6 +463,16 @@ ipcMain.handle(CHANNELS.request.send, async (event, ...args: unknown[]) => {
     throw new Error(`Could not reach ${targetUrl.origin}. ${reason}${code ? ` (${code})` : ''}`)
   }
   const body = await response.text()
+  if (request.savedResponse) {
+    // Saving is best effort: a failed save never fails the request, and the response is still returned.
+    await saveResponse(app.getPath('userData'), {
+      ...request.savedResponse,
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      body,
+    }).catch(() => undefined)
+  }
 
   return {
     status: response.status,
@@ -473,6 +485,20 @@ ipcMain.handle(CHANNELS.request.send, async (event, ...args: unknown[]) => {
         : cookieList(response.headers.get('set-cookie')),
     body,
   }
+})
+
+const savedResponseTargetSchema = z.object({ workspaceId: storeIdSchema, requestId: storeIdSchema })
+
+ipcMain.handle(CHANNELS.response.listSaved, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [input] = z.tuple([z.object({ workspaceId: storeIdSchema })]).parse(args)
+  return listSavedResponses(app.getPath('userData'), input.workspaceId)
+})
+
+ipcMain.handle(CHANNELS.response.readSaved, async (event, ...args: unknown[]) => {
+  assertTrustedSender(event)
+  const [target] = z.tuple([savedResponseTargetSchema]).parse(args)
+  return (await readSavedResponse(app.getPath('userData'), target.workspaceId, target.requestId)) ?? null
 })
 
 ipcMain.handle(CHANNELS.scripts.run, async (event, ...args: unknown[]) => {

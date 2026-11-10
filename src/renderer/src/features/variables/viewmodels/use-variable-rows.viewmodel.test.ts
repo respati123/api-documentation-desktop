@@ -18,6 +18,17 @@ describe('useVariableRowsViewModel', () => {
     expect(result.current.rows[1]).toMatchObject({ valueType: 'text', valueReadOnly: true })
   })
 
+  it('warns when a row name uses the reserved response. prefix', () => {
+    const reserved: WorkspaceVariable = { id: 'c', name: 'response.login', value: '', secret: false }
+    const { result } = renderHook(() => useVariableRowsViewModel({ rows: [plainRow, reserved], readOnly: false, onChange: vi.fn() }))
+    expect(result.current.reservedNameMessage).toBeDefined()
+  })
+
+  it('shows no warning for ordinary names', () => {
+    const { result } = renderHook(() => useVariableRowsViewModel({ rows: [secretRow, plainRow], readOnly: false, onChange: vi.fn() }))
+    expect(result.current.reservedNameMessage).toBeUndefined()
+  })
+
   it('appends an empty row when adding', () => {
     const onChange = vi.fn()
     const { result } = renderHook(() => useVariableRowsViewModel({ rows: [plainRow], readOnly: false, onChange }))

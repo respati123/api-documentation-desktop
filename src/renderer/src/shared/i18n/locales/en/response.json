@@ -51,5 +51,8 @@
     "skippedNoEnvironment": "Variable \"{{name}}\" was not saved because no environment is active.",
     "skippedSecret": "Variable \"{{name}}\" was not changed because it is a secret.",
     "errorAtLine": "Line {{line}}: {{message}}"
+  },
+  "suggestion": {
+    "scope": "Saved response, {{status}} {{statusText}}"
   }
 }

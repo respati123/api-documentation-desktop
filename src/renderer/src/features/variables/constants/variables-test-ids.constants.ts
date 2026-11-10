@@ -20,6 +20,7 @@ export const VARIABLES_TEST_IDS = {
   tabDelete: 'variables-environment-tab-delete-button',
   tabStorageWarning: 'variables-environment-tab-storage-warning',
   rowsEmpty: 'variables-rows-empty',
+  rowsReservedName: 'variables-rows-reserved-name',
   rowsAdd: 'variables-rows-add-button',
   rowName: (id: string) => `variables-rows-name-input-${id}`,
   rowValue: (id: string) => `variables-rows-value-input-${id}`,

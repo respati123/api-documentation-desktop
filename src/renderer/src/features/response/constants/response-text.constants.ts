@@ -1,4 +1,7 @@
 export const RESPONSE_TEXT = {
+  suggestion: {
+    scope: 'suggestion.scope',
+  },
   heading: {
     kicker: 'heading.kicker',
     title: 'heading.title',

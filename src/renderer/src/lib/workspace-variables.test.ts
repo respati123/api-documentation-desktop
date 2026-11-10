@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  isReservedVariableName,
   normalizeWorkspaceVariables,
   preserveLocalSecretValues,
   shareableWorkspaceVariables,
@@ -49,5 +50,13 @@ describe('normalizeWorkspaceVariables', () => {
 
   test('returns empty variables for input that is not an object', () => {
     expect(normalizeWorkspaceVariables('nope')).toEqual({ globals: [], environments: [] })
+  })
+})
+
+describe('isReservedVariableName', () => {
+  test('reserves the response. prefix only', () => {
+    expect(isReservedVariableName('response.login')).toBe(true)
+    expect(isReservedVariableName('responses')).toBe(false)
+    expect(isReservedVariableName('baseUrl')).toBe(false)
   })
 })

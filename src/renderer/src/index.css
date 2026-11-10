@@ -155,12 +155,12 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .variable-field-overlay { position: absolute; z-index: 2; inset: 0; overflow: hidden; border: 1px solid transparent; border-radius: inherit; color: var(--foreground); pointer-events: none; user-select: none; }
 .variable-input-overlay { display: flex; align-items: center; white-space: pre; }
 .variable-textarea-overlay { white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; }
-.variable-suggestions { position: fixed; z-index: 200; display: grid; gap: 0; max-height: 230px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--card); box-shadow: 0 12px 30px rgb(15 23 42 / .18); }
+.variable-suggestions { position: fixed; z-index: 200; display: grid; gap: 0; max-height: 230px; overflow-x: hidden; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--card); box-shadow: 0 12px 30px rgb(15 23 42 / .18); }
 .variable-suggestion { min-width: 0; min-height: 32px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; border: 0; border-radius: 5px; padding: 0 8px; color: var(--foreground); background: transparent; text-align: left; font-size: 12px; }
 .variable-suggestion:hover, .variable-suggestion-active { background: color-mix(in srgb, var(--primary) 14%, transparent); }
 .variable-suggestion-mark { color: var(--primary-foreground); font-family: var(--font-data); font-size: 11px; }
 .variable-suggestion-name { overflow: hidden; font-family: var(--font-data); text-overflow: ellipsis; white-space: nowrap; }
-.variable-suggestion-scope { color: var(--muted-foreground); font-size: 10px; }
+.variable-suggestion-scope { min-width: 0; overflow: hidden; color: var(--muted-foreground); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .header-description { width: calc(100% - 42px); height: 30px; min-height: 30px; margin: 8px 0 0 32px; border-color: transparent; padding-inline: 8px; color: var(--muted-foreground); font-size: 11px; }
 .header-description:hover, .header-description:focus { border-color: var(--primary); background: var(--card); }
 

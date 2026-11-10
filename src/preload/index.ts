@@ -53,6 +53,9 @@ ipcRenderer.on(CHANNELS.auth.failed, (_event, reason: string) => {
 contextBridge.exposeInMainWorld('apiDesktop', {
   sendRequest: (request: ApiRequest) => ipcRenderer.invoke(CHANNELS.request.send, request),
   runScript: (input: unknown) => ipcRenderer.invoke(CHANNELS.scripts.run, input),
+  listSavedResponses: (workspaceId: string) => ipcRenderer.invoke(CHANNELS.response.listSaved, { workspaceId }),
+  readSavedResponse: (workspaceId: string, requestId: string) =>
+    ipcRenderer.invoke(CHANNELS.response.readSaved, { workspaceId, requestId }),
   selectFile: (): Promise<{ path: string; name: string } | null> => ipcRenderer.invoke(CHANNELS.file.select),
   loadWorkspace: (legacyTree: unknown[]) => ipcRenderer.invoke(CHANNELS.workspace.load, legacyTree),
   saveWorkspace: (workspace: LocalWorkspace, options?: { overwrite: boolean }): Promise<boolean> =>
@@ -177,6 +180,8 @@ export type ApiRequest = {
   bodyMimeType?: string
   bodyPath?: string
   bodyFileName?: string
+  // Save this response under the workspace and request, so other requests can reference it.
+  savedResponse?: { workspaceId: string; requestId: string }
 }
 
 export type ApiResponse = {

@@ -1,3 +1,4 @@
+import { isResponseReference, resolveResponseReference, type SavedResponses } from '@/lib/response-references'
 import type { RequestAuth, RequestNode } from '@/shared/models/api-node.model'
 import { isRecord } from '@/shared/utils/record'
 
@@ -20,6 +21,11 @@ export type WorkspaceVariables = {
 }
 
 export const workspaceVariablesChangeId = '__workspace_variables__'
+
+// The response. prefix is reserved for saved response references. A variable with that name is never used.
+export function isReservedVariableName(name: string): boolean {
+  return name.trim().startsWith('response.')
+}
 
 export function emptyWorkspaceVariables(): WorkspaceVariables {
   return { globals: [], environments: [] }
@@ -93,10 +99,15 @@ function replaceAuthVariables(auth: RequestAuth, replace: (value: string) => str
   }
 }
 
-export function resolveRequestVariables<T extends RequestNode>(request: T, values: Record<string, string>): T {
+export function resolveRequestVariables<T extends RequestNode>(
+  request: T,
+  values: Record<string, string>,
+  savedResponses: SavedResponses = new Map(),
+): T {
   const replace = (value: string) =>
     value.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, rawName: string) => {
       const name = rawName.trim()
+      if (isResponseReference(name)) return resolveResponseReference(name, savedResponses)
       if (!Object.hasOwn(values, name)) throw new Error(`Variable "{{${name}}}" is not defined in the global scope or active environment.`)
       return values[name]
     })

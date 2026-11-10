@@ -55,7 +55,9 @@
     "secretToggle": "Rahasia",
     "removeLabel": "Hapus variabel {{name}}",
     "empty": "Belum ada variabel.",
-    "add": "Tambah variabel"
+    "add": "Tambah variabel",
+    "reservedNameTitle": "Nama yang dipesan",
+    "reservedName": "Nama yang diawali response. dipakai untuk response tersimpan. Variabel dengan nama ini tidak akan dipakai. Ganti namanya."
   },
   "quickEdit": {
     "eyebrow": "Variabel workspace",

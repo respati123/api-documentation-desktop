@@ -6,6 +6,7 @@ import type { ScriptContext } from '@/features/request/lib/script-run'
 import { requestService } from '@/features/request/services/request.service'
 import { useSendRequestViewModel } from '@/features/request/viewmodels/use-send-request.viewmodel'
 import type { ResponseData } from '@/features/response'
+import { savedResponseService } from '@/features/response'
 import type { WorkspaceVariables } from '@/lib/workspace-variables'
 import type { ScriptRunResult } from '@/shared/ipc/script-contract'
 import type { RequestNode } from '@/shared/models/api-node.model'
@@ -158,5 +159,76 @@ describe('useSendRequestViewModel scripts', () => {
     expect(runScript).not.toHaveBeenCalled()
     expect(send.mock.calls[0][0].url).toBe('https://a.example.com/me')
     await waitFor(() => expect(result.current.scripts).toEqual({ pre: null, post: null, skipped: [] }))
+  })
+
+  it('asks the main process to save the response under its workspace and request', async () => {
+    const send = vi.spyOn(requestService, 'send').mockResolvedValue(okResponse)
+    const { result } = renderSend(makeRequest({ id: 'login' }), {
+      variables,
+      activeEnvironmentId: 'dev',
+      updateVariables: vi.fn(),
+      workspaceId: 'local-default',
+    })
+
+    await act(async () => {
+      await result.current.send()
+    })
+
+    expect(send.mock.calls[0][0].savedResponse).toEqual({ workspaceId: 'local-default', requestId: 'login' })
+  })
+
+  it('does not ask to save a response when the workspace is unknown', async () => {
+    const send = vi.spyOn(requestService, 'send').mockResolvedValue(okResponse)
+    const { result } = renderSend(makeRequest({ id: 'login' }), { variables, activeEnvironmentId: 'dev', updateVariables: vi.fn() })
+
+    await act(async () => {
+      await result.current.send()
+    })
+
+    expect(send.mock.calls[0][0].savedResponse).toBeUndefined()
+  })
+  it('reads the saved response a request refers to, and sends the value from it', async () => {
+    const send = vi.spyOn(requestService, 'send').mockResolvedValue(okResponse)
+    const read = vi.spyOn(savedResponseService, 'read').mockResolvedValue({
+      savedAt: '2026-11-10T10:00:00.000Z',
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      body: '{"data":{"id":7}}',
+      truncated: false,
+    })
+    const { result } = renderSend(makeRequest({ id: 'me', url: 'https://a.example.com/users/{{response.login.body.$.data.id}}' }), {
+      variables,
+      activeEnvironmentId: 'dev',
+      updateVariables: vi.fn(),
+      workspaceId: 'local-default',
+    })
+
+    await act(async () => {
+      await result.current.send()
+    })
+
+    expect(read).toHaveBeenCalledWith('local-default', 'login')
+    expect(send.mock.calls[0][0].url).toBe('https://a.example.com/users/7')
+  })
+
+  it('stops before sending when the referred response has not been saved yet', async () => {
+    const send = vi.spyOn(requestService, 'send').mockResolvedValue(okResponse)
+    vi.spyOn(savedResponseService, 'read').mockResolvedValue(undefined)
+    const { result } = renderSend(makeRequest({ id: 'me', url: 'https://a.example.com/users/{{response.login.body.$.data.id}}' }), {
+      variables,
+      activeEnvironmentId: 'dev',
+      updateVariables: vi.fn(),
+      workspaceId: 'local-default',
+    })
+
+    await act(async () => {
+      await result.current.send()
+    })
+
+    expect(send).not.toHaveBeenCalled()
+    await waitFor(() =>
+      expect(result.current.response).toEqual({ kind: 'error', message: 'Request "login" has no saved response yet. Send it first.' }),
+    )
   })
 })

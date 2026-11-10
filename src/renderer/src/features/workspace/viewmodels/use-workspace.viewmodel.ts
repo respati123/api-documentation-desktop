@@ -11,6 +11,7 @@ import {
   useCollectionTreeViewModel,
 } from '@/features/collection'
 import { NOTIFICATION_TEXT, teamUpdateDismissMs, useNotificationsViewModel } from '@/features/notifications'
+import { useSavedResponsesViewModel } from '@/features/response'
 import {
   type CloudWorkspace,
   changeStatusKey,
@@ -270,6 +271,7 @@ export function useWorkspaceViewModel() {
     historyDiffRows,
   } = history
   const resolvedVariables = activeVariableValues(workspaceVariables, activeEnvironmentId)
+  const savedResponses = useSavedResponsesViewModel(currentWorkspaceId)
   const variableSuggestions: VariableSuggestion[] = (() => {
     const environment = workspaceVariables.environments.find((item) => item.id === activeEnvironmentId)
     const seen = new Set<string>()
@@ -285,7 +287,7 @@ export function useWorkspaceViewModel() {
         secret: variable.secret,
       })
     }
-    return suggestions
+    return [...suggestions, ...savedResponses.suggestions]
   })()
 
   const aiConnect = useAiConnectViewModel()
@@ -400,7 +402,12 @@ export function useWorkspaceViewModel() {
     onSave: saveQuickVariable,
   })
 
-  const scriptContext = { variables: workspaceVariables, activeEnvironmentId, updateVariables: updateWorkspaceVariables }
+  const scriptContext = {
+    variables: workspaceVariables,
+    activeEnvironmentId,
+    updateVariables: updateWorkspaceVariables,
+    workspaceId: currentWorkspaceId,
+  }
   const sendHistory = useSendHistoryViewModel()
   const { activeRequest, updateActiveRequest, requestWorkbench } = useWorkspaceRequestViewModel({
     selectedRequestId,

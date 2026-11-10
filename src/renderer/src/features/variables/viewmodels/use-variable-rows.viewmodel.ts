@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { VARIABLES_TEXT } from '@/features/variables/constants/variables-text.constants'
-import type { WorkspaceVariable } from '@/lib/workspace-variables'
+import { isReservedVariableName, type WorkspaceVariable } from '@/lib/workspace-variables'
 
 export const maxVariablesPerScope = 500
 
@@ -22,7 +22,13 @@ export function useVariableRowsViewModel({
     onChange(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)))
   }
 
+  // A reserved name is never used, so one warning under the table covers every row that has one.
+  const hasReservedName = rows.some((row) => isReservedVariableName(row.name))
+
   return {
+    reservedNameMessage: hasReservedName
+      ? { title: t(VARIABLES_TEXT.rows.reservedNameTitle), description: t(VARIABLES_TEXT.rows.reservedName) }
+      : undefined,
     rows: rows.map((row, index) => {
       const valueType: 'password' | 'text' = row.secret ? 'password' : 'text'
       return {
