@@ -13,6 +13,7 @@ function props(overrides: Partial<AiConnectViewProps> = {}): AiConnectViewProps 
         id: 'codex',
         name: 'Codex',
         statusText: 'Not installed',
+        statusVariant: 'warning',
         showInstall: true,
         showConnect: false,
         installLabel: 'Install',

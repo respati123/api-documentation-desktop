@@ -22,6 +22,18 @@ const toolNames = {
 
 type Action = { label: string; run: () => Promise<unknown> }
 
+function getStatusVariant(
+  supported: boolean,
+  connected: boolean,
+  installed: boolean,
+  id: AiToolId,
+): 'outline' | 'success' | 'secondary' | 'warning' {
+  if (!supported) return 'outline'
+  if (connected) return 'success'
+  if (installed || id === 'claude-desktop') return 'secondary'
+  return 'warning'
+}
+
 // Owns the connect-AI dialog: its open state, the tool status query, the install and connect actions,
 // and the live setup log. The main process menu can open it too.
 export function useAiConnectViewModel() {
@@ -104,6 +116,7 @@ export function useAiConnectViewModel() {
       id,
       name: t(toolNames[id]),
       statusText,
+      statusVariant: getStatusVariant(supported, connected, installed, id),
       showInstall: supported && needsInstall,
       showConnect: supported && (installed || id === 'claude-desktop'),
       installLabel: t(busy === id ? AI_CONNECT_TEXT.tools.installing : AI_CONNECT_TEXT.tools.install),

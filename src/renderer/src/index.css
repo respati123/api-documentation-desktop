@@ -195,6 +195,7 @@ body.is-resizing-collection { cursor: col-resize; user-select: none; }
 .variable-quick-preview { display: grid; gap: 8px; border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0; padding: 8px 16px; background: var(--muted); }
 .variable-quick-preview code { overflow-wrap: anywhere; color: var(--foreground); font-family: var(--font-data); font-size: 11px; line-height: 1.55; }
 .variable-quick-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 0; }
+.dialog__content.ai-connect-dialog { width: min(620px, calc(100vw - 32px)); }
 .client-code-dialog { width: min(760px, calc(100vw - 32px)); }
 .dialog-error { margin: 0; color: var(--destructive); font-size: 12px; line-height: 1.5; }
 .dialog-success { margin: 0; color: var(--ok); font-size: 12px; line-height: 1.5; }
